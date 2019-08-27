@@ -152,16 +152,16 @@ void ZZSelectorBase::Init(TTree *tree)
         //fChain->SetBranchAddress("duplicated", &duplicated, &b_duplicated);
         //std::cout<<"enum channel_: "<<channel_<<std::endl;
         //fChain->SetBranchAddress("e1ZZTightIDNoVtx", &l1IsTight, &b_l1IsTight);
-        fChain->SetBranchAddress("e1ZZTightIDNoVtxHZZWP", &l1IsTight, &b_l1IsTight);
+        fChain->SetBranchAddress("e1ZZTightIDNoVtx", &l1IsTight, &b_l1IsTight);
         fChain->SetBranchAddress("e1ZZIsoPass", &l1IsIso, &b_l1IsIso);
         //fChain->SetBranchAddress("e2ZZTightIDNoVtx", &l2IsTight, &b_l2IsTight);
-        fChain->SetBranchAddress("e2ZZTightIDNoVtxHZZWP", &l2IsTight, &b_l2IsTight);
+        fChain->SetBranchAddress("e2ZZTightIDNoVtx", &l2IsTight, &b_l2IsTight);
         fChain->SetBranchAddress("e2ZZIsoPass", &l2IsIso, &b_l2IsIso);
         //fChain->SetBranchAddress("e3ZZTightIDNoVtx", &l3IsTight, &b_l3IsTight);
-        fChain->SetBranchAddress("e3ZZTightIDNoVtxHZZWP", &l3IsTight, &b_l3IsTight);
+        fChain->SetBranchAddress("e3ZZTightIDNoVtx", &l3IsTight, &b_l3IsTight);
         fChain->SetBranchAddress("e3ZZIsoPass", &l3IsIso, &b_l3IsIso);
         //fChain->SetBranchAddress("e4ZZTightIDNoVtx", &l4IsTight, &b_l4IsTight);
-        fChain->SetBranchAddress("e4ZZTightIDNoVtxHZZWP", &l4IsTight, &b_l4IsTight);
+        fChain->SetBranchAddress("e4ZZTightIDNoVtx", &l4IsTight, &b_l4IsTight);
         fChain->SetBranchAddress("e4ZZIsoPass", &l4IsIso, &b_l4IsIso);
         fChain->SetBranchAddress("e1_e2_Mass", &Z1mass, &b_Z1mass);
         fChain->SetBranchAddress("e3_e4_Mass", &Z2mass, &b_Z2mass);
@@ -177,6 +177,10 @@ void ZZSelectorBase::Init(TTree *tree)
         fChain->SetBranchAddress("e2Pt", &l2Pt, &b_l2Pt);
         fChain->SetBranchAddress("e3Pt", &l3Pt, &b_l3Pt);
         fChain->SetBranchAddress("e4Pt", &l4Pt, &b_l4Pt);
+	fChain->SetBranchAddress("e1Charge", &l1Charge, &b_l1Charge);
+        fChain->SetBranchAddress("e2Charge", &l2Charge, &b_l2Charge);
+        fChain->SetBranchAddress("e3Charge", &l3Charge, &b_l3Charge);
+        fChain->SetBranchAddress("e4Charge", &l4Charge, &b_l4Charge);
         fChain->SetBranchAddress("e1Eta", &l1Eta, &b_l1Eta);
         fChain->SetBranchAddress("e2Eta", &l2Eta, &b_l2Eta);
         fChain->SetBranchAddress("e3Eta", &l3Eta, &b_l3Eta);
@@ -217,10 +221,10 @@ void ZZSelectorBase::Init(TTree *tree)
         fChain->SetBranchAddress("evt", &evt, &b_evt);
         //fChain->SetBranchAddress("duplicated", &duplicated, &b_duplicated);
         //fChain->SetBranchAddress("e1ZZTightIDNoVtx", &l1IsTight, &b_l1IsTight);
-        fChain->SetBranchAddress("e1ZZTightIDNoVtxHZZWP", &l1IsTight, &b_l1IsTight);
+        fChain->SetBranchAddress("e1ZZTightIDNoVtx", &l1IsTight, &b_l1IsTight);
         fChain->SetBranchAddress("e1ZZIsoPass", &l1IsIso, &b_l1IsIso);
         //fChain->SetBranchAddress("e2ZZTightIDNoVtx", &l2IsTight, &b_l2IsTight);
-        fChain->SetBranchAddress("e2ZZTightIDNoVtxHZZWP", &l2IsTight, &b_l2IsTight);
+        fChain->SetBranchAddress("e2ZZTightIDNoVtx", &l2IsTight, &b_l2IsTight);
         fChain->SetBranchAddress("e2ZZIsoPass", &l2IsIso, &b_l2IsIso);
         fChain->SetBranchAddress("m1ZZTightIDNoVtx", &l3IsTight, &b_l3IsTight);
         fChain->SetBranchAddress("m1ZZIsoPass", &l3IsIso, &b_l3IsIso);
@@ -240,6 +244,10 @@ void ZZSelectorBase::Init(TTree *tree)
         fChain->SetBranchAddress("e2Pt", &l2Pt, &b_l2Pt);
         fChain->SetBranchAddress("m1Pt", &l3Pt, &b_l3Pt);
         fChain->SetBranchAddress("m2Pt", &l4Pt, &b_l4Pt);
+        fChain->SetBranchAddress("e1Charge", &l1Charge, &b_l1Charge);
+        fChain->SetBranchAddress("e2Charge", &l2Charge, &b_l2Charge);
+        fChain->SetBranchAddress("m1Charge", &l3Charge, &b_l3Charge);
+        fChain->SetBranchAddress("m2Charge", &l4Charge, &b_l4Charge);
         fChain->SetBranchAddress("e1Eta", &l1Eta, &b_l1Eta);
         fChain->SetBranchAddress("e2Eta", &l2Eta, &b_l2Eta);
         fChain->SetBranchAddress("m1Eta", &l3Eta, &b_l3Eta);
@@ -280,10 +288,10 @@ void ZZSelectorBase::Init(TTree *tree)
         fChain->SetBranchAddress("evt", &evt, &b_evt);
         //fChain->SetBranchAddress("duplicated", &duplicated, &b_duplicated);
         //fChain->SetBranchAddress("e1ZZTightIDNoVtx", &l1IsTight, &b_l1IsTight);
-        fChain->SetBranchAddress("e1ZZTightIDNoVtxHZZWP", &l1IsTight, &b_l1IsTight);
+        fChain->SetBranchAddress("e1ZZTightIDNoVtx", &l1IsTight, &b_l1IsTight);
         fChain->SetBranchAddress("e1ZZIsoPass", &l1IsIso, &b_l1IsIso);
         //fChain->SetBranchAddress("e2ZZTightIDNoVtx", &l2IsTight, &b_l2IsTight); 
-        fChain->SetBranchAddress("e2ZZTightIDNoVtxHZZWP", &l2IsTight, &b_l2IsTight);
+        fChain->SetBranchAddress("e2ZZTightIDNoVtx", &l2IsTight, &b_l2IsTight);
         fChain->SetBranchAddress("e2ZZIsoPass", &l2IsIso, &b_l2IsIso);
         fChain->SetBranchAddress("m1ZZTightIDNoVtx", &l3IsTight, &b_l3IsTight);
         fChain->SetBranchAddress("m1ZZIsoPass", &l3IsIso, &b_l3IsIso);
@@ -305,6 +313,10 @@ void ZZSelectorBase::Init(TTree *tree)
         fChain->SetBranchAddress("e2Pt", &l2Pt, &b_l2Pt);
         fChain->SetBranchAddress("m1Pt", &l3Pt, &b_l3Pt);
         fChain->SetBranchAddress("m2Pt", &l4Pt, &b_l4Pt);
+        fChain->SetBranchAddress("e1Charge", &l1Charge, &b_l1Charge);
+        fChain->SetBranchAddress("e2Charge", &l2Charge, &b_l2Charge);
+        fChain->SetBranchAddress("m1Charge", &l3Charge, &b_l3Charge);
+        fChain->SetBranchAddress("m2Charge", &l4Charge, &b_l4Charge);
         fChain->SetBranchAddress("e1Eta", &l1Eta, &b_l1Eta);
         fChain->SetBranchAddress("e2Eta", &l2Eta, &b_l2Eta);
         fChain->SetBranchAddress("m1Eta", &l3Eta, &b_l3Eta);
@@ -364,6 +376,10 @@ void ZZSelectorBase::Init(TTree *tree)
         fChain->SetBranchAddress("m2Pt", &l2Pt, &b_l2Pt);
         fChain->SetBranchAddress("m3Pt", &l3Pt, &b_l3Pt);
         fChain->SetBranchAddress("m4Pt", &l4Pt, &b_l4Pt);
+        fChain->SetBranchAddress("m1Charge", &l1Charge, &b_l1Charge);
+        fChain->SetBranchAddress("m2Charge", &l2Charge, &b_l2Charge);
+        fChain->SetBranchAddress("m3Charge", &l3Charge, &b_l3Charge);
+        fChain->SetBranchAddress("m4Charge", &l4Charge, &b_l4Charge);
         fChain->SetBranchAddress("m1Eta", &l1Eta, &b_l1Eta);
         fChain->SetBranchAddress("m2Eta", &l2Eta, &b_l2Eta);
         fChain->SetBranchAddress("m3Eta", &l3Eta, &b_l3Eta);
@@ -566,6 +582,9 @@ Bool_t ZZSelectorBase::Process(Long64_t entry)
     b_l1Pt->GetEntry(entry);
     b_l2Pt->GetEntry(entry);
     b_l3Pt->GetEntry(entry);
+    b_l1Charge->GetEntry(entry);
+    b_l2Charge->GetEntry(entry);
+    b_l3Charge->GetEntry(entry);
     b_l1Eta->GetEntry(entry);
     b_l2Eta->GetEntry(entry);
     b_l3Eta->GetEntry(entry);
@@ -584,6 +603,7 @@ Bool_t ZZSelectorBase::Process(Long64_t entry)
     //std::cout<<"Is the ZZSelectorBase fine until here"<<std::endl;
     if (channel_ == eeee || channel_ == eemm || channel_ == mmee || channel_ == mmmm) {
       b_l4Pt->GetEntry(entry);
+      b_l4Charge->GetEntry(entry);
       b_l4Eta->GetEntry(entry);
       b_l4Phi->GetEntry(entry);
       b_l4SIP3D->GetEntry(entry);

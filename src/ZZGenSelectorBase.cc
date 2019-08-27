@@ -103,6 +103,10 @@ void ZZGenSelectorBase::Init(TTree *tree)
         fChain->SetBranchAddress("e2Pt", &Genl2Pt, &b_Genl2Pt);
         fChain->SetBranchAddress("e3Pt", &Genl3Pt, &b_Genl3Pt);
         fChain->SetBranchAddress("e4Pt", &Genl4Pt, &b_Genl4Pt);
+        fChain->SetBranchAddress("e1Charge", &Genl1Charge, &b_Genl1Charge);
+        fChain->SetBranchAddress("e2Charge", &Genl2Charge, &b_Genl2Charge);
+        fChain->SetBranchAddress("e3Charge", &Genl3Charge, &b_Genl3Charge);
+        fChain->SetBranchAddress("e4Charge", &Genl4Charge, &b_Genl4Charge);
         fChain->SetBranchAddress("e1Eta", &Genl1Eta, &b_Genl1Eta);
         fChain->SetBranchAddress("e2Eta", &Genl2Eta, &b_Genl2Eta);
         fChain->SetBranchAddress("e3Eta", &Genl3Eta, &b_Genl3Eta);
@@ -139,6 +143,10 @@ void ZZGenSelectorBase::Init(TTree *tree)
         fChain->SetBranchAddress("e2Pt", &Genl2Pt, &b_Genl2Pt);
         fChain->SetBranchAddress("m1Pt", &Genl3Pt, &b_Genl3Pt);
         fChain->SetBranchAddress("m2Pt", &Genl4Pt, &b_Genl4Pt);
+	fChain->SetBranchAddress("e1Charge", &Genl1Charge, &b_Genl1Charge);
+        fChain->SetBranchAddress("e2Charge", &Genl2Charge, &b_Genl2Charge);
+        fChain->SetBranchAddress("m1Charge", &Genl3Charge, &b_Genl3Charge);
+        fChain->SetBranchAddress("m2Charge", &Genl4Charge, &b_Genl4Charge);
         fChain->SetBranchAddress("e1Eta", &Genl1Eta, &b_Genl1Eta);
         fChain->SetBranchAddress("e2Eta", &Genl2Eta, &b_Genl2Eta);
         fChain->SetBranchAddress("m1Eta", &Genl3Eta, &b_Genl3Eta);
@@ -174,6 +182,10 @@ void ZZGenSelectorBase::Init(TTree *tree)
         fChain->SetBranchAddress("e2Pt", &Genl2Pt, &b_Genl2Pt);
         fChain->SetBranchAddress("m1Pt", &Genl3Pt, &b_Genl3Pt);
         fChain->SetBranchAddress("m2Pt", &Genl4Pt, &b_Genl4Pt);
+	fChain->SetBranchAddress("e1Charge", &Genl1Charge, &b_Genl1Charge);
+        fChain->SetBranchAddress("e2Charge", &Genl2Charge, &b_Genl2Charge);
+        fChain->SetBranchAddress("m1Charge", &Genl3Charge, &b_Genl3Charge);
+        fChain->SetBranchAddress("m2Charge", &Genl4Charge, &b_Genl4Charge);
         fChain->SetBranchAddress("e1Eta", &Genl1Eta, &b_Genl1Eta);
         fChain->SetBranchAddress("e2Eta", &Genl2Eta, &b_Genl2Eta);
         fChain->SetBranchAddress("m1Eta", &Genl3Eta, &b_Genl3Eta);
@@ -209,6 +221,10 @@ void ZZGenSelectorBase::Init(TTree *tree)
         fChain->SetBranchAddress("m2Pt", &Genl2Pt, &b_Genl2Pt);
         fChain->SetBranchAddress("m3Pt", &Genl3Pt, &b_Genl3Pt);
         fChain->SetBranchAddress("m4Pt", &Genl4Pt, &b_Genl4Pt);
+	fChain->SetBranchAddress("m1Charge", &Genl1Charge, &b_Genl1Charge);
+        fChain->SetBranchAddress("m2Charge", &Genl2Charge, &b_Genl2Charge);
+        fChain->SetBranchAddress("m3Charge", &Genl3Charge, &b_Genl3Charge);
+        fChain->SetBranchAddress("m4Charge", &Genl4Charge, &b_Genl4Charge);
         fChain->SetBranchAddress("m1Eta", &Genl1Eta, &b_Genl1Eta);
         fChain->SetBranchAddress("m2Eta", &Genl2Eta, &b_Genl2Eta);
         fChain->SetBranchAddress("m3Eta", &Genl3Eta, &b_Genl3Eta);
@@ -245,6 +261,9 @@ Bool_t ZZGenSelectorBase::Process(Long64_t entry)
     b_Genl1Pt->GetEntry(entry);
     b_Genl2Pt->GetEntry(entry);
     b_Genl3Pt->GetEntry(entry);
+    b_Genl1Charge->GetEntry(entry);
+    b_Genl2Charge->GetEntry(entry);
+    b_Genl3Charge->GetEntry(entry);
     b_Genl1Eta->GetEntry(entry);
     b_Genl2Eta->GetEntry(entry);
     b_Genl3Eta->GetEntry(entry);
@@ -260,6 +279,7 @@ Bool_t ZZGenSelectorBase::Process(Long64_t entry)
     //std::cout<<"Is the ZZGenSelectorBase fine until here"<<std::endl;
     if (channel_ == eeee || channel_ == eemm || channel_ == mmee || channel_ == mmmm) {
       b_Genl4Pt->GetEntry(entry);
+      b_Genl4Charge->GetEntry(entry);
       b_Genl4Eta->GetEntry(entry);
       b_Genl4Phi->GetEntry(entry);
       b_Genl4Energy->GetEntry(entry);

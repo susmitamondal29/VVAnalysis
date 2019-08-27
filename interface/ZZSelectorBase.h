@@ -71,7 +71,7 @@ public :
     Float_t l2GenPt;
     Float_t l3GenPt;
     Float_t l4GenPt;
-
+   
     Bool_t l1IsTight;
     Bool_t l2IsTight;
     Bool_t l3IsTight;
@@ -90,6 +90,10 @@ public :
     Float_t l2Pt;
     Float_t l3Pt;
     Float_t l4Pt;
+    Int_t l1Charge;
+    Int_t l2Charge;
+    Int_t l3Charge;
+    Int_t l4Charge;
     Float_t l1Eta;
     Float_t l2Eta;
     Float_t l3Eta;
@@ -142,6 +146,7 @@ public :
     TBranch* b_l2GenPt;
     TBranch* b_l3GenPt;
     TBranch* b_l4GenPt;
+  
     
     TBranch* b_run;
     TBranch* b_lumi;
@@ -165,6 +170,10 @@ public :
     TBranch* b_l2Pt;
     TBranch* b_l3Pt;
     TBranch* b_l4Pt;
+    TBranch* b_l1Charge;
+    TBranch* b_l2Charge;
+    TBranch* b_l3Charge;
+    TBranch* b_l4Charge;
     TBranch* b_l1Eta;
     TBranch* b_l2Eta;
     TBranch* b_l3Eta;

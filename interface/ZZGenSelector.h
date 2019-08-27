@@ -44,6 +44,9 @@ public :
         { "GenZ2lep2_Phi",  {} },
         { "GenZ2lep2_Pt",  {} },
         { "GenMass", {} },
+	{ "GennJets", {} },
+	{ "GenjetPt", {} },
+	{ "GenjetEta", {} },
        // { "Pt", {} },
        // { "nJets", {} },
        // { "nJetCSVv2T", {} },
@@ -56,11 +59,19 @@ public :
 
     Float_t GenMass;
     Float_t GenPt;
+    UInt_t   GennJets;
+    std::vector<float>* GenjetPt = NULL;
+    std::vector<float>* GenjetEta = NULL;
     float GendPhiZZ; //DeltaPhi between Z1 and Z2
     float cosTheta_1; 
     float cosTheta_2;
+    float cosTheta_3;
+    float cosTheta_4;
     TBranch* b_GenMass;
     TBranch* b_GenPt;
+    TBranch* b_GennJets;
+    TBranch* b_GenjetPt;
+    TBranch* b_GenjetEta;
 
     // Readers to access the data (delete the ones you do not need).
     ZZGenSelector(TTree * /*tree*/ =0) { }

@@ -49,11 +49,15 @@ public :
     Float_t GenZ1energy;
     Float_t GenZ2eta;
     Float_t GenZ2energy;
-
+  
     Float_t Genl1Pt;
     Float_t Genl2Pt;
     Float_t Genl3Pt;
     Float_t Genl4Pt;
+    Int_t Genl1Charge;
+    Int_t Genl2Charge;
+    Int_t Genl3Charge;
+    Int_t Genl4Charge;
     Float_t Genl1Eta;
     Float_t Genl2Eta;
     Float_t Genl3Eta;
@@ -84,11 +88,15 @@ public :
     TBranch* b_GenZ2eta;
     TBranch* b_GenZ1energy;
     TBranch* b_GenZ2energy;
-
+   
     TBranch* b_Genl1Pt;
     TBranch* b_Genl2Pt;
     TBranch* b_Genl3Pt;
     TBranch* b_Genl4Pt;
+    TBranch* b_Genl1Charge;
+    TBranch* b_Genl2Charge;
+    TBranch* b_Genl3Charge;
+    TBranch* b_Genl4Charge;
     TBranch* b_Genl1Eta;
     TBranch* b_Genl2Eta;
     TBranch* b_Genl3Eta;

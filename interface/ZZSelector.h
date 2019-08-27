@@ -104,6 +104,11 @@ public :
         { "Z2lep2_Pt",  {} },
         { "Z2lep2_PdgId",  {} },
         { "Mass", {} },
+	{ "nJets", {} },
+	{ "jetPt[0]", {} },
+	{ "jetEta[0]", {} },
+	{ "jetPt[0]50", {} },
+	{ "jetEta[0]50", {} },
        // { "Pt", {} },
        // { "nJets", {} },
        // { "nJetCSVv2T", {} },
@@ -172,10 +177,16 @@ public :
     std::vector<float>* jetCSVv2 = NULL;
     UInt_t nvtx;
     Float_t Mass;
+    UInt_t   nJets;
+    std::vector<float>* jetPtf = NULL;
+    std::vector<float>* jetEtaf= NULL;
+
     Float_t Pt;
     float dPhiZZ; //DeltaPhi between Z1 and Z2
     float cosTheta_1; 
     float cosTheta_2;
+    float cosTheta_3;
+    float cosTheta_4;
     //Float_t Zlep1_Wlep_Mass;
     //Float_t Zlep2_Wlep_Mass;
     //Float_t Eta;
@@ -231,6 +242,11 @@ public :
     TBranch* b_nvtx;
     TBranch* b_Mass;
     TBranch* b_Pt;
+    TBranch* b_nJets;
+    TBranch* b_jetPt;
+    TBranch* b_jetEta;
+
+    
     //TBranch* b_Zlep1_Wlep_Mass;
     //TBranch* b_Zlep2_Wlep_Mass;
     //TBranch* b_Eta;

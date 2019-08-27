@@ -8,6 +8,9 @@ void ZZGenSelector::Init(TTree *tree)
 
     fChain->SetBranchAddress("Mass", &GenMass, &b_GenMass);
     fChain->SetBranchAddress("Pt", &GenPt, &b_GenPt);
+    fChain->SetBranchAddress("nJets", &GennJets, &b_GennJets);
+    fChain->SetBranchAddress("jetPt", &GenjetPt, &b_GenjetPt);
+    fChain->SetBranchAddress("jetEta",&GenjetEta, &b_GenjetEta);
     //std::cout<<"Is it able to initialize"<<std::endl; 
 }
 void ZZGenSelector::LoadBranches(Long64_t entry) { 
@@ -15,6 +18,9 @@ void ZZGenSelector::LoadBranches(Long64_t entry) {
 
     b_GenMass->GetEntry(entry);
     b_GenPt->GetEntry(entry);
+    b_GennJets->GetEntry(entry);
+    b_GenjetPt->GetEntry(entry);
+    b_GenjetEta->GetEntry(entry);
     //std::cout<<"channel in LoadBranches function: "<<channel_<<std::endl;
     if(channel_ == eemm || channel_ == mmee){
       SetVariables(entry);
@@ -29,6 +35,18 @@ void ZZGenSelector::LoadBranches(Long64_t entry) {
 
     GendPhiZZ = deltaPhiZZ(GenZ1phi,GenZ2phi);
 }
+
+double Gencostheta(TLorentzVector z1P4, TLorentzVector z2P4, TLorentzVector l1P4) {
+  
+  TLorentzVector zzP4=z1P4+z2P4;
+  l1P4.Boost(-z1P4.BoostVector());
+  z1P4.Boost(-zzP4.BoostVector());
+  TLorentzVector lP4_z1=l1P4;
+  TLorentzVector z1P4_zz=z1P4;
+    double ct = lP4_z1.Vect().Dot(z1P4_zz.Vect()) / (lP4_z1.Vect().Mag()*z1P4_zz.Vect().Mag());
+    return ct;
+}
+
 void ZZGenSelector::GetPolarizationAngle(){
 
     TLorentzVector z1P4;
@@ -49,17 +67,11 @@ void ZZGenSelector::GetPolarizationAngle(){
     TLorentzVector l4P4;
     l4P4.SetPtEtaPhiM(Genl4Pt,Genl4Eta,Genl4Phi,Genl4Mass);
 
-    TLorentzVector zzP4=z1P4+z2P4;
-    l1P4.Boost(-z1P4.BoostVector());
-    l4P4.Boost(-z2P4.BoostVector());
-    z1P4.Boost(-zzP4.BoostVector());
-    z2P4.Boost(-zzP4.BoostVector());
-    //TLorentzVector lP4_z1=l2P4;
-    //TLorentzVector z1P4_zz=z1P4;
+    cosTheta_1 = Gencostheta(z1P4,z2P4,l1P4);
+    cosTheta_2 = Gencostheta(z1P4,z2P4,l2P4);
+    cosTheta_3 = Gencostheta(z2P4,z1P4,l3P4);
+    cosTheta_4 = Gencostheta(z2P4,z1P4,l4P4);
 
-    //cosTheta = (lP4_z1.Vect().Dot(z1P4_zz.Vect())) / (lP4_z1.Vect().Mag()*z1P4_zz.Vect().Mag()); 
-    cosTheta_1 = TMath::Cos(l1P4.Angle(z1P4.Vect()));
-    cosTheta_2 = TMath::Cos(l4P4.Angle(z2P4.Vect()));
 }
 //Similar to Kenneth's SetShiftedMasses function which i will need later as well
 void ZZGenSelector::SetVariables(Long64_t entry) {
@@ -111,6 +123,12 @@ void ZZGenSelector::SetVariables(Long64_t entry) {
       float templ2Mass = Genl2Mass;
       Genl2Mass = Genl4Mass;
       Genl4Mass = templ2Mass;
+      float templ1Charge = Genl1Charge;
+      Genl1Charge = Genl3Charge;
+      Genl3Charge = templ1Charge;
+      float templ2Charge = Genl2Charge;
+      Genl2Charge = Genl4Charge;
+      Genl4Charge = templ2Charge;
     }
 }
 bool ZZGenSelector::ZZSelection() {
@@ -142,6 +160,10 @@ void ZZGenSelector::FillHistograms(Long64_t entry, float Genweight) {
     
     SafeHistFill(hists1D_, getHistName("Genyield"), 1, Genweight);
     SafeHistFill(hists1D_, getHistName("GenMass"), GenMass,Genweight);
+    SafeHistFill(hists1D_, getHistName("GennJets"), GennJets,Genweight);
+     if (GenjetPt->size() > 0 && GenjetPt->size() == GenjetEta->size()) {
+    SafeHistFill(hists1D_, getHistName("GenjetPt"), GenjetPt->at(0),Genweight);
+    SafeHistFill(hists1D_, getHistName("GenjetEta"),GenjetEta->at(0),Genweight);}
     SafeHistFill(hists1D_, getHistName("GenZMass"), GenZ1mass, Genweight);
     SafeHistFill(hists1D_, getHistName("GenZMass"), GenZ2mass, Genweight);
     //Making LeptonPt and Eta plots
@@ -184,8 +206,14 @@ void ZZGenSelector::FillHistograms(Long64_t entry, float Genweight) {
     SafeHistFill(hists1D_, getHistName("GenZ2lep2_Pt"), Genl4Pt, Genweight);
     SafeHistFill(hists1D_, getHistName("GenZ2lep2_Eta"), Genl4Eta, Genweight);
     SafeHistFill(hists1D_, getHistName("GenZ2lep2_Phi"), Genl4Phi, Genweight);
-    SafeHistFill(hists1D_, getHistName("GenCosTheta"),  cosTheta_1, Genweight);
-    SafeHistFill(hists1D_, getHistName("GenCosTheta"),  cosTheta_2, Genweight);
+    if (Genl1Charge<0 && Genl2Charge>0) {
+      SafeHistFill(hists1D_, getHistName("GenCosTheta"),  cosTheta_1, Genweight);}
+    if (Genl2Charge <0 && Genl1Charge>0) {
+      SafeHistFill(hists1D_, getHistName("GenCosTheta"),  cosTheta_2, Genweight);}
+    if (Genl3Charge<0 && Genl4Charge>0) {
+      SafeHistFill(hists1D_, getHistName("GenCosTheta"),  cosTheta_3, Genweight);}
+    if (Genl4Charge <0 && Genl3Charge>0) {
+      SafeHistFill(hists1D_, getHistName("GenCosTheta"),  cosTheta_4, Genweight);}
     //2D Z1 vs Z2
     SafeHistFill(hists2D_, getHistName("GenZ1Mass_GenZ2Mass"),GenZ1mass,GenZ2mass,Genweight);
 
