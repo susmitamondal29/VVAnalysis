@@ -105,8 +105,13 @@ public :
         { "Z2lep2_PdgId",  {} },
         { "Mass", {} },
 	{ "nJets", {} },
+	{ "deltaEtajjabs", {} },
+	{ "mjj", {} },
+	{ "zeppenfeld", {} },
 	{ "jetPt[0]", {} },
 	{ "jetEta[0]", {} },
+	{ "jetPt[1]", {} },
+	{ "jetEta[1]", {} },
 	{ "jetPt[0]50", {} },
 	{ "jetEta[0]50", {} },
        // { "Pt", {} },
@@ -177,6 +182,9 @@ public :
     std::vector<float>* jetCSVv2 = NULL;
     UInt_t nvtx;
     Float_t Mass;
+    Float_t deltaEtajj;
+    Float_t mjj;
+    Float_t zeppenfeld;
     UInt_t   nJets;
     std::vector<float>* jetPtf = NULL;
     std::vector<float>* jetEtaf= NULL;
@@ -245,6 +253,9 @@ public :
     TBranch* b_nJets;
     TBranch* b_jetPt;
     TBranch* b_jetEta;
+    TBranch* b_deltaEtajj;
+    TBranch* b_mjj;
+    TBranch* b_zeppenfeld;
 
     
     //TBranch* b_Zlep1_Wlep_Mass;
@@ -304,6 +315,7 @@ protected:
     bool TightZZLeptons();
     bool ZZSelection();
     bool Z4lSelection();
+    bool EtaSelection();
     bool ZSelection();
     bool HZZSIPSelection();
     bool TestMuons();

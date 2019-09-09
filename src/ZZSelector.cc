@@ -16,6 +16,9 @@ void ZZSelector::Init(TTree *tree)
     fChain->SetBranchAddress("nJets", &nJets, &b_nJets);
     fChain->SetBranchAddress("jetPt", &jetPtf, &b_jetPt);
     fChain->SetBranchAddress("jetEta",&jetEtaf, &b_jetEta);
+    fChain->SetBranchAddress("deltaEtajj", &deltaEtajj, &b_deltaEtajj);
+    fChain->SetBranchAddress("mjj", &mjj, &b_mjj);
+    fChain->SetBranchAddress("zeppenfeld",&zeppenfeld, &b_zeppenfeld);
     //std::cout<<"Is it able to initialize"<<std::endl; 
 }
 void ZZSelector::LoadBranches(Long64_t entry, std::pair<Systematic, std::string> variation) { 
@@ -30,6 +33,9 @@ void ZZSelector::LoadBranches(Long64_t entry, std::pair<Systematic, std::string>
     b_nJets->GetEntry(entry);
     b_jetPt->GetEntry(entry);
     b_jetEta->GetEntry(entry);
+    b_deltaEtajj->GetEntry(entry);
+    b_mjj->GetEntry(entry);
+    b_zeppenfeld->GetEntry(entry);
     //std::cout<<"channel in LoadBranches function: "<<channel_<<std::endl;
     if(channel_ == eemm || channel_ == mmee){
       //if(TightZZLeptons()){//i don't think this condition is needed even though it might save time but it messes up sf application for CRs in eemm,mmee states
@@ -507,6 +513,19 @@ bool ZZSelector::Z4lSelection() {
     else
         return false;
 }
+
+bool ZZSelector::EtaSelection() {
+
+  if (!(jetPtf->size()>1 && jetPtf->size() == jetEtaf->size())){
+    return false;
+  }
+
+  if (jetEtaf->at(0)*jetEtaf->at(1)<0 && abs(deltaEtajj)>1){
+    return true;}
+  else{
+    return false;}
+}
+
 bool ZZSelector::HZZSIPSelection(){
     if ((l1SIP3D < 4.0 && l2SIP3D < 4.0 && l3SIP3D < 4.0 && l4SIP3D < 4.0))
         return true;
@@ -543,15 +562,26 @@ void ZZSelector::FillHistograms(Long64_t entry, float weight, bool noBlind,
     }
     SafeHistFill(hists1D_, getHistName("nTruePU", variation.second), nTruePU, weight);
     SafeHistFill(hists1D_, getHistName("yield", variation.second), 1, weight);
+
+    if (EtaSelection()){//start of EtaSelection
     SafeHistFill(hists1D_, getHistName("Mass", variation.second), Mass,weight);
     SafeHistFill(hists1D_, getHistName("nJets",variation.second), nJets,weight);
-     if (jetPtf->size() > 0 && jetPtf->size() == jetEtaf->size()) {
+    SafeHistFill(hists1D_, getHistName("deltaEtajjabs",variation.second), abs(deltaEtajj),weight);
+    SafeHistFill(hists1D_, getHistName("mjj",variation.second), mjj,weight);
+    SafeHistFill(hists1D_, getHistName("zeppenfeld",variation.second), zeppenfeld,weight);
+
+    if (jetPtf->size()>1 && jetPtf->size() == jetEtaf->size() && jetPtf->at(0)>30 && jetPtf->at(1)>30) {
     SafeHistFill(hists1D_, getHistName("jetPt[0]",variation.second), jetPtf->at(0),weight);
     SafeHistFill(hists1D_, getHistName("jetEta[0]",variation.second),jetEtaf->at(0),weight);
+    SafeHistFill(hists1D_, getHistName("jetPt[1]",variation.second), jetPtf->at(1),weight);
+    SafeHistFill(hists1D_, getHistName("jetEta[1]",variation.second),jetEtaf->at(1),weight);
+
     if(jetPtf->at(0)>50){
     SafeHistFill(hists1D_, getHistName("jetPt[0]50",variation.second), jetPtf->at(0),weight);
     SafeHistFill(hists1D_, getHistName("jetEta[0]50",variation.second),jetEtaf->at(0),weight);}
-    }
+
+    }//jet selection
+
     SafeHistFill(hists1D_, getHistName("ZMass", variation.second), Z1mass, weight);
     SafeHistFill(hists1D_, getHistName("ZMass", variation.second), Z2mass, weight);
     //Making LeptonPt and Eta plots
@@ -614,7 +644,7 @@ void ZZSelector::FillHistograms(Long64_t entry, float weight, bool noBlind,
     if (l4Charge <0 && l3Charge>0) {
       SafeHistFill(hists1D_, getHistName("CosTheta", variation.second),  cosTheta_4, weight); }
     //2D Z1 vs Z2
-    SafeHistFill(hists2D_, getHistName("Z1Mass_Z2Mass",variation.second),Z1mass,Z2mass,weight);
+    SafeHistFill(hists2D_, getHistName("Z1Mass_Z2Mass",variation.second),Z1mass,Z2mass,weight); }//end of Eta selection
 
     if (hists1D_[getHistName("nvtx", variation.second)] != nullptr) {
         b_nvtx->GetEntry(entry);
