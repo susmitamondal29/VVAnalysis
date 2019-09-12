@@ -38,14 +38,22 @@ public :
     Float_t nTruePU;
     Float_t Z1mass;
     Float_t Z2mass; 
+   
     //Float_t Zamass;
     //Float_t Zbmass;
     Float_t Z1pt;
     Float_t Z2pt;
     Float_t Z1Phi;
     Float_t Z2Phi;
+
     Float_t Z1Eta;
     Float_t Z2Eta;
+
+    Float_t Z1eta;
+    Float_t Z1energy;
+    Float_t Z2eta;
+    Float_t Z2energy;
+
     Float_t type1_pfMETEt;
     Float_t type1_pfMETPhi;
     Float_t l1GenPt;
@@ -71,6 +79,10 @@ public :
     Float_t l2Pt;
     Float_t l3Pt;
     Float_t l4Pt;
+    Int_t l1Charge;
+    Int_t l2Charge;
+    Int_t l3Charge;
+    Int_t l4Charge;
     Float_t l1Eta;
     Float_t l2Eta;
     Float_t l3Eta;
@@ -129,6 +141,7 @@ public :
     TBranch* b_run;
     TBranch* b_lumi;
     TBranch* b_evt;
+   
 
     TBranch* b_l1IsTight;
     TBranch* b_l2IsTight;
@@ -148,6 +161,14 @@ public :
     TBranch* b_l2Pt;
     TBranch* b_l3Pt;
     TBranch* b_l4Pt;
+    TBranch* b_Z1eta;
+    TBranch* b_Z2eta;
+    TBranch* b_Z1energy;
+    TBranch* b_Z2energy;
+    TBranch* b_l1Charge;
+    TBranch* b_l2Charge;
+    TBranch* b_l3Charge;
+    TBranch* b_l4Charge;
     TBranch* b_l1Eta;
     TBranch* b_l2Eta;
     TBranch* b_l3Eta;
@@ -210,6 +231,7 @@ protected:
     bool tightSIP();
     bool tightZ1Leptons();
     bool tightZ2Leptons();
+   
 };
 
 #endif
