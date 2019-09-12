@@ -14,7 +14,7 @@ void ZZSelector::Init(TTree *tree)
         //{pileupUp, "CMS_pileupUp"},
         //{pileupDown, "CMS_pileupDown"},
     }; 
-    doSystematics_ = true;
+    doSystematics_ = false;
     
     //This would be set true inside ZZBackground Selector
     isNonPrompt_ = false;
@@ -45,7 +45,7 @@ void ZZSelector::Init(TTree *tree)
 
     hists1D_ = {
          "yield", "ZMass","ZZPt","dPhiZ1Z2","ZPt","LepPt","LepEta",
-         "Mass","nJets","jetPt[0]","jetPt[1]","jetEta[0]","jetEta[1]","mjj","dEtajj"
+         "Mass","nJets","jetPt[0]","jetPt[1]","jetEta[0]","jetEta[1]","mjj","dEtajj","CosTheta","zeppenfeld"
     };
 
     weighthists1D_ = {
@@ -70,6 +70,7 @@ void ZZSelector::SetBranchesUWVV() {
     fChain->SetBranchAddress("jetPt", &jetPt, &b_jetPt);
     fChain->SetBranchAddress("jetEta", &jetEta, &b_jetEta);
     fChain->SetBranchAddress("mjj", &mjj, &b_mjj);
+    fChain->SetBranchAddress("zeppenfeld",&zeppenfeld, &b_zeppenfeld);
 }
 
 unsigned int ZZSelector::GetLheWeightInfo() {
@@ -109,6 +110,7 @@ void ZZSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::str
     b_jetPt->GetEntry(entry);
     b_jetEta->GetEntry(entry);
     b_mjj->GetEntry(entry);
+    b_zeppenfeld->GetEntry(entry);
     //std::cout<<"channel in LoadBranches function: "<<channel_<<std::endl;
     if(channel_ == eemm || channel_ == mmee){
       //if(TightZZLeptons()){//i don't think this condition is needed even though it might save time but it messes up sf application for CRs in eemm,mmee states
@@ -338,6 +340,12 @@ void ZZSelector::SetVariables(Long64_t entry) {
       float tempPt = Z1pt;
       Z1pt = Z2pt;
       Z2pt = tempPt;
+      float tempEnergy = Z1energy;
+      Z1energy = Z2energy;
+      Z2energy = tempEnergy;
+      float tempeta = Z1eta;
+      Z1eta = Z2eta;
+      Z2eta = tempeta;
       bool templ1IsTight = l1IsTight;
       l1IsTight = l3IsTight;
       l3IsTight = templ1IsTight;
@@ -392,6 +400,12 @@ void ZZSelector::SetVariables(Long64_t entry) {
       float templ2Mass = l2Mass;
       l2Mass = l4Mass;
       l4Mass = templ2Mass;
+      float templ1Charge = l1Charge;
+      l1Charge = l3Charge;
+      l3Charge = templ1Charge;
+      float templ2Charge = l2Charge;
+      l2Charge = l4Charge;
+      l4Charge = templ2Charge;
     }
 }
 void ZZSelector::ShiftEfficiencies(Systematic variation) {
@@ -568,6 +582,13 @@ bool ZZSelector::PassesZZjjSelection() {
     else
         return true;
 }
+
+bool ZZSelector::PassesEtaSelection() {
+    if ((jetPt->size() != jetEta->size() || jetPt->size() < 2) || (jetEta->at(0)*jetEta->at(1)>=0 || dEtajj<=1))
+        return false;
+    else
+        return true;
+}
 bool ZZSelector::PassesZZSelection(bool nonPrompt){
   //This nonPrompt boolean is for ZZBackgroundSelector
   //When running ZZBackgroundSelector, FillHistograms should run just with ZZSelection, we cannot require TightZZLeptons by definition
@@ -644,6 +665,44 @@ bool ZZSelector::TestMuons(){
         return false;
 }
 
+double costheta(TLorentzVector z1P4, TLorentzVector z2P4, TLorentzVector l1P4) {
+  
+  TLorentzVector zzP4=z1P4+z2P4;
+  l1P4.Boost(-z1P4.BoostVector());
+  z1P4.Boost(-zzP4.BoostVector());
+  TLorentzVector lP4_z1=l1P4;
+  TLorentzVector z1P4_zz=z1P4;
+    double ct = lP4_z1.Vect().Dot(z1P4_zz.Vect()) / (lP4_z1.Vect().Mag()*z1P4_zz.Vect().Mag());
+    return ct;
+}
+
+void ZZSelector::GetPolarizationAngle(){
+
+    TLorentzVector z1P4;
+    z1P4.SetPtEtaPhiM(Z1pt, Z1eta, Z1Phi, Z1mass);
+
+    TLorentzVector z2P4;
+    z2P4.SetPtEtaPhiM(Z2pt, Z2eta, Z2Phi, Z2mass);
+
+    TLorentzVector l1P4;
+    l1P4.SetPtEtaPhiM(l1Pt,l1Eta,l1Phi,l1Mass);
+
+    TLorentzVector l2P4;
+    l2P4.SetPtEtaPhiM(l2Pt,l2Eta,l2Phi,l2Mass);
+
+    TLorentzVector l3P4;
+    l3P4.SetPtEtaPhiM(l3Pt,l3Eta,l3Phi,l3Mass);
+
+    TLorentzVector l4P4;
+    l4P4.SetPtEtaPhiM(l4Pt,l4Eta,l4Phi,l4Mass);
+    
+    cosTheta_1 = costheta(z1P4,z2P4,l1P4);
+    cosTheta_2 = costheta(z1P4,z2P4,l2P4);
+    cosTheta_3 = costheta(z2P4,z1P4,l3P4);
+    cosTheta_4 = costheta(z2P4,z1P4,l4P4);
+
+}
+
 void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::string> variation) { 
     //bool noBlind = true;
     //Applying the ZZ Selection here
@@ -675,6 +734,18 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
     SafeHistFill(histMap1D_, getHistName("ZPt", variation.second), Z2pt, weight);
     SafeHistFill(histMap1D_, getHistName("dPhiZ1Z2", variation.second), dPhiZZ, weight);
     SafeHistFill(histMap1D_, getHistName("ZZPt", variation.second), Pt, weight);
+    SafeHistFill(histMap1D_, getHistName("zeppenfeld",variation.second), zeppenfeld,weight);
+
+     GetPolarizationAngle();
+
+    if (l1Charge<0 && l2Charge>0) {
+      SafeHistFill(histMap1D_, getHistName("CosTheta", variation.second),  cosTheta_1, weight);}
+    if (l2Charge <0 && l1Charge>0) {
+      SafeHistFill(histMap1D_, getHistName("CosTheta", variation.second),  cosTheta_2, weight); }
+    if (l3Charge<0 && l4Charge>0) {
+      SafeHistFill(histMap1D_, getHistName("CosTheta", variation.second),  cosTheta_3, weight);}
+    if (l4Charge <0 && l3Charge>0) {
+      SafeHistFill(histMap1D_, getHistName("CosTheta", variation.second),  cosTheta_4, weight); }
     
     //Making LeptonPt and Eta plots
     SafeHistFill(histMap1D_, getHistName("LepPt", variation.second), l1Pt, weight);
@@ -697,6 +768,11 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
     if (!PassesZZjjSelection()){
       return;
     }
+
+    if (!PassesEtaSelection()){
+      return;
+    }
+
     SafeHistFill(histMap1D_, getHistName("mjj", variation.second), mjj, weight);
     SafeHistFill(histMap1D_, getHistName("dEtajj", variation.second), dEtajj, weight);
     // Summing 12,34 leptons
