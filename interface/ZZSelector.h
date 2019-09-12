@@ -33,6 +33,7 @@ public :
     float zep3l_jerUp;
     float zep3l_jerDown;
     Float_t mjj;
+    Float_t zeppenfeld;
     std::vector<float>* jetEta = NULL;
     std::vector<float>* jetEta_jesUp = NULL;
     std::vector<float>* jetEta_jesDown = NULL;
@@ -62,6 +63,11 @@ public :
     TBranch* b_jetPt;
     TBranch* b_jetEta;
     TBranch* b_mjj;
+    TBranch* b_zeppenfeld;
+    float cosTheta_1; 
+    float cosTheta_2;
+    float cosTheta_3;
+    float cosTheta_4;
     int cen_count = 0;
     float count = 0;
 
@@ -78,7 +84,10 @@ protected:
     void ApplyScaleFactors();
     bool PassesZZSelection(bool nonPrompt);
     bool PassesZZjjSelection();
+
     bool PassesHZZSelection(bool nonPrompt);
+    bool PassesEtaSelection();
+
     unsigned int GetLheWeightInfo();
     void SetVariables(Long64_t entry);
     //bool DuplicatedEvent();
@@ -91,6 +100,7 @@ protected:
     bool HZZLowMass();
     bool HZZMediumMass();
     bool TestMuons();
+    void GetPolarizationAngle();
     void ShiftEfficiencies(Systematic variation);
 };
 
