@@ -704,6 +704,13 @@ bool ZZSelector::TestMuons(){
         return false;
 }
 
+bool ZZSelector::MassSelection() {
+    if (Mass > 160.0)
+        return true;
+    else
+        return false;
+}
+
 double costheta(TLorentzVector z1P4, TLorentzVector z2P4, TLorentzVector l1P4) {
   
   TLorentzVector zzP4=z1P4+z2P4;
@@ -816,24 +823,40 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
     SafeHistFill(histMap1D_, getHistName("LepEta", variation.second), l3Eta, weight);
     SafeHistFill(histMap1D_, getHistName("LepEta", variation.second), l4Eta, weight);
     SafeHistFill(histMap1D_, getHistName("nJets", variation.second), jetPt->size(), weight);
-    if (jetPt->size() > 0 && jetPt->size() == jetEta->size()) {
-        SafeHistFill(histMap1D_, getHistName("jetPt[0]", variation.second), jetPt->at(0), weight);
-        SafeHistFill(histMap1D_, getHistName("jetEta[0]", variation.second), jetEta->at(0), weight);
-    }
+    // if (jetPt->size() > 0 && jetPt->size() == jetEta->size()) {
+    //    SafeHistFill(histMap1D_, getHistName("jetPt[0]", variation.second), jetPt->at(0), weight);
+    //	   if (jetEta->size()==1){
+    //	  SafeHistFill(histMap1D_, getHistName("jetEta[0]", variation.second), jetEta->at(0), weight);}
+    //  }
+
     if (jetPt->size() > 1 && jetPt->size() == jetEta->size()) {
         SafeHistFill(histMap1D_, getHistName("jetPt[1]", variation.second), jetPt->at(1), weight);
         SafeHistFill(histMap1D_, getHistName("jetEta[1]", variation.second), jetEta->at(1), weight);
     }
+
     if (!PassesZZjjSelection()){
       return;
     }
 
-    if (!PassesEtaSelection()){
+    if (!MassSelection()){
       return;
     }
 
+    if (jetPt->size() > 1 && jetPt->size() == jetEta->size()) {
+        SafeHistFill(histMap1D_, getHistName("jetPt[0]", variation.second), jetPt->at(0), weight);
+	SafeHistFill(histMap1D_, getHistName("jetEta[0]", variation.second), jetEta->at(0), weight);
+	SafeHistFill(histMap1D_, getHistName("jetPt[0]", variation.second), jetPt->at(1), weight);
+	SafeHistFill(histMap1D_, getHistName("jetEta[0]", variation.second), jetEta->at(1), weight);
+      }
+
+    //   if (!PassesEtaSelection()){
+    //     return;
+    //  }
+
     SafeHistFill(histMap1D_, getHistName("mjj", variation.second), mjj, weight);
-    SafeHistFill(histMap1D_, getHistName("dEtajj", variation.second), dEtajj, weight);
+
+    if (jetPt->size() > 1 && jetPt->size() == jetEta->size()) {
+      SafeHistFill(histMap1D_, getHistName("dEtajj", variation.second), dEtajj, weight);}
     // Summing 12,34 leptons
     //SafeHistFill(histMap1D_, getHistName("Lep12Pt", variation.second), l1Pt, weight);
     //SafeHistFill(histMap1D_, getHistName("Lep12Pt", variation.second), l2Pt, weight);
