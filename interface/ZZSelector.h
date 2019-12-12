@@ -81,6 +81,7 @@ protected:
     void ApplyScaleFactors();
     bool PassesZZSelection(bool nonPrompt);
     bool PassesZZjjSelection();
+    bool MassSelection();
     bool PassesHZZSelection();
     bool PassesEtaSelection();
     unsigned int GetLheWeightInfo();
