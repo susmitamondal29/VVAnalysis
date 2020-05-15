@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import ROOT
+import pdb
 from python import SelectorTools
 from python import UserInput
 from python import OutputTools
@@ -182,6 +183,7 @@ def makeHistFile(args):
         selector.setDatasets(args['filenames'])
     else:
         selector.setFileList(*args['inputs_from_file'])
+    #pdb.set_trace()
     mc = selector.applySelector()
 
 
@@ -235,7 +237,8 @@ def makeHistFile(args):
         nonpromptmc.Delete()
 
         OutputTools.writeOutputListItem(nonpromptmc, fOut)
-
+    
+    #pdb.set_trace()
     ewkmc = HistTools.makeCompositeHists(fOut,"AllEWK", ConfigureJobs.getListOfFilesWithXSec(
         ConfigureJobs.getListOfEWKFilenames(args['analysis']), manager_path), args['lumi'],
         underflow=False, overflow=False)
@@ -248,6 +251,7 @@ def makeHistFile(args):
 
 def main():
     args = getComLineArgs()
+    #pdb.set_trace()
     makeHistFile(args)
     exit(0)
 
