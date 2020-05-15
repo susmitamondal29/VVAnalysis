@@ -67,6 +67,10 @@ public :
     float cosTheta_4;
     int cen_count = 0;
     float count = 0;
+    int zzcutcount = 0;
+    int mjjcutcount = 0;
+    int masscutcount = 0;
+    
 
     // Readers to access the data (delete the ones you do not need).
     virtual void    Init(TTree *tree) override;

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import ROOT
 import glob
+import pdb
 import datetime
 import ConfigureJobs, OutputTools
 import sys
@@ -151,6 +152,7 @@ class SelectorDriver(object):
             self.combineParallelFiles(tempfiles, "Inclusive")
 
     def processDataset(self, dataset, file_path, chan):
+        #pdb.set_trace()
         logging.info("Processing dataset %s" % dataset)
         print "Processing dataset: ", dataset
         select = getattr(ROOT, self.selector_name)()
@@ -231,6 +233,7 @@ class SelectorDriver(object):
     def processParallelByDataset(self, datasets, chan):
         numCores = min(self.numCores, len(datasets))
         p = multiprocessing.Pool(processes=self.numCores)
+        #pdb.set_trace()
         p.map(self, [[dataset, f, chan] for dataset, f in datasets.iteritems()])
         # Store arrays in temp files, since it can get way too big to keep around in memory
         tempfiles = [self.tempfileName(d) for d in datasets] 

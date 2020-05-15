@@ -1,6 +1,7 @@
 #include "Analysis/VVAnalysis/interface/ZZSelector.h"
 #include "TLorentzVector.h"
 #include <boost/algorithm/string.hpp>
+#include <fstream>
 
 void ZZSelector::Init(TTree *tree)
 {
@@ -666,7 +667,7 @@ bool ZZSelector::TestMuons(){
 }
 
 bool ZZSelector::MassSelection() {
-    if (Mass > 160.0)
+    if (Mass > 180.0)
         return true;
     else
         return false;
@@ -718,6 +719,14 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
     if (!PassesZZSelection(isNonPrompt_)){
         return;
     }
+
+    if(!isMC_) {
+      std::ofstream eventFilezz("event_countszz.txt", std::ios_base::app);
+      eventFilezz<<weight<<std::endl;
+      //eventFile<<zzcutcount<<" "<<mjjcutcount<<" "<<masscutcount<<std::endl;
+    eventFilezz.close();}
+
+    if (!isMC_) zzcutcount+=1;
     //std::cout<<"eventWeight in ZZSelector: "<<weight<<std::endl;
     if ((variation.first == Central || (doaTGC_ && isaTGC_)) && isMC_){
         //std::cout<<"does it go into lheWeights"<<std::endl;
@@ -770,17 +779,33 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
     //	  SafeHistFill(histMap1D_, getHistName("jetEta[0]", variation.second), jetEta->at(0), weight);}
     //  }
 
-    if (jetPt->size() > 1 && jetPt->size() == jetEta->size()) {
-        SafeHistFill(histMap1D_, getHistName("jetPt[1]", variation.second), jetPt->at(1), weight);
-        SafeHistFill(histMap1D_, getHistName("jetEta[1]", variation.second), jetEta->at(1), weight);
-    }
 
     if (!PassesZZjjSelection()){
       return;
     }
 
+    if(!isMC_) {
+      std::ofstream eventFilejj("event_countsjj.txt", std::ios_base::app);
+      eventFilejj<<weight<<std::endl;
+      //eventFile<<zzcutcount<<" "<<mjjcutcount<<" "<<masscutcount<<std::endl;
+    eventFilejj.close();}
+
+    if (!isMC_) mjjcutcount+=1;
+
     if (!MassSelection()){
       return;
+    }
+    if (!isMC_) masscutcount+=1;
+
+    if(!isMC_) {
+      std::ofstream eventFile("event_counts.txt", std::ios_base::app);
+      eventFile<<weight<<std::endl;
+      //eventFile<<zzcutcount<<" "<<mjjcutcount<<" "<<masscutcount<<std::endl;
+    eventFile.close();}
+
+    if (jetPt->size() > 1 && jetPt->size() == jetEta->size()) {
+        SafeHistFill(histMap1D_, getHistName("jetPt[1]", variation.second), jetPt->at(1), weight);
+        SafeHistFill(histMap1D_, getHistName("jetEta[1]", variation.second), jetEta->at(1), weight);
     }
 
     if (jetPt->size() > 1 && jetPt->size() == jetEta->size()) {
