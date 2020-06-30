@@ -58,9 +58,11 @@ public :
     TBranch* b_Mass;
     TBranch* b_Pt;
     TBranch* b_jetPt;
+    TBranch* b_jetPhi;
     TBranch* b_jetEta;
     TBranch* b_mjj;
     TBranch* b_zeppenfeld;
+    //TBranch* b_evt;
     float cosTheta_1; 
     float cosTheta_2;
     float cosTheta_3;
@@ -70,7 +72,9 @@ public :
     int zzcutcount = 0;
     int mjjcutcount = 0;
     int masscutcount = 0;
-    
+    //ULong64_t evt;
+    FILE * ggZZFile;
+    bool ggZZfirst = true;
 
     // Readers to access the data (delete the ones you do not need).
     virtual void    Init(TTree *tree) override;
