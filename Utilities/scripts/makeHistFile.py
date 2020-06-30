@@ -176,7 +176,7 @@ def makeHistFile(args):
         logging.debug("Processing channels " % args['channels'])
         selector.setChannels(args['channels'])
     selector.setNumCores(args['numCores'])
-
+    
     if args['filenames']:
         selector.setDatasets(args['filenames'])
     else:
@@ -222,6 +222,7 @@ def makeHistFile(args):
     fOut.Close()
     fOut = ROOT.TFile.Open(tmpFileName, "update")
 
+    #pdb.set_trace()
     alldata = HistTools.makeCompositeHists(fOut,"AllData", 
         ConfigureJobs.getListOfFilesWithXSec([args['analysis']+"data"], manager_path), args['lumi'],
         underflow=False, overflow=False)
