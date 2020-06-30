@@ -7,7 +7,6 @@
 <use name="rootphysics"/>
 <!-- TTreeReader stuff is in rootgraphics -->
 <use name="rootgraphics"/>
-<Flags CXXFLAGS="-g"/>
 <export>
   <lib name="1"/>
 </export>

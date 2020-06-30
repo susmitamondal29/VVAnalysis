@@ -9,6 +9,7 @@ import array
 import string
 import socket
 import logging
+import pdb
 #try:
 import configparser
 #except:
@@ -105,15 +106,15 @@ def getListOfGenFilenames(analysis='ZZ'):
     return []
 def getListOfEWKFilenames(analysis=""):
     if "ZZ4l" in analysis:
-        return [
-            "zz4l-powheg",
+        return ["zz4l-amcatnlo","ggZZSpec",
+            #"zz4l-powheg",
             #"zzjj4l-ewk",
-            "ggZZ4e",
-            "ggZZ4m",
-            "ggZZ4t",
-            "ggZZ2e2mu",
-            "ggZZ2e2tau",
-            "ggZZ2mu2tau",
+            #"ggZZ4e",
+            #"ggZZ4m",
+            #"ggZZ4t",
+            #"ggZZ2e2mu",
+            #"ggZZ2e2tau",
+            #"ggZZ2mu2tau",
         ]
     # TODO: This is obviously WZ specific and should be updated
     return [
@@ -282,6 +283,7 @@ def fillTemplatedFile(template_file_name, out_file_name, template_dict):
         outFile.write(result)
 
 def getListOfFilesWithXSec(filelist, manager_path="", selection="ntuples"):
+    #pdb.set_trace()
     if manager_path is "":
         manager_path = getManagerPath()
     data_path = "%s/%s/FileInfo" % (manager_path, getManagerName())
