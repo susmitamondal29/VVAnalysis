@@ -827,7 +827,7 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
     if (l4Charge <0 && l3Charge>0) {
       SafeHistFill(histMap1D_, getHistName("CosTheta", variation.second),  cosTheta_4, weight); }
     
->>>>>>> 12ac117... added new plots
+
     //Making LeptonPt and Eta plots
     SafeHistFill(histMap1D_, getHistName("LepPt", variation.second), l1Pt, weight);
     SafeHistFill(histMap1D_, getHistName("LepPt", variation.second), l2Pt, weight);
