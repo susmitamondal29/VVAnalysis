@@ -6,7 +6,7 @@ from python import UserInput,OutputTools
 from python import ConfigureJobs
 from python import SelectorTools,HistTools
 import logging
-import sys
+import sys,pdb
 
 ROOT.gROOT.SetBatch(True)
 
@@ -56,6 +56,7 @@ def makeCompositeHists(hist_file,name, members, addRatios=True, overflow=False):
         print "EWK members: ",members
     for directory in [str(i) for i in members.keys()]:
         for histname in getHistNames(["eee", "eem", "emm", "mmm"]):
+            #pdb.set_trace()
             print "histname:", histname
             print "hist_file:", hist_file
             print "directory:",directory
@@ -169,6 +170,7 @@ if not args['test']:
     
     #fOut.Close()
 if args['test']:
+    pdb.set_trace()
     fOut = ROOT.TFile.Open(fileName, "update")
     alldata = makeCompositeHists(fOut,"AllData", ConfigureJobs.getListOfFilesWithXSec([args['analysis']+"data"]))
     OutputTools.writeOutputListItem(alldata, fOut)

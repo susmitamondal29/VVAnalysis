@@ -287,6 +287,7 @@ class SelectorDriver(object):
 
     # You can use filenum to index the files and sum separately, but it's not necessary
     def fillSumweightsHist(self, rtfile, filenum=1):
+        #pdb.set_trace()
         if self.ntupleType == "NanoAOD":
             sumweights_branch = "genEventSumw"
             meta_tree_name = "Runs"

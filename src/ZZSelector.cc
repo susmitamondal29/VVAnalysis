@@ -16,7 +16,7 @@ void ZZSelector::Init(TTree *tree)
         {pileupUp, "CMS_pileupUp"},
         {pileupDown, "CMS_pileupDown"},
     }; 
-    doSystematics_ = true;
+    doSystematics_ = false;
     
     //This would be set true inside ZZBackground Selector
     //isNonPrompt_ = false;
@@ -134,7 +134,8 @@ void ZZSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::str
         SetVariables(entry);}
     } 
     if (isMC_) {
-        ApplyScaleFactors();
+      //ApplyScaleFactors();
+	//std::cout<<"weights after applying SF:"<<weight<<std::endl;
       }
     if (variation.first == Central) {
         if (isMC_ && doSystematics_ && !isNonPrompt_) {
@@ -154,7 +155,7 @@ void ZZSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::str
             }
         }
       }
-    else if (isMC_) {
+    else if (isMC_) {std::cout<<"This part actually is involved"<<std::endl;
       //Systematic uncertainties and creating shiftUp and shiftDown histograms
       //Starting with lepton Efficiencies
         if (variation.first == electronEfficiencyUp || variation.first == electronEfficiencyDown || variation.first == electronRecoEffUp || variation.first == electronRecoEffDown || 
@@ -168,7 +169,7 @@ void ZZSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::str
             weight *= pileupSF_->Evaluate1D(nTruePU, ScaleFactor::ShiftDown)/pileupSF_->Evaluate1D(nTruePU);
         }
     }
-
+    //std::cout<<"weights after applying All SF:"<<weight<<std::endl;
     auto deltaPhiZZ = [](float phi1, float phi2) {
       float pi = TMath::Pi();
       float dphi = fabs(phi1-phi2);
@@ -767,10 +768,11 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
     }
 
     if(!isMC_) {
-      std::ofstream eventFilezz("event_countszz.txt", std::ios_base::app);
-      eventFilezz<<weight<<std::endl;
+      //std::ofstream eventFilezz("event_countszz.txt", std::ios_base::app);
+      //eventFilezz<<weight<<std::endl;
       //eventFile<<zzcutcount<<" "<<mjjcutcount<<" "<<masscutcount<<std::endl;
-    eventFilezz.close();}
+      //eventFilezz.close();
+    }
 
     if (!isMC_) zzcutcount+=1;
     //std::cout<<"eventWeight in ZZSelector: "<<weight<<std::endl;
@@ -850,10 +852,11 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
     }
 
     if(!isMC_) {
-      std::ofstream eventFilejj("event_countsjj.txt", std::ios_base::app);
-      eventFilejj<<weight<<std::endl;
+      //std::ofstream eventFilejj("event_countsjj.txt", std::ios_base::app);
+      //eventFilejj<<weight<<std::endl;
       //eventFile<<zzcutcount<<" "<<mjjcutcount<<" "<<masscutcount<<std::endl;
-    eventFilejj.close();}
+      //eventFilejj.close();
+      }
 
     if (!isMC_) mjjcutcount+=1;
 
@@ -869,16 +872,19 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
 	ggZZfirst=false;
       }
       else{*/
-                         //ggZZFile=fopen("event_counts2.txt","a");
+                             //ggZZFile=fopen("event_counts2.txt","a");
       
       //std::ofstream eventFile("event_counts.txt", std::ios_base::app);
       //eventFile<<evt<<" "<<jetPt->size()<<" "<<dEtajj<<" "<<mjj<<" "<<Z1mass<<" "<<Z2mass<<" "<<Mass<<" "<<weight<<std::endl;
+      //eventFile<<weight<<std::endl;
       //eventFile.close();
-      
-      //fprintf(ggZZFile,"%llu %lu %.3f %.3f %.3f %.3f %.3f %d %d %d %d %d %d %d %d %f \n",evt,jetPt->size(),dEtajj,mjj,Z1mass,Z2mass,Mass,
+
+      std::cout<<"NoSF:"<<weight<<std::endl;
+
+                             //fprintf(ggZZFile,"%f \n",weight);//"%llu %lu %.3f %.3f %.3f %.3f %.3f %d %d %d %d %d %d %d %d %f \n",evt,jetPt->size(),dEtajj,mjj,Z1mass,Z2mass,Mass,
       //	      l1IsIso,l2IsIso,l3IsIso,l4IsIso,l1IsTight,l2IsTight,l3IsTight,l4IsTight,weight); //}
       //eventFile<<zzcutcount<<" "<<mjjcutcount<<" "<<masscutcount<<std::endl;
-      // fclose(ggZZFile);
+                             //fclose(ggZZFile);
     }
 
     SafeHistFill(histMap1D_, getHistName("Mass", variation.second), Mass,weight);

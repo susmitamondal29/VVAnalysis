@@ -561,11 +561,11 @@ void ZZSelectorBase::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std:
         b_nTruePU->GetEntry(entry);
         weight = genWeight;
         //Prefiring weights for 2016 and 2017
-        //std::cout<<"genWeight: "<<weight<<std::endl;
+        //if (channel_ == eeee || channel_ == eemm || channel_ == mmmm) {std::cout<<"genWeight:"<<weight<<std::endl;}
         if (year_ == yr2016 || year_ == yr2017){
           b_L1prefiringWeight->GetEntry(entry);
-          weight *= L1prefiringWeight;
-          //std::cout<<"PrefiredWeight: "<<weight<<std::endl;
+          //weight *= L1prefiringWeight;
+          //if (channel_ == eeee || channel_ == eemm || channel_ == mmmm) {std::cout<<"PrefiredWeight: "<<weight<<std::endl;}
         }
     }
     if(channel_ == mmee){
