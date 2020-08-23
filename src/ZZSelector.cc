@@ -14,7 +14,7 @@ void ZZSelector::Init(TTree *tree)
         {pileupUp, "CMS_pileupUp"},
         {pileupDown, "CMS_pileupDown"},
     }; 
-    doSystematics_ = true;
+    doSystematics_ = false;
     
     //This would be set true inside ZZBackground Selector
     //isNonPrompt_ = false;
@@ -734,6 +734,8 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
     SafeHistFill(histMap1D_, getHistName("LepEta", variation.second), l3Eta, weight);
     SafeHistFill(histMap1D_, getHistName("LepEta", variation.second), l4Eta, weight);
     SafeHistFill(histMap1D_, getHistName("nJets", variation.second), jetPt->size(), weight);
+    SafeHistFill(histMap1D_, getHistName("dEtajj", variation.second), dEtajj, weight);
+
     if (jetPt->size() > 0 && jetPt->size() == jetEta->size()) {
         SafeHistFill(histMap1D_, getHistName("jetPt[0]", variation.second), jetPt->at(0), weight);
         SafeHistFill(histMap1D_, getHistName("jetEta[0]", variation.second), jetEta->at(0), weight);
@@ -745,8 +747,18 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
     if (!PassesZZjjSelection()){
       return;
     }
+
+    if (Mass <= 180.0){
+      return;
+    }
+
+    if(isMC_) {
+
+    std::cout<<"UpdatedSF:"<<weight<<std::endl;
+    }
     SafeHistFill(histMap1D_, getHistName("mjj", variation.second), mjj, weight);
-    SafeHistFill(histMap1D_, getHistName("dEtajj", variation.second), dEtajj, weight);
+    //SafeHistFill(histMap1D_, getHistName("dEtajj", variation.second), dEtajj, weight);
+    
     // Summing 12,34 leptons
     //SafeHistFill(histMap1D_, getHistName("Lep12Pt", variation.second), l1Pt, weight);
     //SafeHistFill(histMap1D_, getHistName("Lep12Pt", variation.second), l2Pt, weight);

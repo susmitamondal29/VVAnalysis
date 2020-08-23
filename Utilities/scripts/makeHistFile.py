@@ -9,7 +9,7 @@ import os
 import logging
 import sys
 import datetime
-import subprocess
+import subprocess,pdb
 
 #logging.basicConfig(level=logging.DEBUG)
 
@@ -184,6 +184,7 @@ def makeHistFile(args):
         selector.setFileList(*args['inputs_from_file'])
     mc = selector.applySelector()
 
+    sys.exit()
 
     if args['with_background']:
         selector.isBackground()
@@ -221,7 +222,7 @@ def makeHistFile(args):
 
     fOut.Close()
     fOut = ROOT.TFile.Open(tmpFileName, "update")
-
+    #pdb.set_trace()
     alldata = HistTools.makeCompositeHists(fOut,"AllData", 
         ConfigureJobs.getListOfFilesWithXSec([args['analysis']+"data"], manager_path), args['lumi'],
         underflow=False, overflow=False)
