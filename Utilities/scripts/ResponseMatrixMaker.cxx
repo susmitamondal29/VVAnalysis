@@ -185,7 +185,8 @@ void ResponseMatrixMakerBase<T>::setup()
                                    ("recoChain_"+getVar() + "_" + getChannel()).c_str()));
   for(const auto& fn : fileNames)
     recoTree->Add(fn.c_str());
-
+  //std::cout<<fileNames<<std::endl;
+  //std::cout<<binning<<std::endl;
   // set up lots of things
   Vec<Str> systs = Vec<Str>({"nominal",
         "pu_Up","pu_Down",
@@ -386,18 +387,23 @@ void ResponseMatrixMakerBase<T>::setup()
           // fill histos that use nominal value but with different weights
          
           //this section is for variables like leppt or all multibranch response matrices
-          for(size_t i = 0; i < val.size(); ++i){
-            if (val[i] > upperEdge){val[i]=binCenter;}
+	  
+          //for(size_t i = 0; i < val.size(); ++i){
+          //  if (val[i] > upperEdge){val[i]=binCenter;}
             //std::cout<<"val: "<<val[i]<<std::endl;
-          }
+          //}
 
-          for(size_t i = 0; i < trueVal.size(); ++i){
-            if (trueVal[i] > upperEdge){trueVal[i]=binCenter;}
+          //for(size_t i = 0; i < trueVal.size(); ++i){
+          //  if (trueVal[i] > upperEdge){trueVal[i]=binCenter;}
             //std::cout<<"trueVal: "<<trueVal[i]<<std::endl;
-          } 
+          //} 
+	  
+	  
           //this section is for variables like mass or all singlebranch response matrices
-          //if (val > upperEdge){val=binCenter;}
-          //if (trueVal > upperEdge){trueVal=binCenter;}
+	  std::cout<<"val is of simple float type "<<val<<std::endl;
+	  if (val > upperEdge){val=binCenter;}
+          if (trueVal > upperEdge){trueVal=binCenter;}
+	  
           //std::cout<<"val: "<<val<<std::endl;
           this->fillResponse(responses["nominal"], val, trueVal, nominalWeight);
 

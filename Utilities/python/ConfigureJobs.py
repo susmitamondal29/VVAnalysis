@@ -9,10 +9,10 @@ import array
 import string
 import socket
 import logging
-#try:
-import configparser
-#except:
-    #import ConfigParser as configparser
+try:
+    import configparser
+except:
+    import ConfigParser as configparser
     #from six.moves import configparser
 
 def get2DBinning(xvar="mjj", yvar="etajj", analysis='WZ'):
