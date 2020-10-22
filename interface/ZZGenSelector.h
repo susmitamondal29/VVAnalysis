@@ -23,7 +23,7 @@ public :
     Float_t GenZ2Phi; 
     Float_t GenZ1Eta;
     Float_t GenZ2Eta;
-
+    
     Float_t Genl1Pt;
     Float_t Genl2Pt;
     Float_t Genl3Pt;
@@ -36,7 +36,13 @@ public :
     Float_t Genl2Phi;
     Float_t Genl3Phi;
     Float_t Genl4Phi;
+    std::vector<float>* GenjetPt=NULL;
+    std::vector<float>* GenjetEta=NULL;
+    Float_t Genmjj;
     
+    TBranch* b_Genmjj;
+    TBranch* b_GenjetPt;
+    TBranch* b_GenjetEta;
     TBranch* b_genWeight;
     TBranch* b_GenZ1mass;
     TBranch* b_GenZ2mass;

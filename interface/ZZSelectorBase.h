@@ -35,6 +35,7 @@ public :
     //Int_t duplicated;
     Float_t weight;
     Float_t genWeight;
+    Float_t originalXWGTUP;
     Float_t L1prefiringWeight;
     Float_t nTruePU;
     Float_t Z1mass;
@@ -108,6 +109,7 @@ public :
     TBranch* b_scaleWeights;
     //TBranch* b_duplicated;
     TBranch* b_genWeight;
+    TBranch* b_originalXWGTUP;
     TBranch* b_L1prefiringWeight;
     TBranch* b_Z1mass;
     TBranch* b_Z2mass;

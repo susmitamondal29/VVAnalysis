@@ -16,6 +16,7 @@ void ZZGenSelector::Init(TTree *tree)
         "GendRZ1Z2",
         "GenLepPt",
         "GenLepEta",
+	"GenjetPt[0]",
     };
 
     //hists2D_ = {"GenZ1Mass_GenZ2Mass"};
@@ -35,6 +36,9 @@ void ZZGenSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::
     b_Genl1Phi->GetEntry(entry);
     b_Genl2Phi->GetEntry(entry);
     b_Genl3Phi->GetEntry(entry);
+    b_GenjetPt->GetEntry(entry);
+    b_GenjetEta->GetEntry(entry);
+    b_Genmjj->GetEntry(entry);
     //std::cout<<"Is the ZZGenSelectorBase fine until here"<<std::endl;
     if (channel_ == eeee || channel_ == eemm || channel_ == mmee || channel_ == mmmm) {
       b_Genl4Pt->GetEntry(entry);
@@ -194,6 +198,9 @@ void ZZGenSelector::SetBranchesUWVV() {
     fChain->SetBranchAddress("Mass", &GenMass, &b_GenMass);
     fChain->SetBranchAddress("Pt", &GenPt, &b_GenPt);
     fChain->SetBranchAddress("Eta", &GenEta, &b_GenEta);
+    fChain->SetBranchAddress("jetPt",&GenjetPt,&b_GenjetPt);
+    fChain->SetBranchAddress("jetEta",&GenjetEta,&b_GenjetEta);
+    fChain->SetBranchAddress("mjj",&Genmjj,&b_Genmjj);  
 }
 
 void ZZGenSelector::SetVariables(Long64_t entry) {
@@ -251,6 +258,7 @@ bool ZZGenSelector::e1e2IsZ1(){
 void ZZGenSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::string> variation) { 
     if (!ZZSelection())
         return;
+
     SafeHistFill(histMap1D_, getHistName("Genyield", variation.second), 1, Genweight);
     SafeHistFill(histMap1D_, getHistName("GenMass", variation.second), GenMass,Genweight);
     SafeHistFill(histMap1D_, getHistName("GenZMass", variation.second), GenZ1mass, Genweight);
@@ -270,6 +278,12 @@ void ZZGenSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::st
     SafeHistFill(histMap1D_, getHistName("GenLepEta", variation.second), Genl2Eta, Genweight);
     SafeHistFill(histMap1D_, getHistName("GenLepEta", variation.second), Genl3Eta, Genweight);
     SafeHistFill(histMap1D_, getHistName("GenLepEta", variation.second), Genl4Eta, Genweight);
+
+    //if (Genmjj<=100 || GenMass<=180 ||GenjetPt->size()<2){return;}
+    //std::cout<<"bug in selection?"<<std::endl;
+    if (GenjetPt->size() > 0 && GenjetPt->size() == GenjetEta->size()) {
+      SafeHistFill(histMap1D_, getHistName("GenjetPt[0]", variation.second), GenjetPt->at(0), Genweight);}
+    //std::cout<<"no bug here?"<<std::endl;
 }
 
 void ZZGenSelector::SetupNewDirectory() {

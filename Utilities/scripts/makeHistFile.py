@@ -184,7 +184,8 @@ def makeHistFile(args):
         selector.setFileList(*args['inputs_from_file'])
     mc = selector.applySelector()
 
-    sys.exit()
+    print("Pause here")
+    #sys.exit()
 
     if args['with_background']:
         selector.isBackground()

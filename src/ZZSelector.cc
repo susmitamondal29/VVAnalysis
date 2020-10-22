@@ -22,6 +22,7 @@ void ZZSelector::Init(TTree *tree)
     systHists_ = {
         "yield",
         "Mass",
+	"jetPt[0]",
         "ZMass",
         "ZZPt",
         "ZZEta",
@@ -40,8 +41,8 @@ void ZZSelector::Init(TTree *tree)
     //};
 
     hists1D_ = {
-         "yield", "ZMass","ZZPt","ZZEta","dPhiZ1Z2","dRZ1Z2","ZPt","LepPt","LepEta",
-         "Mass","nJets","jetPt[0]","jetPt[1]","jetEta[0]","jetEta[1]","mjj","dEtajj","SIP3D"
+      "yield", "Z1Mass","Z2Mass","ZMass","ZZPt","ZZEta","dPhiZ1Z2","dRZ1Z2","ZPt","LepPt","LepEta",
+         "Mass","Mass0j","Mass1j","Mass2j","Mass3j","nJets","jetPt[0]","jetPt[1]","jetPt[2]","jetEta[0]","jetEta[1]","jetEta[2]","jetPhi[0]","jetPhi[1]","jetPhi[2]","mjj","dEtajj","SIP3D","jetPt[01]","jetEta[01]"
     };
 
     weighthists1D_ = {
@@ -72,6 +73,7 @@ void ZZSelector::SetBranchesUWVV() {
     fChain->SetBranchAddress("Pt", &Pt, &b_Pt);
     fChain->SetBranchAddress("Eta", &Eta, &b_Eta);
     fChain->SetBranchAddress("jetPt", &jetPt, &b_jetPt);
+    fChain->SetBranchAddress("jetPhi", &jetPhi, &b_jetPhi);
     fChain->SetBranchAddress("jetEta", &jetEta, &b_jetEta);
     fChain->SetBranchAddress("mjj", &mjj, &b_mjj);
 }
@@ -112,6 +114,7 @@ void ZZSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::str
     b_Pt->GetEntry(entry);
     b_Eta->GetEntry(entry);
     b_jetPt->GetEntry(entry);
+    b_jetPhi->GetEntry(entry);
     b_jetEta->GetEntry(entry);
     b_mjj->GetEntry(entry);
     //std::cout<<"channel in LoadBranches function: "<<channel_<<std::endl;
@@ -709,6 +712,16 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
     //std::cout<<"isNonPrompt_ in FillHistograms after ZZSelection:"<<isNonPrompt_<<std::endl;
     //std::cout<<run<<":"<<lumi<<":"<<evt<<std::endl;
     //std::cout << "variation.second: "<<variation.second;
+
+    if (!PassesZZjjSelection()){
+      return;
+    }
+
+
+    if (Mass <= 180.0){
+      return;
+    }
+
     SafeHistFill(histMap1D_, getHistName("yield", variation.second), 1, weight);
     SafeHistFill(histMap1D_, getHistName("Mass", variation.second), Mass,weight);
     SafeHistFill(histMap1D_, getHistName("ZMass", variation.second), Z1mass, weight);
@@ -734,29 +747,48 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
     SafeHistFill(histMap1D_, getHistName("LepEta", variation.second), l3Eta, weight);
     SafeHistFill(histMap1D_, getHistName("LepEta", variation.second), l4Eta, weight);
     SafeHistFill(histMap1D_, getHistName("nJets", variation.second), jetPt->size(), weight);
-    SafeHistFill(histMap1D_, getHistName("dEtajj", variation.second), dEtajj, weight);
+
 
     if (jetPt->size() > 0 && jetPt->size() == jetEta->size()) {
         SafeHistFill(histMap1D_, getHistName("jetPt[0]", variation.second), jetPt->at(0), weight);
         SafeHistFill(histMap1D_, getHistName("jetEta[0]", variation.second), jetEta->at(0), weight);
+        SafeHistFill(histMap1D_, getHistName("jetPhi[0]", variation.second), jetPhi->at(0), weight);
     }
     if (jetPt->size() > 1 && jetPt->size() == jetEta->size()) {
         SafeHistFill(histMap1D_, getHistName("jetPt[1]", variation.second), jetPt->at(1), weight);
         SafeHistFill(histMap1D_, getHistName("jetEta[1]", variation.second), jetEta->at(1), weight);
-    }
-    if (!PassesZZjjSelection()){
-      return;
+        SafeHistFill(histMap1D_, getHistName("jetPhi[1]", variation.second), jetPhi->at(1), weight);
+	SafeHistFill(histMap1D_, getHistName("dEtajj", variation.second), dEtajj, weight);
+	SafeHistFill(histMap1D_, getHistName("mjj", variation.second), mjj, weight);
+
+        SafeHistFill(histMap1D_, getHistName("jetEta[01]", variation.second), jetEta->at(0), weight);
+        SafeHistFill(histMap1D_, getHistName("jetEta[01]", variation.second), jetEta->at(1), weight);
+        SafeHistFill(histMap1D_, getHistName("jetPt[01]", variation.second), jetPt->at(0), weight);
+        SafeHistFill(histMap1D_, getHistName("jetPt[01]", variation.second), jetPt->at(1), weight);
     }
 
-    if (Mass <= 180.0){
-      return;
+    if (jetPt->size() > 2 && jetPt->size() == jetEta->size()) {
+        SafeHistFill(histMap1D_, getHistName("jetPt[2]", variation.second), jetPt->at(2), weight);
+        SafeHistFill(histMap1D_, getHistName("jetEta[2]", variation.second), jetEta->at(2), weight);
+        SafeHistFill(histMap1D_, getHistName("jetPhi[2]", variation.second), jetPhi->at(2), weight);
     }
+
+
+    //    if (!PassesZZjjSelection()){
+    //  return;
+    //}
+
+
+    //if (Mass <= 180.0){
+    //  return;
+    //}
 
     if(isMC_) {
-
-    std::cout<<"UpdatedSF:"<<weight<<std::endl;
+      //std::cout<<run<<":"<<lumi<<":"<<evt<<std::endl;
+      //std::cout<<"UpdatedSF:"<<weight<<std::endl;
     }
-    SafeHistFill(histMap1D_, getHistName("mjj", variation.second), mjj, weight);
+
+    //SafeHistFill(histMap1D_, getHistName("Mass", variation.second), Mass,weight);
     //SafeHistFill(histMap1D_, getHistName("dEtajj", variation.second), dEtajj, weight);
     
     // Summing 12,34 leptons
