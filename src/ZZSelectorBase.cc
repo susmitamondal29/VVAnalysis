@@ -49,7 +49,7 @@ void ZZSelectorBase::Init(TTree *tree)
 void ZZSelectorBase::SetBranchesUWVV() {
     if (isMC_){
         fChain->SetBranchAddress("genWeight", &genWeight, &b_genWeight);
-	fChain->SetBranchAddress("originalXWGTUP", &originalXWGTUP, &b_originalXWGTUP);
+	//fChain->SetBranchAddress("originalXWGTUP", &originalXWGTUP, &b_originalXWGTUP);
         fChain->SetBranchAddress("nTruePU", &nTruePU, &b_nTruePU);
         if (year_ == yr2016 || year_ == yr2017){
           fChain->SetBranchAddress("L1prefiringWeight", &L1prefiringWeight, &b_L1prefiringWeight);
@@ -519,9 +519,9 @@ void ZZSelectorBase::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std:
     //std::cout<<"IsMC: "<<isMC_<<std::endl;
     if (isMC_) {
         b_genWeight->GetEntry(entry);
-	b_originalXWGTUP->GetEntry(entry);
+	//b_originalXWGTUP->GetEntry(entry);
         b_nTruePU->GetEntry(entry);
-        weight = originalXWGTUP; //genWeight;
+        weight = genWeight;//originalXWGTUP; //genWeight;
         //Prefiring weights for 2016 and 2017
         //std::cout<<"genWeight:"<<weight<<std::endl;
         if (year_ == yr2016 || year_ == yr2017){

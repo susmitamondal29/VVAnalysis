@@ -712,18 +712,24 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
     //std::cout<<"isNonPrompt_ in FillHistograms after ZZSelection:"<<isNonPrompt_<<std::endl;
     //std::cout<<run<<":"<<lumi<<":"<<evt<<std::endl;
     //std::cout << "variation.second: "<<variation.second;
+    SafeHistFill(histMap1D_, getHistName("Mass", variation.second), Mass,weight);
 
     if (!PassesZZjjSelection()){
       return;
     }
+    
+    if (Mass <= 180){                                                                                                                                                                    
+     return;                                                                                                                                                                                             
+    }  
 
-
-    if (Mass <= 180.0){
-      return;
-    }
+    //if (Mass <= 70.0 || Mass>=1000.0){
+    //  return;
+    //}
 
     SafeHistFill(histMap1D_, getHistName("yield", variation.second), 1, weight);
-    SafeHistFill(histMap1D_, getHistName("Mass", variation.second), Mass,weight);
+    //SafeHistFill(histMap1D_, getHistName("Mass", variation.second), Mass,weight);
+    SafeHistFill(histMap1D_, getHistName("Z1Mass", variation.second), Z1mass, weight);
+    SafeHistFill(histMap1D_, getHistName("Z2Mass", variation.second), Z2mass, weight);
     SafeHistFill(histMap1D_, getHistName("ZMass", variation.second), Z1mass, weight);
     SafeHistFill(histMap1D_, getHistName("ZMass", variation.second), Z2mass, weight);
     SafeHistFill(histMap1D_, getHistName("ZPt", variation.second), Z1pt, weight);
@@ -748,6 +754,18 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
     SafeHistFill(histMap1D_, getHistName("LepEta", variation.second), l4Eta, weight);
     SafeHistFill(histMap1D_, getHistName("nJets", variation.second), jetPt->size(), weight);
 
+    if (jetPt->size() == 0 && jetPt->size() == jetEta->size()) {
+      SafeHistFill(histMap1D_, getHistName("Mass0j", variation.second), Mass, weight);
+    }
+    else if (jetPt->size() == 1 && jetPt->size() == jetEta->size()){
+      SafeHistFill(histMap1D_, getHistName("Mass1j", variation.second), Mass, weight);
+    }
+    else if (jetPt->size() == 2 && jetPt->size() == jetEta->size()){
+      SafeHistFill(histMap1D_, getHistName("Mass2j", variation.second), Mass, weight);
+    }
+    else if (jetPt->size() == 3 && jetPt->size() == jetEta->size()){
+      SafeHistFill(histMap1D_, getHistName("Mass3j", variation.second), Mass, weight);
+    }
 
     if (jetPt->size() > 0 && jetPt->size() == jetEta->size()) {
         SafeHistFill(histMap1D_, getHistName("jetPt[0]", variation.second), jetPt->at(0), weight);

@@ -194,7 +194,7 @@ def makeHistFile(args):
         selector.setOutputfile(output_name)
         bkgd = selector.applySelector()
         combinedNames.append(output_name)
-
+    #pdb.set_trace()
     if args['with_Gen']:
         selector.isGen()
         selector.setChannels([c+"Gen" for c in args['channels']])
@@ -204,8 +204,8 @@ def makeHistFile(args):
         selector.setOutputfile(output_name)
         combinedNames.append(output_name)
         if args['filenames']:
-            #selector.setDatasets(args['filenames'])
-            selector.setDatasets(ConfigureJobs.getListOfGenFilenames(args['analysis']))
+            selector.setDatasets(args['filenames'])
+            #selector.setDatasets(ConfigureJobs.getListOfGenFilenames(args['analysis']))
         else:
             selector.setFileList(*args['inputs_from_file'])
         gen = selector.applySelector()
@@ -222,6 +222,7 @@ def makeHistFile(args):
         sys.exit(0)
 
     fOut.Close()
+    #sys.exit()
     fOut = ROOT.TFile.Open(tmpFileName, "update")
     #pdb.set_trace()
     alldata = HistTools.makeCompositeHists(fOut,"AllData", 

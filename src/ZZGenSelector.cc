@@ -7,6 +7,7 @@ void ZZGenSelector::Init(TTree *tree)
     allChannels_ = {"ee", "mm", };
     hists1D_ = {
         "GenMass",
+	"Genmjj",
         "Genyield",
         "GenZMass",
         "GenZZPt",
@@ -256,6 +257,10 @@ bool ZZGenSelector::e1e2IsZ1(){
 }
 
 void ZZGenSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::string> variation) { 
+
+    if (GenjetPt->size() > 1 && GenjetPt->size() == GenjetEta->size()) {
+      SafeHistFill(histMap1D_, getHistName("Genmjj", variation.second), Genmjj, Genweight);}
+
     if (!ZZSelection())
         return;
 
