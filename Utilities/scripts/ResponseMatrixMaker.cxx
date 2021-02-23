@@ -184,7 +184,8 @@ void ResponseMatrixMakerBase<T>::setup()
   UPtr<TChain> recoTree(new TChain((getChannel()+"/ntuple").c_str(),
                                    ("recoChain_"+getVar() + "_" + getChannel()).c_str()));
   for(const auto& fn : fileNames)
-    recoTree->Add(fn.c_str());
+    {//std::cout<<fn<<std::endl;
+      recoTree->Add(fn.c_str());}
   //std::cout<<fileNames<<std::endl;
   //std::cout<<binning<<std::endl;
   // set up lots of things
@@ -375,12 +376,14 @@ void ResponseMatrixMakerBase<T>::setup()
       //const T& trueVal = iTrue->second;
 
       T& trueVal = iTrue->second;
+      //if(this->getVar().c_str() == "jetPt0"){trueVal=trueVal.at(0);}
       if(this->selectEvent())
         {
           // Nominal value
           //const T val = this->getEventResponse();
           
           T val = this->getEventResponse();
+	  //if(this->getVar().c_str() == "jetPt0"){val=val.at(0);}
           const float nominalWeight = scale * puWt * lepSF * genWeight;
 
           //const float nominalWeight = scale * lepSF * genWeight;
@@ -400,7 +403,8 @@ void ResponseMatrixMakerBase<T>::setup()
 	  
 	  
           //this section is for variables like mass or all singlebranch response matrices
-	  std::cout<<"val is of simple float type "<<val<<std::endl;
+
+	  //std::cout<<"val is of simple float type "<<val<<std::endl;
 	  if (val > upperEdge){val=binCenter;}
           if (trueVal > upperEdge){trueVal=binCenter;}
 	  
@@ -727,15 +731,20 @@ template<typename T>
 T JetBranchResponseMatrixMakerBase<T>::getEventResponse(const Str& syst) const
 {
   if(syst.find("jes_up") != Str::npos)
-    return value_jesUp;
+    return value_jesUp->at(0);
   if(syst.find("jes_dn") != Str::npos)
-    return value_jesDn;
+    return value_jesDn->at(0);
   if(syst.find("jer_up") != Str::npos)
-    return value_jerUp;
+    return value_jerUp->at(0);
   if(syst.find("jer_dn") != Str::npos)
-    return value_jerDn;
+    return value_jerDn->at(0);
 
-  return BranchValueResponseMatrixMaker<T>::getEventResponse(syst);
+  if(this->getVar()=="jetPt0"){
+    //std::cout<<"response value"<<valuevecfloat->at(0)<<std::endl;
+    return valuevecfloat->at(0);}
+
+  else{return BranchValueResponseMatrixMaker<T>::getEventResponse(syst);}
+  //return BranchValueResponseMatrixMaker<T>::getEventResponse(syst);
 }
 
 
@@ -744,34 +753,51 @@ void
 JetBranchResponseMatrixMakerBase<T>::setRecoBranches(TChain& t,
                                                      const Vec<Str>& objects)
 {
-  BranchValueResponseMatrixMaker<T>::setRecoBranches(t, objects);
+  //std::cout<<this->getVar()<<(this->getVar()=="jetPt0")<<std::endl;
+  if(this->getVar()=="jetPt0"){
+  my_doNotUse1 = 0.;
+  my_doNotUse2 = 0.;
+  my_mZ1 = this->getmZPtr(t, objects.at(0), objects.at(1),my_doNotUse1);
+  my_mZ2 = this->getmZPtr(t, objects.at(2), objects.at(3),my_doNotUse2);
+
+    t.SetBranchAddress("jetPt", &valuevecfloat);
+    t.SetBranchAddress("jetPt_jesUp", &value_jesUp);
+    t.SetBranchAddress("jetPt_jesDown", &value_jesDn);
+    t.SetBranchAddress("jetPt_jerUp", &value_jerUp);
+    t.SetBranchAddress("jetPt_jerDown", &value_jerDn);}
+
+
+  else{BranchValueResponseMatrixMaker<T>::setRecoBranches(t, objects);
 
   t.SetBranchAddress((this->getVar()+"_jesUp").c_str(), &value_jesUp);
   t.SetBranchAddress((this->getVar()+"_jesDown").c_str(), &value_jesDn);
   t.SetBranchAddress((this->getVar()+"_jerUp").c_str(), &value_jerUp);
-  t.SetBranchAddress((this->getVar()+"_jerDown").c_str(), &value_jerDn);
+  t.SetBranchAddress((this->getVar()+"_jerDown").c_str(), &value_jerDn);}
 }
 
-
-DijetBranchResponseMatrixMaker::DijetBranchResponseMatrixMaker(const Str& channel,
+template<class T>
+DijetBranchResponseMatrixMaker<T>::DijetBranchResponseMatrixMaker(const Str& channel,
                                                                const Str& varName,
                                                                const Vec<float>& binning) :
-  JetBranchResponseMatrixMakerBase<float>(channel, varName, binning)
+  JetBranchResponseMatrixMakerBase<T>(channel, varName, binning)
 {;}
 
-
-UPtr<UMap<size_t, float> >
-DijetBranchResponseMatrixMaker::getTrueValues(TChain& trueTree,
+template<class T>
+UPtr<UMap<size_t, T> >
+DijetBranchResponseMatrixMaker<T>::getTrueValues(TChain& trueTree,
                                               const Vec<Str>& objects,
                                               const Str& syst) const
 {
-  UPtr<UMap<size_t, float> > out(new UMap<size_t, float>());
+  UPtr<UMap<size_t, T> > out(new UMap<size_t, T>());
 
   unsigned long long trueEvt;
-  float trueVal;
+  T trueVal;
+  Vec<float>* trueValvecfloat=NULL;
   unsigned int trueNJets;
   trueTree.SetBranchAddress("evt", &trueEvt);
-  trueTree.SetBranchAddress(this->getVar().c_str(), &trueVal);
+  if(this->getVar()=="jetPt0"){
+    trueTree.SetBranchAddress("jetPt", &trueValvecfloat);}
+  else{trueTree.SetBranchAddress(this->getVar().c_str(), &trueVal);}
   trueTree.SetBranchAddress("nJets", &trueNJets);
 
   float _doNotUse1 = 0.;
@@ -786,46 +812,69 @@ DijetBranchResponseMatrixMaker::getTrueValues(TChain& trueTree,
       trueTree.GetEntry(row);
 
       if(!this->selectTrueEvent(*mZ1,*mZ2))
-        continue;
+        {continue;}
 
-      if(trueNJets >= 2)
-        (*out)[trueEvt] = trueVal;
+      if(trueNJets >= 1){
+	//std::cout<<trueNJets<<":"<<trueValvecfloat->size()<<std::endl;
+	if(this->getVar()=="jetPt0"){(*out)[trueEvt] = trueValvecfloat->at(0);}
+	//std::cout<<"selected true values:"<<trueValvecfloat->at(0)<<std::endl;}
+        else{(*out)[trueEvt] = trueVal;}}
     }
 
   return std::move(out);
 }
 
-
+template<class T>
 void
-DijetBranchResponseMatrixMaker::setRecoBranches(TChain& t, const Vec<Str>& objects)
+DijetBranchResponseMatrixMaker<T>::setRecoBranches(TChain& t, const Vec<Str>& objects)
 {
-  JetBranchResponseMatrixMakerBase<float>::setRecoBranches(t, objects);
-
+  JetBranchResponseMatrixMakerBase<T>::setRecoBranches(t, objects);
+  
   t.SetBranchAddress("nJets", &nJets);
+  t.SetBranchAddress("mjj", &mjj);
+  t.SetBranchAddress("Mass", &Mass);
   t.SetBranchAddress("nJets_jesUp", &nJets_jesUp);
   t.SetBranchAddress("nJets_jesDown", &nJets_jesDn);
   t.SetBranchAddress("nJets_jerUp", &nJets_jerUp);
   t.SetBranchAddress("nJets_jerDown", &nJets_jerDn);
 }
 
+//template<typename T>
+//void 
+//DijetBranchResponseMatrixMaker<T>::fillResponse(TH2D& h, const Vec<float>& val, const Vec<float>& trueVal, float w) const
+//{
 
+//  h.Fill(val.at(0), trueVal.at(0), w); //currently only used to handle jetPt case                                                                                                                    
+
+
+//}
+
+template<class T>
 bool
-DijetBranchResponseMatrixMaker::selectEvent(const Str& syst) const
+DijetBranchResponseMatrixMaker<T>::selectEvent(const Str& syst) const
 {
+  float mZ1=*(JetBranchResponseMatrixMakerBase<T>::my_mZ1);
+  float mZ2=*(JetBranchResponseMatrixMakerBase<T>::my_mZ2);
+  bool  mass_sel = mZ1 > 60. && mZ1 < 120. && mZ2 > 60. && mZ2 < 120.;
+  //std::cout<<"Confirm mZ1,mZ2:  "<<mZ1<<" "<<mZ2<<std::endl;
   if(syst.empty())
-    return nJets >= 2;
-
+    return nJets >= 1 && mass_sel;// && mjj>100 && Mass>180;
+  
   if(syst.find("jes_up") != Str::npos)
-    return nJets_jesUp >= 2;
+    return nJets_jesUp >= 1 && mass_sel;// && mjj>100 && Mass>180;
   if(syst.find("jes_dn") != Str::npos)
-    return nJets_jesDn >= 2;
+    return nJets_jesDn >= 1 && mass_sel; //&& mjj>100 && Mass>180;
   if(syst.find("jer_up") != Str::npos)
-    return nJets_jerUp >= 2;
+    return nJets_jerUp >= 1 && mass_sel;// && mjj>100 && Mass>180;
   if(syst.find("jer_dn") != Str::npos)
-    return nJets_jerDn >= 2;
+    return nJets_jerDn >= 1 && mass_sel;// && mjj>100 && Mass>180;
 
-  return nJets >= 2;
+  return nJets >= 1 && mass_sel;// && mjj>100 && Mass>180;
 }
+
+testJets::testJets(const Str& channel,const Str& varName,const Vec<float>& binning):
+  DijetBranchResponseMatrixMaker<float>(channel, varName, binning)
+{;}
 
 
 SelectedZResponseMatrixMakerBase::SelectedZResponseMatrixMakerBase(const Str& channel,
@@ -1728,12 +1777,14 @@ RelaxGenZCuts<R>::RelaxGenZCuts(const Str& channel, const Str& varName,
   R(channel, varName, binning)
 {;}
 
-
+typedef Vec<float> Vecfloat;
 typedef SimpleValueResponseMatrixMakerBase<float> FloatResponseMatrixMakerBase;
+typedef SimpleValueResponseMatrixMakerBase<Vecfloat> test1;
 typedef BranchValueResponseMatrixMaker<float> FloatBranchResponseMatrixMaker;
 typedef AbsValueResponseMatrixMaker<FloatBranchResponseMatrixMaker> AbsFloatBranchResponseMatrixMaker;
 typedef BranchValueResponseMatrixMaker<unsigned int> UIntBranchResponseMatrixMaker;
-typedef AbsValueResponseMatrixMaker<DijetBranchResponseMatrixMaker> AbsDijetBranchResponseMatrixMaker;
+typedef DijetBranchResponseMatrixMaker<float> dijetmaker;
+typedef AbsValueResponseMatrixMaker<dijetmaker> AbsDijetBranchResponseMatrixMaker;
 typedef JetBranchResponseMatrixMakerBase<unsigned int> JetUIntBranchResponseMatrixMaker;
 typedef JetBranchResponseMatrixMakerBase<float> JetFloatBranchResponseMatrixMaker;
 typedef AbsValueResponseMatrixMaker<ZZDeltaPhiResponseMatrixMaker> ZZAbsDeltaPhiResponseMatrixMaker;
@@ -1741,11 +1792,13 @@ typedef NthJetResponseMatrixMaker<float,0> FirstJetFloatResponseMatrixMaker;
 typedef NthJetResponseMatrixMaker<float,1> SecondJetFloatResponseMatrixMaker;
 typedef AbsValueResponseMatrixMaker<FirstJetFloatResponseMatrixMaker> FirstJetAbsFloatResponseMatrixMaker;
 typedef AbsValueResponseMatrixMaker<SecondJetFloatResponseMatrixMaker> SecondJetAbsFloatResponseMatrixMaker;
+//typedef DijetBranchResponseMatrixMaker<Vecfloat> testJet; 
 
 typedef UseSFHists<FloatBranchResponseMatrixMaker>       SFHistFloatBranchResponseMatrixMaker;
 typedef UseSFHists<AbsFloatBranchResponseMatrixMaker>    SFHistAbsFloatBranchResponseMatrixMaker;
 typedef UseSFHists<UIntBranchResponseMatrixMaker>        SFHistUIntBranchResponseMatrixMaker;
-typedef UseSFHists<DijetBranchResponseMatrixMaker>       SFHistDijetBranchResponseMatrixMaker;
+typedef UseSFHists<testJets>                             SFHisttestJet;
+//typedef UseSFHists<DijetBranchResponseMatrixMaker>       SFHistDijetBranchResponseMatrixMaker;
 typedef UseSFHists<AbsDijetBranchResponseMatrixMaker>    SFHistAbsDijetBranchResponseMatrixMaker;
 typedef UseSFHists<JetUIntBranchResponseMatrixMaker>     SFHistJetUIntBranchResponseMatrixMaker;
 typedef UseSFHists<JetFloatBranchResponseMatrixMaker>    SFHistJetFloatBranchResponseMatrixMaker;
@@ -1770,7 +1823,9 @@ typedef UseSFHists<FullSpectrumFloatResponseMatrixMaker> SFHistFullSpectrumFloat
 #pragma link C++ class FloatBranchResponseMatrixMaker;
 #pragma link C++ class AbsFloatBranchResponseMatrixMaker;
 #pragma link C++ class UIntBranchResponseMatrixMaker;
-#pragma link C++ class DijetBranchResponseMatrixMaker;
+//#pragma link C++ class DijetBranchResponseMatrixMaker;
+#pragma link C++ class testJet;
+#pragma link C++ class SFHisttestJet;
 #pragma link C++ class AbsDijetBranchResponseMatrixMaker;
 #pragma link C++ class JetUIntBranchResponseMatrixMaker;
 #pragma link C++ class JetFloatBranchResponseMatrixMaker;

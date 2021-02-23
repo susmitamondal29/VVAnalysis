@@ -77,10 +77,10 @@ def getComLineArgs():
     parser.add_argument('--logy', '--logY', '--log', action='store_true',
                         help='Put vertical axis on a log scale.')
     parser.add_argument('--plotDir', type=str, nargs='?',
-                        default='/afs/cern.ch/user/h/hehe/www/ZZFullRun2/PlottingResults/ZZ4l2016/ZZSelectionsTightLeps/ANPlots/ZZ4l2016/RespMat_Moriond2019IDMuSF',
+                        default='/afs/cern.ch/user/h/hehe/www/ZZFullRun2/PlottingResults/ZZ4l2016/ZZSelectionsTightLeps/ANPlots/ZZ4l2016/AltTest2_NoOverflow_RespMat_Moriond2019IDMuSF_Oct13_notZZjj',
                         help='Directory to put response and covariance plots in')
     parser.add_argument('--unfoldDir', type=str, nargs='?',
-                        default='/afs/cern.ch/user/h/hehe/www/ZZFullRun2/PlottingResults/ZZ4l2016/ZZSelectionsTightLeps/ANPlots/ZZ4l2016/LogDiffDistributionsWAltSignal_Moriond2019IDMuSF',
+                        default='/afs/cern.ch/user/h/hehe/www/ZZFullRun2/PlottingResults/ZZ4l2016/ZZSelectionsTightLeps/ANPlots/ZZ4l2016/AltTest2_LogDiff_Oct13_inverted__not_ZZjj',
                         help='Directory to put response and covariance plots in')
     parser.add_argument('--nIter', type=int, nargs='?', default=4,
                         help='Number of iterations for D\'Agostini method')
@@ -96,6 +96,7 @@ if selection == "":
 analysis=args['analysis']
 _binning = {
     'pt' : [25.*i for i in range(4)] + [100., 150., 200., 300.],
+    'jetPt0':[30.,70.,110.,150.,190.,230.,270.,310.,350.,390.,430.],
     #'mass' : [100.+100.*i for i in range(12)],
     'mass' : [100.] + [200.+50.*i for i in range(5)] + [500.,600.,800.],
     'massFull' : [80.,100.,120.,130.,150.,180.,200.,240.,300.,400.,1000],
@@ -116,6 +117,7 @@ _binning = {
 
 units = {
     'pt' : '[GeV]',
+    'jetPt0' : '[GeV]',
     'mass' : '[GeV]',
     'massFull' : '[GeV]',
     'eta' : '',
@@ -135,6 +137,7 @@ units = {
 
 yaxisunits = {
     'pt' : 'GeV',
+    'jetPt0' : 'GeV',
     'mass' : 'GeV',
     'massFull' : 'GeV',
     'eta' : '',
@@ -154,6 +157,7 @@ yaxisunits = {
 
 prettyVars = {
     'pt' : 'p_{T}^{4\\ell}',
+    'jetPt0' : 'jetPt0',
     'mass' : 'm_{4\\ell}',
     'massFull' : 'm_{4\\ell}',
     'eta' : '\\eta_{4\\ell}',
@@ -199,6 +203,7 @@ for var, prettyVar in prettyVars.iteritems():
 # information from multiple trees, which can't be done with TTree::Draw())
 responseClassNames = {
     'mass' : {c:'FloatBranchResponseMatrixMaker' for c in channels},
+    'jetPt0' : {c:'testJet' for c in channels},
     #'massFull' : {c:'FullSpectrumFloatResponseMatrixMaker' for c in channels},
     'pt' : {c:'FloatBranchResponseMatrixMaker' for c in channels},
     'eta' : {c:'AbsFloatBranchResponseMatrixMaker' for c in channels},
@@ -227,6 +232,7 @@ responseClassNames = {
 # Variable names usable by response maker classes
 varNamesForResponseMaker = {
     'mass' : {c:'Mass' for c in channels},
+    'jetPt0' : {c:'jetPt0' for c in channels},
     #'massFull' : {c:'Mass' for c in channels},
     'pt' : {c:'Pt' for c in channels},
     'eta' : {c:'Eta' for c in channels},
@@ -246,7 +252,7 @@ varNamesForResponseMaker = {
 }
 
 # list of variables not counting systematic shifts
-varList=['Mass','ZZPt','ZPt','LepPt','dPhiZ1Z2','dRZ1Z2']
+varList=['Mass','ZZPt','ZPt','LepPt','dPhiZ1Z2','dRZ1Z2','jetPt[0]']
 
 # Sometimes need to more or resize legend
 legDefaults = {
@@ -372,8 +378,8 @@ def createCanvasPads():
     pad1 = ROOT.TPad("pad1", "pad1", 0.01, 0.33, 0.99, 0.99)
     pad1.Draw()
     pad1.cd()
-    if varName!="drz1z2":
-        pad1.SetLogy()
+    #if varName!="drz1z2":
+    #    pad1.SetLogy()
     pad1.SetFillColor(0)
     pad1.SetFrameBorderMode(0)
     pad1.SetBorderMode(0)
@@ -654,7 +660,7 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
 
     ## Give hSig and hTrue in the form of histograms
 
-    varNames={'mass': 'Mass','pt':'ZZPt','zpt':'ZPt','leppt':'LepPt','dphiz1z2':'dPhiZ1Z2','drz1z2':'dRZ1Z2'}
+    varNames={'mass': 'Mass','pt':'ZZPt','zpt':'ZPt','leppt':'LepPt','dphiz1z2':'dPhiZ1Z2','drz1z2':'dRZ1Z2','jetPt0':'jetPt[0]'}
     #varNames={'zmass':'ZMass','mass': 'Mass','pt':'ZZPt','eta':'ZZEta','z1mass':'Z1Mass','z1pt':'Z1Pt','z2mass':'Z2Mass','z2pt':'Z2Pt','zpt':'ZPt','leppt':'LepPt'}
 
     hSigNominal = hSigDic[chan][varNames[varName]]
@@ -694,7 +700,7 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
     print("trueHist: ",hTrue,", ",hTrue.Integral())
     #print "TotBkgHist after rebinning: ",hBkgTotal,", ",hBkgTotal.Integral()
     hTruth['']=hTrue
-    pdb.set_trace()
+    #pdb.set_trace()
     hUnfolded[''], hCov, hResp = getUnfolded(hSigNominal,hBkgTotal,hTruth[''],hResponse,hData, nIter,True)
 
     #print "hUnfolded['']: ",hUnfolded[''].Integral()
@@ -707,6 +713,7 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
         if varName == 'massFull':
             cRes.SetLogx()
             cRes.SetLogy()
+        #hResp.Draw('colz text45')
         draw_opt = "colz text45"
         hResp.GetXaxis().SetTitle('Reco '+prettyVars[varName]+''+units[varName])
         hResp.GetYaxis().SetTitle('True '+prettyVars[varName]+''+units[varName])
@@ -714,6 +721,7 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
         hResp.GetYaxis().SetTitleSize(0.75*yaxisSize)
         hResp.Draw(draw_opt)
         texS,texS1=getLumiTextBox()
+
         #style.setCMSStyle(cRes, '', dataType='  Preliminary', intLumi=35900.)
         #print "plotDir: ",plotDir
         cRes.Print("%s/response_%s.png" % (plotDir,varName))
@@ -952,17 +960,25 @@ def getUnfolded(hSig, hBkg, hTrue, hResponse, hData, nIter,withRespAndCov=False)
 
     print("TrueBeforeResponse: ", hTrue,", ",hTrue.Integral())
     print("SigBeforeResponse: ", hSig,", ",hSig.Integral())
+    print("======================================================")
+    print("binsize %s %s"%(hSig.GetNbinsX(),hTrue.GetNbinsX()))
     response = Response(hSig, hTrue.Clone(), hResponse.Clone()) 
     ROOT.SetOwnership(response,False)
     ROOT.SetOwnership(hData,False)
     #Response matrix as a 2D-histogram: (x,y)=(measured,truth)
     hResp = response.Hresponse()
+    #pdb.set_trace()
+    my_mResp=response.Mresponse()
+    inv_mResp=my_mResp.Clone()
+    inv_mResp.Invert()
     #hResp = hResponse
     #print "hResp out of response: ",hResp
 
     #RooUnfoldIter = getattr(ROOT,"RooUnfoldBayes")
 
     RooUnfoldInv = getattr(ROOT,"RooUnfoldInvert")
+    RooUnfoldSvd = getattr(ROOT,"RooUnfoldSvd")
+    RooUnfoldBayes = getattr(ROOT,"RooUnfoldBayes")
 
     #RooUnfoldBinbyBin = getattr(ROOT,"RooUnfoldBinByBin")
     try:
@@ -1021,9 +1037,10 @@ def getUnfolded(hSig, hBkg, hTrue, hResponse, hData, nIter,withRespAndCov=False)
 
     #Simply inverting the matrix
     unf = RooUnfoldInv(response, hDataMinusBkg)
-    
+    unf2 = RooUnfoldSvd(response, hDataMinusBkg,4)
+    unf3 = RooUnfoldBayes(response, hDataMinusBkg,2)
     #unf = RooUnfoldIter(response, hDataMinusBkg, nIter)
-    print("unf: ",unf )
+    print("unf: ",unf2 )
 
     #Unfolds using the method of correction factors
     #unf = RooUnfoldBinbyBin(response, hSig)
@@ -1031,6 +1048,9 @@ def getUnfolded(hSig, hBkg, hTrue, hResponse, hData, nIter,withRespAndCov=False)
     #del hDataMinusBkg
     #This is the unfolded "data" distribution
     hOut = unf.Hreco()
+    hOut2=unf2.Hreco()
+    hOut3=unf3.Hreco()
+
     #ROOT.SetOwnership(hOut,False)
     if not hOut:
         print(hOut)
@@ -1042,6 +1062,8 @@ def getUnfolded(hSig, hBkg, hTrue, hResponse, hData, nIter,withRespAndCov=False)
     #2: Errors from the covariance matrix given by the unfolding => We use this one for now
     #3: Errors from the covariance matrix from the variation of the results in toy MC tests
     hCov = unf.Ereco(2)
+    hCov2=unf2.Ereco(2)
+    hCov3=unf3.Ereco(2)
     #hOut.SetDirectory(0)
     #hResp.SetDirectory(0)
     #ROOT.SetOwnership(hCov,False)
@@ -1050,7 +1072,7 @@ def getUnfolded(hSig, hBkg, hTrue, hResponse, hData, nIter,withRespAndCov=False)
     #return hCov.Clone(),hResp.Clone()
     #return hOut
     if withRespAndCov:
-        return hOut,hCov.Clone(),hResp.Clone()
+        return hOut,hCov.Clone(),hResp.Clone() #inv_mResp.Clone()#hResp.Clone()
     
     #del hDataMinusBkg
     #print "DataMinusbkgIntegral: ",hDataMinusBkg, ", ",hDataMinusBkg.Integral()
@@ -1169,10 +1191,11 @@ def generatePlots(hUnfolded,hUncUp,hUncDn,hTruth,hTruthAlt,varName,norm,normFb,l
     if unfoldDir:
         #Create a ratio plot
         c,pad1 = createCanvasPads()
-        Unfmaximum = hUnf.GetMaximum()
-        hTrue.SetFillColor(ROOT.TColor.GetColor("#99ccff"))
+        #Unfmaximum = hUnf.GetMaximum()
+
+        #hTrue.SetFillColor(ROOT.TColor.GetColor("#99ccff"))
         hTrue.SetLineColor(ROOT.TColor.GetColor('#000099')) 
-        hTrue.SetFillStyle(3010)
+        #hTrue.SetFillStyle(3010)
         #AltSignal
         hTrueAlt.SetFillColor(2)
         hTrueAlt.SetLineStyle(10)#dashes
@@ -1181,7 +1204,7 @@ def generatePlots(hUnfolded,hUncUp,hUncDn,hTruth,hTruthAlt,varName,norm,normFb,l
         print("Total Truth Integral",hTrue.Integral())
         print("Total Alt Truth Integral",hTrueAlt.Integral())
         print("Total Unf Data Integral",hUnf.Integral())
-        Truthmaximum = hTrue.GetMaximum()
+        #Truthmaximum = hTrue.GetMaximum()
         hTrue.SetLineWidth(2*hTrue.GetLineWidth())
         hTrueAlt.SetLineWidth(2*hTrueAlt.GetLineWidth())
 
@@ -1227,7 +1250,9 @@ def generatePlots(hUnfolded,hUncUp,hUncDn,hTruth,hTruthAlt,varName,norm,normFb,l
 
         hTrue.Draw("HIST")
         hTrueAlt.Draw("HIST")
-        
+        Unfmaximum = hUnf.GetMaximum()
+        Truthmaximum = hTrue.GetMaximum()
+        #pdb.set_trace()
         if(Unfmaximum > Truthmaximum):
             hTrue.SetMaximum(Unfmaximum*1.2)
         else:
@@ -1239,7 +1264,9 @@ def generatePlots(hUnfolded,hUncUp,hUncDn,hTruth,hTruthAlt,varName,norm,normFb,l
         #hTrue.SetMinimum(0.0)
         UnfErrBand = MainErrorBand(hUnf,hUncUp,hUncDn,varName,norm,normFb)
         #print "UnfErrBand: ",UnfErrBand
+
         UnfErrBand.Draw("a2")
+
         #UnfErrBand.Draw("PSAME")
         hTrue.GetXaxis().SetLabelSize(0)
         hTrue.GetXaxis().SetTitleSize(0)
@@ -1530,7 +1557,7 @@ plotDir=args['plotDir']
 UnfoldDir=args['unfoldDir']
 nIterations=args['nIter']
 
-varNames={'mass': 'Mass','pt':'ZZPt','zpt':'ZPt','leppt':'LepPt','dphiz1z2':'dPhiZ1Z2','drz1z2':'dRZ1Z2'}
+varNames={'mass': 'Mass','pt':'ZZPt','zpt':'ZPt','leppt':'LepPt','dphiz1z2':'dPhiZ1Z2','drz1z2':'dRZ1Z2','jetPt0':'jetPt[0]'}
 
 
 #Dictionary where signal samples are keys with cross-section*kfactors as values
@@ -1548,7 +1575,9 @@ sigSampleDic.update(AltsigSampleDic)
 #Replace fOut with fUse once you have run all the data samples and the backgrounds - right now unfolded data looking really big- subtract backgrounds
 if args['test']:
     sigSamplesPath={}
-    fUse = ROOT.TFile("SystGenFiles/originalWithGenandSyst_Hists14Sep2020-ZZ4l2016_Moriond.root","update")
+    fUse = ROOT.TFile("SystGenFiles/originalWithGenandSyst_forJets_1jetCutBoth_Hists12Oct2020-ZZ4l2016_Moriond.root","update")
+    #fUse = ROOT.TFile("SystGenFiles/originalWithGenandSyst_forJets_Hists30Sep2020-ZZ4l2016_Moriond.root","update")
+    #fUse = ROOT.TFile("SystGenFiles/originalWithGenandSyst_forJets_ZZjj_Hists09Oct2020-ZZ4l2016_Moriond.root","update")
     fOut=fUse
     for dataset in TotSigSampleList:
         file_path = ConfigureJobs.getInputFilesPath(dataset,selection, analysis)

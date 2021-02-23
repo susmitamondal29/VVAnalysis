@@ -98,6 +98,8 @@ class ResponseMatrixMakerBase
   virtual void fillResponse(TH3D& h, const T& val, const T& trueVal,
                             unsigned iteration, float w) const = 0;
 
+  //  virtual void fillResponse(TH2D& h, const Vec<float>& val, const Vec<float>& trueVal, float w) const {;}
+
   virtual bool selectEvent(const Str& option = "") const = 0;
 
   virtual float getLepSF(const Vec<Str>& leptons,
@@ -164,9 +166,16 @@ class SimpleValueResponseMatrixMakerBase : public ResponseMatrixMakerBase<T>
  protected:
   typedef typename ResponseMatrixMakerBase<T>::ValType ValType;
 
-  void fillResponse(TH2D& h, const T& val, const T& trueVal, float w) const
+virtual void fillResponse(TH2D& h, const T& val, const T& trueVal, float w) const
   {
-    h.Fill(val, trueVal, w);
+    //if(std::is_same<T,Vec<float>>::value){
+    // h.Fill(val.at(0), trueVal.at(0), w);} //currently only used to handle jetPt case
+    //else{
+    h.Fill(val, trueVal, w);//}
+    //if (val>430 || trueVal>430){
+    //  std::cout<<"Event>430!!!"<<val<<""<<trueVal<<std::endl;}
+    
+
   }
   // For PDF responses
   void fillResponse(TH3D& h, const T& val, const T& trueVal,
@@ -174,6 +183,19 @@ class SimpleValueResponseMatrixMakerBase : public ResponseMatrixMakerBase<T>
   {
     h.Fill(val, trueVal, float(iteration), w);
   }
+
+  //  void fillResponse(TH3D& h, const Vec<float>& val, const Vec<float>& trueVal,
+  //                    unsigned iteration, float w) const
+  // {
+  //  h.Fill(val.at(0), trueVal.at(0), float(iteration), w);
+  // }
+
+  // void fillResponse(TH2D& h, const Vec<float>& val, const Vec<float>& trueVal, float w) const
+  // {
+  // h.Fill(val.at(0), trueVal.at(0), w); //currently only used to handle jetPt case                               
+  //}
+
+
 };
 
 
@@ -246,19 +268,25 @@ class JetBranchResponseMatrixMakerBase : public BranchValueResponseMatrixMaker<T
   typedef typename BranchValueResponseMatrixMaker<T>::ValType ValType;
 
   virtual T getEventResponse(const Str& syst = "") const;
+  float my_doNotUse1;
+  float my_doNotUse2;
+  float * my_mZ1=NULL;
+  float * my_mZ2=NULL;
 
   // sets jet systematic branches too
   virtual void setRecoBranches(TChain& t, const Vec<Str>& objects);
 
  private:
-  T value_jesUp;
-  T value_jesDn;
-  T value_jerUp;
-  T value_jerDn;
+  Vec<float>* valuevecfloat=NULL;
+  Vec<float>* value_jesUp=NULL; //T 
+  Vec<float>* value_jesDn=NULL;
+  Vec<float>* value_jerUp=NULL;
+  Vec<float>* value_jerDn=NULL;
+
 };
 
-
-class DijetBranchResponseMatrixMaker : public JetBranchResponseMatrixMakerBase<float>
+template<typename T>
+class DijetBranchResponseMatrixMaker : public JetBranchResponseMatrixMakerBase<T>
 {
  public:
   DijetBranchResponseMatrixMaker(const Str& channel, const Str& varName,
@@ -266,11 +294,13 @@ class DijetBranchResponseMatrixMaker : public JetBranchResponseMatrixMakerBase<f
   virtual ~DijetBranchResponseMatrixMaker(){;}
 
  protected:
-  typedef JetBranchResponseMatrixMakerBase<float>::ValType ValType;
+  typedef typename JetBranchResponseMatrixMakerBase<T>::ValType ValType;
 
-  virtual UPtr<UMap<size_t, float> > getTrueValues(TChain& trueTree,
+  virtual UPtr<UMap<size_t, T> > getTrueValues(TChain& trueTree,
                                                    const Vec<Str>& objects,
                                                    const Str& syst = "") const;
+
+  //virtual void fillResponse(TH2D& h, const T& val, const T& trueVal, float w) const;
 
   // gets nJets branch (and nJets systematic branches) as well as the
   // value branch
@@ -280,6 +310,8 @@ class DijetBranchResponseMatrixMaker : public JetBranchResponseMatrixMakerBase<f
   bool selectEvent(const Str& syst = "") const;
 
  private:
+  float mjj;
+  float Mass;
   unsigned int nJets;
   unsigned int nJets_jesUp;
   unsigned int nJets_jesDn;
@@ -287,6 +319,17 @@ class DijetBranchResponseMatrixMaker : public JetBranchResponseMatrixMakerBase<f
   unsigned int nJets_jerDn;
 };
 
+class testJets : public DijetBranchResponseMatrixMaker<float>
+{
+public:
+  testJets(const Str& channel, const Str& varName,
+                                 const Vec<float>& binning);
+  virtual ~testJets(){;}
+
+ protected:
+  typedef typename DijetBranchResponseMatrixMaker<float>::ValType ValType;
+  //void fillResponse(TH2D& h, const Vec<float>& val, const Vec<float>& trueVal, float w) const {h.Fill(val.at(0), trueVal.at(0), w);}
+};
 
 class SelectedZResponseMatrixMakerBase : public SimpleValueResponseMatrixMakerBase<float>
 {
