@@ -152,6 +152,10 @@ public :
     TBranch* b_l2Pt;
     TBranch* b_l3Pt;
     TBranch* b_l4Pt;
+    TBranch* b_l1PVDZ;
+    TBranch* b_l2PVDZ;
+    TBranch* b_l3PVDZ;
+    TBranch* b_l4PVDZ;
     TBranch* b_l1Eta;
     TBranch* b_l2Eta;
     TBranch* b_l3Eta;

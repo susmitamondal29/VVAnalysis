@@ -7,6 +7,7 @@ void ZZGenSelector::Init(TTree *tree)
     allChannels_ = {"ee", "mm", };
     hists1D_ = {
         "GenMass",
+	"GenMass0j","GenMass1j","GenMass2j","GenMass3j","GenMass4j",
 	"Genmjj",
         "Genyield",
         "GenZMass",
@@ -18,6 +19,10 @@ void ZZGenSelector::Init(TTree *tree)
         "GenLepPt",
         "GenLepEta",
 	"GenjetPt[0]",
+	"GenjetPt[1]",
+	"GenjetEta[0]",
+	"GenjetEta[1]",
+	"GendEtajj",
     };
 
     //hists2D_ = {"GenZ1Mass_GenZ2Mass"};
@@ -258,8 +263,6 @@ bool ZZGenSelector::e1e2IsZ1(){
 
 void ZZGenSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::string> variation) { 
 
-    if (GenjetPt->size() > 1 && GenjetPt->size() == GenjetEta->size()) {
-      SafeHistFill(histMap1D_, getHistName("Genmjj", variation.second), Genmjj, Genweight);}
 
     if (!ZZSelection())
         return;
@@ -287,7 +290,30 @@ void ZZGenSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::st
     //if (Genmjj<=100 || GenMass<=180 ||GenjetPt->size()<2){return;}
     //std::cout<<"bug in selection?"<<std::endl;
     if (GenjetPt->size() > 0 && GenjetPt->size() == GenjetEta->size()) {
-      SafeHistFill(histMap1D_, getHistName("GenjetPt[0]", variation.second), GenjetPt->at(0), Genweight);}
+      SafeHistFill(histMap1D_, getHistName("GenjetPt[0]", variation.second), GenjetPt->at(0), Genweight);
+      SafeHistFill(histMap1D_, getHistName("GenjetEta[0]", variation.second), GenjetEta->at(0), Genweight);}
+    if (GenjetPt->size() > 1 && GenjetPt->size() == GenjetEta->size()) {
+      SafeHistFill(histMap1D_, getHistName("GenjetPt[1]", variation.second), GenjetPt->at(1), Genweight);
+      SafeHistFill(histMap1D_, getHistName("GenjetEta[1]", variation.second), GenjetEta->at(1), Genweight);
+      SafeHistFill(histMap1D_, getHistName("Genmjj", variation.second), Genmjj, Genweight);
+      SafeHistFill(histMap1D_, getHistName("GendEtajj", variation.second), std::abs(GenjetEta->at(1)-GenjetEta->at(0)), Genweight);}
+
+    if (GenjetPt->size() == 0 && GenjetPt->size() == GenjetEta->size()) {
+      SafeHistFill(histMap1D_, getHistName("GenMass0j", variation.second), GenMass, Genweight);}
+    else if (GenjetPt->size() == 1 && GenjetPt->size() == GenjetEta->size()) {
+      SafeHistFill(histMap1D_, getHistName("GenMass1j", variation.second), GenMass, Genweight);}
+    else if (GenjetPt->size() == 2 && GenjetPt->size() == GenjetEta->size()) {
+      SafeHistFill(histMap1D_, getHistName("GenMass2j", variation.second), GenMass, Genweight);}
+    else if (GenjetPt->size() == 3 && GenjetPt->size() == GenjetEta->size()) {
+      SafeHistFill(histMap1D_, getHistName("GenMass3j", variation.second), GenMass, Genweight);}
+    else if (GenjetPt->size() >= 4 && GenjetPt->size() == GenjetEta->size()) {
+      SafeHistFill(histMap1D_, getHistName("GenMass4j", variation.second), GenMass, Genweight);}
+
+
+
+
+
+
     //std::cout<<"no bug here?"<<std::endl;
 }
 
