@@ -9,7 +9,7 @@ import os
 import subprocess
 import sys
 import datetime
-import array
+import array,json
 from ROOT import vector as Vec
 
 VFloat = Vec('float')
@@ -55,7 +55,7 @@ def getComLineArgs():
     parser.add_argument('--makeTotals', action='store_true',
                         help='plot total unfolded with uncertainities.')
     parser.add_argument('--unfoldDir', type=str, nargs='?',
-                        default='/afs/cern.ch/user/u/uhussain/www/ZZFullRun2/PlottingResults/ZZ4l2018/ZZSelectionsTightLeps/ANPlots/ZZ4l2018/DiffDist_FullRun2PreApproval_09Nov2019/',
+                        default='/afs/cern.ch/user/h/hehe/www/ZZFullRun2/PlottingResults/ZZ4l2018/ZZSelectionsTightLeps/ANPlots/ZZ4l2018/DiffDist_FullRun2PreApproval_09Nov2019/',
                         help='Directory to put response and covariance plots in')
     return vars(parser.parse_args())
 
@@ -142,6 +142,28 @@ prettyVars = {
     'drz1z2':'\\Delta\\text{R}_{Z_{1},Z_{2}}}',
     }
 
+with open('varsFile.json') as var_json_file:
+    myvar_dict = json.load(var_json_file)
+
+# list of variables not counting systematic shifts
+varList=['Mass','ZZPt','ZPt','LepPt','dPhiZ1Z2','dRZ1Z2'] #With original list, histograms will be searched for all variables regardless of whether they are in runVariables
+varNames={'mass': 'Mass','pt':'ZZPt','zpt':'ZPt','leppt':'LepPt','dphiz1z2':'dPhiZ1Z2','drz1z2':'dRZ1Z2'}
+
+for key in myvar_dict.keys(): #key is the variable
+    _binning[key] = myvar_dict[key]["_binning"]
+    units[key] = myvar_dict[key]["units"]
+    prettyVars[key] = myvar_dict[key]["prettyVars"]
+    yaxisunits[key] = myvar_dict[key]["units"].replace("[","").replace("]","")
+#    responseClassNames[key] = {c:myvar_dict[key]["responseClassNames"] for c in channels}
+    if key == "MassAllj":
+        #varNamesForResponseMaker[key] = {c:'Mass' for c in channels}
+        varNames[key] = 'Mass'
+    else:
+        #varNamesForResponseMaker[key] = {c:str(key) for c in channels}
+        varList.append(str(key))
+        varNames[key] = str(key)
+
+
 _xTitle = {}
 _yTitle = {}
 _yTitleNoNorm = {}
@@ -166,7 +188,7 @@ for var, prettyVar in prettyVars.iteritems():
     _yTitleNoNorm[var] = ytnn
 
 # list of variables not counting systematic shifts
-varList=['Mass','ZZPt','ZPt','LepPt','dPhiZ1Z2','dRZ1Z2']
+#varList=['Mass','ZZPt','ZPt','LepPt','dPhiZ1Z2','dRZ1Z2']
 
 # Sometimes need to more or resize legend
 legDefaults = {
@@ -197,10 +219,13 @@ legParamsLogy = {v:p.copy() for v,p in legParams.iteritems()}
 #legParamsLogy['l1Pt']['topmargin'] = 0.65
 #legParamsLogy['l1Pt']['leftmargin'] = 0.2
 #legParamsLogy['l1Pt']['rightmargin'] = 0.18
-legParamsLogy['mass']['topmargin'] = 0.075
-legParamsLogy['mass']['leftmargin'] = 0.35
-legParamsLogy['mass']['rightmargin'] = 0.025
-legParamsLogy['mass']['textsize'] = 0.033
+for key in legParamsLogy.keys():
+    if "mass" in key.lower():
+        print("legParamsLogy Key= %s=============================="%key)
+        legParamsLogy[key]['topmargin'] = 0.075
+        legParamsLogy[key]['leftmargin'] = 0.35
+        legParamsLogy[key]['rightmargin'] = 0.025
+        legParamsLogy[key]['textsize'] = 0.033
 legParamsLogy['leppt']['topmargin'] = 0.05
 #legParamsLogy['zHigherPt']['topmargin'] = 0.045
 #legParamsLogy['massFull']['topmargin'] = 0.035
@@ -285,7 +310,7 @@ def getPrettyLegend(hTrue, data_hist, hAltTrue, error_hist, coords):
     #legend.SetFillStyle(0)
     legend.SetFillColor(ROOT.kWhite)
     legend.SetBorderSize(2)
-    legend.SetTextSize(0.033)
+    legend.SetTextSize(0.025) #0.033
     legend.SetTextColor(ROOT.kBlack)
     sigLabel = "POWHEG+MCFM+Pythia8" 
     sigLabelAlt = "MG5_aMC@NLO+MCFM+Pythia8"
@@ -634,7 +659,7 @@ def generatePlots(hUnfolded,hUncUp,hUncDn,hTruth,hTruthAlt,varName,norm,normFb,l
         unique_entries = min(2, 8)
         ymax = 0.45 if varName=="leppt" else 0.915
         ycoords = [ymax, ymax - 0.08*unique_entries*args['scalelegy']]
-        coords = [xcoords[0], ycoords[0], xcoords[1], ycoords[1]]
+        coords = [xcoords[0]-0.1, ycoords[0], xcoords[1], ycoords[1]] #extended legend frame
         legend = getPrettyLegend(hTrue, hUnf, hTrueAlt, UnfErrBand, coords)
         legend.Draw()
         texS,texS1=getLumiTextBox()
@@ -776,7 +801,7 @@ def mkdir(plotDir):
             print e
             pass
 
-varNames={'mass': 'Mass','pt':'ZZPt','zpt':'ZPt','leppt':'LepPt','dphiz1z2':'dPhiZ1Z2','drz1z2':'dRZ1Z2'}
+#varNames={'mass': 'Mass','pt':'ZZPt','zpt':'ZPt','leppt':'LepPt','dphiz1z2':'dPhiZ1Z2','drz1z2':'dRZ1Z2'}
 UnfoldDir=args['unfoldDir']
 UnfoldOutDirs={}
 #Make differential cross sections normalizing to unity area.')
@@ -789,14 +814,18 @@ runVariables.append(args['variable'])
 print "runVariables: ",runVariables
 #Plot histograms from these respective root files generated wiht saveUnfolded.py
 if analysis=="ZZ4l2016":
-    fUse = ROOT.TFile("UnfHistsFinal-18Apr2020-ZZ4l2016.root","read")
+    fUse = ROOT.TFile("UnfHistsFinal-13Apr2021-ZZ4l2016.root","read")
+    #fUse = ROOT.TFile("UnfHistsFinal-18Apr2020-ZZ4l2016.root","read")
 elif analysis=="ZZ4l2017":
-    fUse = ROOT.TFile("UnfHistsFinal-18Apr2020-ZZ4l2017.root","read")
+    fUse = ROOT.TFile("UnfHistsFinal-13Apr2021-ZZ4l2017.root","read")
+    #fUse = ROOT.TFile("UnfHistsFinal-18Apr2020-ZZ4l2017.root","read")
 elif analysis=="ZZ4l2018":
-    if args['lumi'] < 100. : 
-        fUse = ROOT.TFile("UnfHistsFinal-18Apr2020-ZZ4l2018.root","read")
+    if args['lumi'] < 100. :
+        fUse = ROOT.TFile("UnfHistsFinal-14Apr2021-ZZ4l2018.root","read")
+        #fUse = ROOT.TFile("UnfHistsFinal-18Apr2020-ZZ4l2018.root","read")
     else:
-        fUse = ROOT.TFile("UnfHistsFinal-18Apr2020-ZZ4lFullRun2.root","read")
+        fUse = ROOT.TFile("allyear_UnfHist.root","read") 
+        #fUse = ROOT.TFile("UnfHistsFinal-18Apr2020-ZZ4lFullRun2.root","read")
 #fUse = ROOT.TFile.Open("UnfHistsFull09Nov2019-ZZ4l2018.root","update")
 for varName in runVariables:
     print "varName:", varNames[varName]

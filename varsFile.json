@@ -1,0 +1,104 @@
+{
+    "Mass4j": {
+        "units": "[GeV]", 
+        "_binning": [
+            100.0, 
+            200.0, 
+            250.0, 
+            300.0, 
+            350.0, 
+            400.0, 
+            500.0, 
+            600.0, 
+            800.0, 
+            1000.0
+        ], 
+        "prettyVars": "m_{4\\ell}(>=4 jets)", 
+        "responseClassNames": "testJet"
+    }, 
+    "Mass3j": {
+        "units": "[GeV]", 
+        "_binning": [
+            100.0, 
+            200.0, 
+            250.0, 
+            300.0, 
+            350.0, 
+            400.0, 
+            500.0, 
+            600.0, 
+            800.0, 
+            1000.0
+        ], 
+        "prettyVars": "m_{4\\ell}(3 jets)", 
+        "responseClassNames": "testJet"
+    }, 
+    "Mass2j": {
+        "units": "[GeV]", 
+        "_binning": [
+            100.0, 
+            200.0, 
+            250.0, 
+            300.0, 
+            350.0, 
+            400.0, 
+            500.0, 
+            600.0, 
+            800.0, 
+            1000.0
+        ], 
+        "prettyVars": "m_{4\\ell}(2 jets)", 
+        "responseClassNames": "testJet"
+    }, 
+    "Mass0j": {
+        "units": "[GeV]", 
+        "_binning": [
+            100.0, 
+            200.0, 
+            250.0, 
+            300.0, 
+            350.0, 
+            400.0, 
+            500.0, 
+            600.0, 
+            800.0, 
+            1000.0
+        ], 
+        "prettyVars": "m_{4\\ell}(0 jets)", 
+        "responseClassNames": "testJet"
+    }, 
+    "Mass1j": {
+        "units": "[GeV]", 
+        "_binning": [
+            100.0, 
+            200.0, 
+            250.0, 
+            300.0, 
+            350.0, 
+            400.0, 
+            500.0, 
+            600.0, 
+            800.0, 
+            1000.0
+        ], 
+        "prettyVars": "m_{4\\ell}(1 jets)", 
+        "responseClassNames": "testJet"
+    }, 
+    "MassAllj": {
+        "units": "[GeV]", 
+        "_binning": [
+            100.0, 
+            200.0, 
+            250.0, 
+            300.0, 
+            350.0, 
+            400.0, 
+            500.0, 
+            600.0, 
+            800.0, 
+            1000.0
+        ], 
+        "prettyVars": "m_{4\\ell}(All Jets)", 
+        "responseClassNames": "testJet"
+    }
+}

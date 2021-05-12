@@ -8,9 +8,9 @@ from python import OutputTools
 from python import ConfigureJobs
 from python import HistTools
 import makeSimpleHtml
-import os
+import os,pdb,copy
 import subprocess
-import sys
+import sys,json,pdb
 import datetime
 import array
 from ROOT import vector as Vec
@@ -70,10 +70,10 @@ def getComLineArgs():
     parser.add_argument('--noSyst', action='store_true',
                         help='No Systematics calculations.')
     parser.add_argument('--plotDir', type=str, nargs='?',
-                        default='/afs/cern.ch/user/u/uhussain/www/ZZFullRun2/PlottingResults/ZZ4l2017/ZZSelectionsTightLeps/ANPlots/ZZ4l2017/RespMat_Moriond2019IDMuSF',
+                        default='/afs/cern.ch/user/h/hehe/www/ZZFullRun2/PlottingResults/ZZ4l2017/ZZSelectionsTightLeps/ANPlots/ZZ4l2017/RespMat_Moriond2019IDMuSF',
                         help='Directory to put response and covariance plots in')
     parser.add_argument('--unfoldDir', type=str, nargs='?',
-                        default='/afs/cern.ch/user/u/uhussain/ZZFullRun2Unfolding',
+                        default='/afs/cern.ch/user/h/hehe/ZZFullRun2Unfolding',
                         help='Directory to put unfolded histo files in')
     parser.add_argument('--nIter', type=int, nargs='?', default=8,
                         help='Number of iterations for D\'Agostini method')
@@ -193,6 +193,28 @@ varNamesForResponseMaker = {
     'drz1z2': {c:'' for c in channels},
 }
 
+with open('varsFile.json') as var_json_file:
+    myvar_dict = json.load(var_json_file)
+
+# list of variables not counting systematic shifts
+varList=['Mass'] #['Mass','ZZPt','ZPt','LepPt','dPhiZ1Z2','dRZ1Z2'] #With original list, histograms will be searched for all variables regardless of whether they are in runVariables
+varNames={'mass': 'Mass','pt':'ZZPt','zpt':'ZPt','leppt':'LepPt','dphiz1z2':'dPhiZ1Z2','drz1z2':'dRZ1Z2'}
+
+for key in myvar_dict.keys(): #key is the variable
+    _binning[key] = myvar_dict[key]["_binning"]
+    units[key] = myvar_dict[key]["units"]
+    prettyVars[key] = myvar_dict[key]["prettyVars"]
+    responseClassNames[key] = {c:myvar_dict[key]["responseClassNames"] for c in channels}
+    if key == "MassAllj":
+        varNamesForResponseMaker[key] = {c:'Mass' for c in channels}
+        varNames[key] = 'Mass'
+    else:
+        varNamesForResponseMaker[key] = {c:str(key) for c in channels}
+        varList.append(str(key))
+        varNames[key] = str(key)
+
+varNamesCopy = copy.deepcopy(varNames) #varNames is also defined and used in a function. Just in case, make a copy and put this in the function
+
 def getLumiTextBox():
     texS = ROOT.TLatex(0.76,0.955, str(args['lumi'])+" fb^{-1} (13 TeV)")
     texS.SetNDC()
@@ -206,8 +228,6 @@ def getLumiTextBox():
     texS1.Draw()
     return texS,texS1
 
-# list of variables not counting systematic shifts
-varList=['Mass','ZZPt','ZPt','LepPt','dPhiZ1Z2','dRZ1Z2']
 
 def generateAnalysisInputs():    
     #dictionary of SF histograms
@@ -452,8 +472,8 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
 
 
     ## Give hSig and hTrue in the form of histograms
-
-    varNames={'mass': 'Mass','pt':'ZZPt','zpt':'ZPt','leppt':'LepPt','dphiz1z2':'dPhiZ1Z2','drz1z2':'dRZ1Z2'}
+    global varNamesCopy    #use a copy from global variable instead
+    varNames= varNamesCopy #{'mass': 'Mass','pt':'ZZPt','zpt':'ZPt','leppt':'LepPt','dphiz1z2':'dPhiZ1Z2','drz1z2':'dRZ1Z2'}
     #varNames={'zmass':'ZMass','mass': 'Mass','pt':'ZZPt','eta':'ZZEta','z1mass':'Z1Mass','z1pt':'Z1Pt','z2mass':'Z2Mass','z2pt':'Z2Pt','zpt':'ZPt','leppt':'LepPt'}
 
     hSigNominal = hSigDic[chan][varNames[varName]]
@@ -613,14 +633,14 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
                 respMatPU.SetDirectory(0)
                 del respMatPU
             #print "hSigSystDic: ",hSigSystDic
-            hSigPU = hSigSystDic[chan][varNames[varName]+"old_CMS_pileup"+sys]
+            hSigPU = hSigSystDic[chan][varNames[varName]+"_CMS_pileup"+sys]
             hSigPU.SetDirectory(0)
             #print 'pu_'+sys 
             #print "sigHist: ", hSigPU,", ",hSigPU.Integral()
             hBkgPU = hbkgDic[chan][varNames[varName]+"_Fakes"]
             hBkgPU.SetDirectory(0)
             #print "NonPromptHist: ",hBkgPU,", ",hBkgPU.Integral()
-            hBkgMCPU = hbkgMCSystDic[chan][varNames[varName]+"old_CMS_pileup"+sys]
+            hBkgMCPU = hbkgMCSystDic[chan][varNames[varName]+"_CMS_pileup"+sys]
             hBkgMCPU.SetDirectory(0)
             #print "VVVHist: ",hBkgMCPU,", ",hBkgMCPU.Integral()
             hBkgPUTotal=hBkgPU.Clone()
@@ -654,14 +674,14 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
                     respMatSyst.SetDirectory(0)
                     del respMatSyst
                 #print "hSigSystDic: ",hSigSystDic
-                hSigSyst = hSigSystDic[chan][varNames[varName]+"old_CMS_eff_"+lep+sys]
+                hSigSyst = hSigSystDic[chan][varNames[varName]+"_CMS_eff_"+lep+sys]
                 hSigSyst.SetDirectory(0)
                 #print lep+'Eff_'+sys 
                 #print "sigHist: ", hSigSyst,", ",hSigSyst.Integral()
                 hBkgSyst = hbkgDic[chan][varNames[varName]+"_Fakes"]
                 hBkgSyst.SetDirectory(0)
                 #print "NonPromptHist: ",hBkgSyst,", ",hBkgSyst.Integral()
-                hBkgMCSyst = hbkgMCSystDic[chan][varNames[varName]+"old_CMS_eff_"+lep+sys]
+                hBkgMCSyst = hbkgMCSystDic[chan][varNames[varName]+"_CMS_eff_"+lep+sys]
                 hBkgMCSyst.SetDirectory(0)
                 #print "VVVHist: ",hBkgMCSyst,", ",hBkgMCSyst.Integral()
                 hBkgSystTotal=hBkgSyst.Clone()
@@ -876,7 +896,7 @@ def getUnfolded(hSig, hBkg, hTrue, hResponse, hData, nIter,withRespAndCov=False)
 
 def _generateUncertainties(hDict,norm):
 
-    nominalArea = hDict[''].Integral(0,hDict[''].GetNbinsX()+1)
+    nominalArea = hDict[''].Integral(0,hDict[''].GetNbinsX()+1) #if called after rebin, the overflow bin is 0 already, and do we include underflow bin?
     hErr = {'Up':{},'Down':{}}
     for sys, h in hDict.iteritems():
         if not sys:
@@ -928,7 +948,7 @@ def _sumUncertainties(errDict,varName):
         print "systematic: ",sys
         print "UncUp: ",UncUpHistos[i].Integral()
         print "UncDn: ",UncDnHistos[i].Integral()
-    LumiUp = errDict['Up']['generator']
+    LumiUp = errDict['Up']['generator'] #lumi ->generator??
     LumiDn = errDict['Down']['generator']
     print "GeneratorUp: ",LumiUp.Integral()
     print "GeneratorDn: ",LumiDn.Integral()
@@ -988,9 +1008,9 @@ def mkdir(plotDir):
 plotDir=args['plotDir']
 nIterations=args['nIter']
 
-varNames={'mass': 'Mass','pt':'ZZPt','zpt':'ZPt','leppt':'LepPt','dphiz1z2':'dPhiZ1Z2','drz1z2':'dRZ1Z2'}
 
 
+#pdb.set_trace()
 #Dictionary where signal samples are keys with cross-section*kfactors as values
 sigSampleDic=ConfigureJobs.getListOfFilesWithXSec(ConfigureJobs.getListOfEWK())
 sigSampleList=[str(i) for i in sigSampleDic.keys()]
@@ -1007,13 +1027,17 @@ sigSampleDic.update(AltsigSampleDic)
 if args['test']:
     sigSamplesPath={}
     if analysis=="ZZ4l2016":
-        fUse = ROOT.TFile("SystGenFiles/Hists25Jun2020-ZZ4l2016_Moriond.root","update")
+        fUse = ROOT.TFile("SystGenFiles/For_unfolding_Hists07Apr2021_ZZ4l2016_Moriond_fullSyst.root","update")
+        #fUse = ROOT.TFile("SystGenFiles/Hists25Jun2020-ZZ4l2016_Moriond.root","update")
         #fUse = ROOT.TFile("SystGenFiles/Hists31Mar2020-ZZ4l2016_Moriond.root","update")
     elif analysis=="ZZ4l2017":
-        fUse = ROOT.TFile("SystGenFiles/Hists07Jun2020-ZZ4l2017_Moriond.root","update")
+        fUse = ROOT.TFile("SystGenFiles/For_unfolding_Hists07Apr2021_ZZ4l2017_Moriond_fullSyst.root","update")
+        #fUse = ROOT.TFile("SystGenFiles/Hists07Jun2020-ZZ4l2017_Moriond.root","update")
     elif analysis=="ZZ4l2018": 
-        fUse = ROOT.TFile("SystGenFiles/Hists08Jun2020-ZZ4l2018_MVA.root","update")
+        fUse = ROOT.TFile("SystGenFiles/For_unfolding_Hists07Apr2021_ZZ4l2018_MVA_fullSyst.root","update")
+        #fUse = ROOT.TFile("SystGenFiles/Hists08Jun2020-ZZ4l2018_MVA.root","update")
     fOut=fUse
+    #pdb.set_trace()
     for dataset in TotSigSampleList:
         file_path = ConfigureJobs.getInputFilesPath(dataset,selection, analysis)
         #print "file_path:",file_path
@@ -1061,6 +1085,7 @@ hAltSigDic=OutputTools.getHistsInDic(altSigmc,varList,channels)
 
 #TrueHists dictionary
 #hTrueDic=OutputTools.getHistsInDic(allzzPowheg,["Gen"+s for s in varList],channels)
+#pdb.set_trace()
 hTrueDic=OutputTools.getHistsInDic(ewkmc,["Gen"+s for s in varList],channels)
 
 #Alt signals containing zzl4-amcatnlo instead of zz4l-powheg
@@ -1085,15 +1110,17 @@ systList=[]
 for chan in channels:
     for sys in ["Up","Down"]: 
         for s in runVariables:
-            systList.append(varNames[s]+"old_CMS_pileup"+sys)
+            systList.append(varNames[s]+"_CMS_pileup"+sys)
             for lep in set(chan):         
-                systList.append(varNames[s]+"old_CMS_eff_"+lep+sys)
+                systList.append(varNames[s]+"_CMS_eff_"+lep+sys)
 
 print systList
-hSigSystDic=OutputTools.getHistsInDic(ewkmc,systList,channels)
-
-hbkgMCSystDic=OutputTools.getHistsInDic(allVVVmc,systList,channels)
-
+if not args['noSyst']: 
+    hSigSystDic=OutputTools.getHistsInDic(ewkmc,systList,channels)
+    hbkgMCSystDic=OutputTools.getHistsInDic(allVVVmc,systList,channels)
+else:
+    hSigSystDic = None #Since they are still put into function arguments
+    hbkgMCSystDic = None
 
 OutputDirs={}
 
@@ -1181,8 +1208,9 @@ for varName in runVariables:
             hTrueTot.Add(hTrue[c][''])
             hTrueAltTot.Add(hTrueAlt[c][''])
         print "hErr.values(): ",hErr.values()
-        hErrTot = _combineChannelUncertainties(*hErr.values())
-        hTotUncUp, hTotUncDn = _sumUncertainties(hErrTot,varName)
+        if not args['noSyst']:
+            hErrTot = _combineChannelUncertainties(*hErr.values())
+            hTotUncUp, hTotUncDn = _sumUncertainties(hErrTot,varName)
         #Saving Total histograms
         hTotalData = hTotData.Clone()
         TotDatName = "tot_"+varName+"_data"
@@ -1203,15 +1231,16 @@ for varName in runVariables:
         hTotTrueAlt.SetName(TotAltTruName)
         savehists.append(hTotTrueAlt)
         #hUncUp
-        TotUncUp = hTotUncUp.Clone()
-        TotUncUpName = "tot_"+varName+"_totUncUp"
-        TotUncUp.SetName(TotUncUpName)
-        savehists.append(TotUncUp)
-        #hUncDn
-        TotUncDn = hTotUncDn.Clone()
-        TotUncDnName = "tot_"+varName+"_totUncDown"
-        TotUncDn.SetName(TotUncDnName)
-        savehists.append(TotUncDn)
+        if not args['noSyst']:
+            TotUncUp = hTotUncUp.Clone()
+            TotUncUpName = "tot_"+varName+"_totUncUp"
+            TotUncUp.SetName(TotUncUpName)
+            savehists.append(TotUncUp)
+            #hUncDn
+            TotUncDn = hTotUncDn.Clone()
+            TotUncDnName = "tot_"+varName+"_totUncDown"
+            TotUncDn.SetName(TotUncDnName)
+            savehists.append(TotUncDn)
 
 if args['plotResponse']:       
     for cat in ["eeee","eemm","mmmm"]:  

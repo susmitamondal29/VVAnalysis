@@ -87,6 +87,7 @@ def getComLineArgs():
     return vars(parser.parse_args())
 
 args = getComLineArgs()
+pdb.set_trace()
 manager_path = ConfigureJobs.getManagerPath()
 selection = args['selection']
 if selection == "":

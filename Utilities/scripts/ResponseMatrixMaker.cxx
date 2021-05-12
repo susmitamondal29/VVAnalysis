@@ -385,7 +385,7 @@ void ResponseMatrixMakerBase<T>::setup()
           T val = this->getEventResponse();
 	  //if(this->getVar().c_str() == "jetPt0"){val=val.at(0);}
           const float nominalWeight = scale * puWt * lepSF * genWeight;
-
+	  //std::cout<<"True Val "<<trueVal<<" RecoVal "<<val<<std::endl;
           //const float nominalWeight = scale * lepSF * genWeight;
           // fill histos that use nominal value but with different weights
          
@@ -665,7 +665,11 @@ BranchValueResponseMatrixMaker<T>::getTrueValues(TChain& t,
 template<typename T> void
 BranchValueResponseMatrixMaker<T>::setRecoBranches(TChain& t, const Vec<Str>& objects)
 {
-  t.SetBranchAddress(this->getVar().c_str(), &value);
+
+  if(this->getVar().find("Mass") != Str::npos){
+    t.SetBranchAddress("Mass", &value);}
+    //std::cout<<"SetRecoBranches called========================================================"<<std::endl;}
+  else{t.SetBranchAddress(this->getVar().c_str(), &value);}
 }
 
 
@@ -753,12 +757,14 @@ void
 JetBranchResponseMatrixMakerBase<T>::setRecoBranches(TChain& t,
                                                      const Vec<Str>& objects)
 {
-  //std::cout<<this->getVar()<<(this->getVar()=="jetPt0")<<std::endl;
-  if(this->getVar()=="jetPt0"){
+
   my_doNotUse1 = 0.;
   my_doNotUse2 = 0.;
   my_mZ1 = this->getmZPtr(t, objects.at(0), objects.at(1),my_doNotUse1);
   my_mZ2 = this->getmZPtr(t, objects.at(2), objects.at(3),my_doNotUse2);
+
+  //std::cout<<this->getVar()<<(this->getVar()=="jetPt0")<<std::endl;
+  if(this->getVar()=="jetPt0"){
 
     t.SetBranchAddress("jetPt", &valuevecfloat);
     t.SetBranchAddress("jetPt_jesUp", &value_jesUp);
@@ -769,10 +775,11 @@ JetBranchResponseMatrixMakerBase<T>::setRecoBranches(TChain& t,
 
   else{BranchValueResponseMatrixMaker<T>::setRecoBranches(t, objects);
 
-  t.SetBranchAddress((this->getVar()+"_jesUp").c_str(), &value_jesUp);
-  t.SetBranchAddress((this->getVar()+"_jesDown").c_str(), &value_jesDn);
-  t.SetBranchAddress((this->getVar()+"_jerUp").c_str(), &value_jerUp);
-  t.SetBranchAddress((this->getVar()+"_jerDown").c_str(), &value_jerDn);}
+    //t.SetBranchAddress((this->getVar()+"_jesUp").c_str(), &value_jesUp);    //value_jesUp etc. are defined as vectors here, but they are not actually used yet so shouldn't matter.
+    //t.SetBranchAddress((this->getVar()+"_jesDown").c_str(), &value_jesDn);
+    //t.SetBranchAddress((this->getVar()+"_jerUp").c_str(), &value_jerUp);
+    //t.SetBranchAddress((this->getVar()+"_jerDown").c_str(), &value_jerDn);
+  }
 }
 
 template<class T>
@@ -795,9 +802,11 @@ DijetBranchResponseMatrixMaker<T>::getTrueValues(TChain& trueTree,
   Vec<float>* trueValvecfloat=NULL;
   unsigned int trueNJets;
   trueTree.SetBranchAddress("evt", &trueEvt);
-  if(this->getVar()=="jetPt0"){
-    trueTree.SetBranchAddress("jetPt", &trueValvecfloat);}
-  else{trueTree.SetBranchAddress(this->getVar().c_str(), &trueVal);}
+  if(this->getVar()=="jetPt0"){trueTree.SetBranchAddress("jetPt", &trueValvecfloat);}
+  else if (this->getVar().find("Mass") != Str::npos)
+    {trueTree.SetBranchAddress("Mass", &trueVal); //All Massnj variables use the Mass address, with nJets selection applied later below
+     std::cout<<"===========================================================================================Mass name corrected for:"<<this->getVar().c_str()<<std::endl;}
+  else {trueTree.SetBranchAddress(this->getVar().c_str(), &trueVal);}
   trueTree.SetBranchAddress("nJets", &trueNJets);
 
   float _doNotUse1 = 0.;
@@ -814,14 +823,25 @@ DijetBranchResponseMatrixMaker<T>::getTrueValues(TChain& trueTree,
       if(!this->selectTrueEvent(*mZ1,*mZ2))
         {continue;}
 
-      if(trueNJets >= 1){
+      if(this->getVar()=="Mass"){(*out)[trueEvt] = trueVal;}
+      else if(this->getVar()=="Mass0j" && trueNJets == 0){(*out)[trueEvt] = trueVal;}
+      else if(this->getVar()=="Mass1j" && trueNJets == 1){
+	(*out)[trueEvt] = trueVal;}
+	//std::cout<<trueEvt<<" "<<trueVal<<std::endl; }
+      else if(this->getVar()=="Mass2j" && trueNJets == 2){(*out)[trueEvt] = trueVal;}
+      else if(this->getVar()=="Mass3j" && trueNJets == 3){(*out)[trueEvt] = trueVal;}
+      else if(this->getVar()=="Mass4j" && trueNJets >= 4){(*out)[trueEvt] = trueVal;}
+      else if (trueNJets >= 1 && this->getVar()=="jetPt0"){(*out)[trueEvt] = trueValvecfloat->at(0);}
+      //else {(*out)[trueEvt] = trueVal;}
+
+      //if(trueNJets >= 1){
 	//std::cout<<trueNJets<<":"<<trueValvecfloat->size()<<std::endl;
-	if(this->getVar()=="jetPt0"){(*out)[trueEvt] = trueValvecfloat->at(0);}
+	//if(this->getVar()=="jetPt0"){(*out)[trueEvt] = trueValvecfloat->at(0);}
 	//std::cout<<"selected true values:"<<trueValvecfloat->at(0)<<std::endl;}
-        else{(*out)[trueEvt] = trueVal;}}
+        //else{(*out)[trueEvt] = trueVal;}}
     }
 
-  return std::move(out);
+  return std::move(out); //move performed on return automatically so this is not actually needed?
 }
 
 template<class T>
@@ -832,7 +852,7 @@ DijetBranchResponseMatrixMaker<T>::setRecoBranches(TChain& t, const Vec<Str>& ob
   
   t.SetBranchAddress("nJets", &nJets);
   t.SetBranchAddress("mjj", &mjj);
-  t.SetBranchAddress("Mass", &Mass);
+  //t.SetBranchAddress("Mass", &Mass);
   t.SetBranchAddress("nJets_jesUp", &nJets_jesUp);
   t.SetBranchAddress("nJets_jesDown", &nJets_jesDn);
   t.SetBranchAddress("nJets_jerUp", &nJets_jerUp);
@@ -857,20 +877,30 @@ DijetBranchResponseMatrixMaker<T>::selectEvent(const Str& syst) const
   float mZ2=*(JetBranchResponseMatrixMakerBase<T>::my_mZ2);
   bool  mass_sel = mZ1 > 60. && mZ1 < 120. && mZ2 > 60. && mZ2 < 120.;
   //std::cout<<"Confirm mZ1,mZ2:  "<<mZ1<<" "<<mZ2<<std::endl;
-  if(syst.empty())
-    return nJets >= 1 && mass_sel;// && mjj>100 && Mass>180;
-  
-  if(syst.find("jes_up") != Str::npos)
-    return nJets_jesUp >= 1 && mass_sel;// && mjj>100 && Mass>180;
-  if(syst.find("jes_dn") != Str::npos)
-    return nJets_jesDn >= 1 && mass_sel; //&& mjj>100 && Mass>180;
-  if(syst.find("jer_up") != Str::npos)
-    return nJets_jerUp >= 1 && mass_sel;// && mjj>100 && Mass>180;
-  if(syst.find("jer_dn") != Str::npos)
-    return nJets_jerDn >= 1 && mass_sel;// && mjj>100 && Mass>180;
+  if(syst.empty()){
+    //std::cout<<"===========================Selection with no syst entered==============="<<std::endl; 
+    if (this->getVar().c_str() == "Mass0j") {return nJets == 0 && mass_sel;}
+    if (this->getVar().c_str() == "Mass1j") {return nJets == 1 && mass_sel;}
+    if (this->getVar().c_str() == "Mass2j") {return nJets == 2 && mass_sel;}
+    if (this->getVar().c_str() == "Mass3j") {return nJets == 3 && mass_sel;}
+    if (this->getVar().c_str() == "Mass4j") {return nJets >= 4 && mass_sel;}
+    if (this->getVar().c_str() == "Mass") {return  mass_sel;}// && mjj>100 && Mass>180;
+    if (this->getVar().c_str() == "jetPt0") {return nJets >= 1 && mass_sel;}
+  }
 
-  return nJets >= 1 && mass_sel;// && mjj>100 && Mass>180;
+  if(syst.find("jes_up") != Str::npos)
+    {return nJets_jesUp >= 1 && mass_sel;}// && mjj>100 && Mass>180;}
+  if(syst.find("jes_dn") != Str::npos)
+    {return nJets_jesDn >= 1 && mass_sel;} //&& mjj>100 && Mass>180;}
+  if(syst.find("jer_up") != Str::npos)
+    {return nJets_jerUp >= 1 && mass_sel;}// && mjj>100 && Mass>180;}
+  if(syst.find("jer_dn") != Str::npos)
+    {return nJets_jerDn >= 1 && mass_sel;}// && mjj>100 && Mass>180;}
+
+  return mass_sel;
 }
+  //return nJets >= 1 && mass_sel;// && mjj>100 && Mass>180;
+  //}
 
 testJets::testJets(const Str& channel,const Str& varName,const Vec<float>& binning):
   DijetBranchResponseMatrixMaker<float>(channel, varName, binning)
