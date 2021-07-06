@@ -10,7 +10,7 @@ from python import HistTools
 import makeSimpleHtml
 import os,pdb,copy
 import subprocess
-import sys,json,pdb
+import sys,json
 import datetime
 import array
 from ROOT import vector as Vec
@@ -478,7 +478,7 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
 
     hSigNominal = hSigDic[chan][varNames[varName]]
     #print "sigHist: ", hSigNominal,", ",hSigNominal.Integral()
-
+    #pdb.set_trace()
     hTrue = hTrueDic[chan]["Gen"+varNames[varName]]
     #histTrue.Scale((1.256*35900*1.0835)/zzSumWeights) 
     hData = hDataDic[chan][varNames[varName]]
@@ -528,6 +528,7 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
             cRes.SetLogy()
         draw_opt = "colz text45"
         hResp.GetXaxis().SetTitle('Reco '+prettyVars[varName]+''+units[varName])
+        hResp.GetXaxis().SetTitleOffset(1.2)
         hResp.GetYaxis().SetTitle('True '+prettyVars[varName]+''+units[varName])
         hResp.GetXaxis().SetTitleSize(0.75*xaxisSize)
         hResp.GetYaxis().SetTitleSize(0.75*yaxisSize)
@@ -690,7 +691,8 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
                 hSigSyst=rebin(hSigSyst,varName)
                 hBkgSystTotal=rebin(hBkgSystTotal,varName)
                 #print "TotBkgSystHist after Rebinning: ",hBkgSystTotal,", ",hBkgSystTotal.Integral()
-                
+                #if lep+'Eff_'+sys=="eEff_Up":
+                #    pdb.set_trace()
                 hUnfolded[lep+'Eff_'+sys] ,hCovLep,hRespLep = getUnfolded(hSigSyst,
                                                          hBkgSystTotal,
                                                          hTruth[''],
@@ -801,7 +803,7 @@ def getUnfolded(hSig, hBkg, hTrue, hResponse, hData, nIter,withRespAndCov=False)
     #RooUnfoldIter = getattr(ROOT,"RooUnfoldBayes")
 
     RooUnfoldInv = getattr(ROOT,"RooUnfoldInvert")
-
+    RooUnfoldBayes = getattr(ROOT,"RooUnfoldBayes")
     #RooUnfoldBinbyBin = getattr(ROOT,"RooUnfoldBinByBin")
     try:
         svd = ROOT.TDecompSVD(response.Mresponse())
@@ -859,7 +861,8 @@ def getUnfolded(hSig, hBkg, hTrue, hResponse, hData, nIter,withRespAndCov=False)
 
     #Simply inverting the matrix
     unf = RooUnfoldInv(response, hDataMinusBkg)
-    
+    unf3 = RooUnfoldBayes(response, hDataMinusBkg,4)
+    #unf3 = RooUnfoldBayes(response, hSig,4)
     #unf = RooUnfoldIter(response, hDataMinusBkg, nIter)
     print "unf: ",unf 
 
@@ -869,17 +872,21 @@ def getUnfolded(hSig, hBkg, hTrue, hResponse, hData, nIter,withRespAndCov=False)
     #del hDataMinusBkg
     #This is the unfolded "data" distribution
     hOut = unf.Hreco()
+    hOut3=unf3.Hreco()
     #ROOT.SetOwnership(hOut,False)
     if not hOut:
         print hOut
         raise ValueError("The unfolded histogram got screwed up somehow!")
-    print("hOut: ",hOut,"",hOut.Integral()) 
+    print("hOut: ",hOut,"",hOut.Integral())
+    print("Check first bin simple:",hOut.GetBinContent(1))
+    print("Check first bin reg:",hOut.GetBinContent(1))
     #Returns covariance matrices for error calculation of type withError
     #0: Errors are the square root of the bin content
     #1: Errors from the diagonals of the covariance matrix given by the unfolding
     #2: Errors from the covariance matrix given by the unfolding => We use this one for now
     #3: Errors from the covariance matrix from the variation of the results in toy MC tests
     hCov = unf.Ereco(2)
+    hCov3=unf3.Ereco(2)
     #hOut.SetDirectory(0)
     #hResp.SetDirectory(0)
     #ROOT.SetOwnership(hCov,False)
@@ -936,6 +943,7 @@ def _sumUncertainties(errDict,varName):
     hUncUp=ROOT.TH1D("hUncUp","Total Up Uncert.",len(histbins)-1,histbins)
     hUncDn=ROOT.TH1D("hUncDn","Total Dn Uncert.",len(histbins)-1,histbins)
     sysList = errDict['Up'].keys()
+    #pdb.set_trace()
     print "sysList: ",sysList
     #print "hUncUp: ",hUncUp,"",hUncUp.Integral()
     #print "hUncDown: ",hUncDn,"",hUncDn.Integral()
@@ -1027,14 +1035,14 @@ sigSampleDic.update(AltsigSampleDic)
 if args['test']:
     sigSamplesPath={}
     if analysis=="ZZ4l2016":
-        fUse = ROOT.TFile("SystGenFiles/For_unfolding_Hists07Apr2021_ZZ4l2016_Moriond_fullSyst.root","update")
+        fUse = ROOT.TFile("SystGenFiles/For_unfolding_Hists17May2021_ZZ4l2016_Moriond_fullSyst.root","update")
         #fUse = ROOT.TFile("SystGenFiles/Hists25Jun2020-ZZ4l2016_Moriond.root","update")
         #fUse = ROOT.TFile("SystGenFiles/Hists31Mar2020-ZZ4l2016_Moriond.root","update")
     elif analysis=="ZZ4l2017":
-        fUse = ROOT.TFile("SystGenFiles/For_unfolding_Hists07Apr2021_ZZ4l2017_Moriond_fullSyst.root","update")
+        fUse = ROOT.TFile("SystGenFiles/For_unfolding_Hists17May2021_ZZ4l2017_Moriond_fullSyst.root","update")
         #fUse = ROOT.TFile("SystGenFiles/Hists07Jun2020-ZZ4l2017_Moriond.root","update")
     elif analysis=="ZZ4l2018": 
-        fUse = ROOT.TFile("SystGenFiles/For_unfolding_Hists07Apr2021_ZZ4l2018_MVA_fullSyst.root","update")
+        fUse = ROOT.TFile("SystGenFiles/For_unfolding_Hists17May2021_ZZ4l2018_MVA_fullSyst.root","update")
         #fUse = ROOT.TFile("SystGenFiles/Hists08Jun2020-ZZ4l2018_MVA.root","update")
     fOut=fUse
     #pdb.set_trace()

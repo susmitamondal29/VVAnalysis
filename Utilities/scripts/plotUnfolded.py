@@ -9,7 +9,7 @@ import os
 import subprocess
 import sys
 import datetime
-import array,json
+import array,json,pdb
 from ROOT import vector as Vec
 
 VFloat = Vec('float')
@@ -547,7 +547,7 @@ def generatePlots(hUnfolded,hUncUp,hUncDn,hTruth,hTruthAlt,varName,norm,normFb,l
         hTrue.SetFillColor(ROOT.TColor.GetColor("#add8e6"))
         hTrue.SetLineColor(ROOT.TColor.GetColor('#377eb8'))
         hTrue.SetLineStyle(1)
-        hTrue.SetFillStyle(3010)
+        hTrue.SetFillStyle(0)
         #AltSignal
         hTrueAlt.SetFillColor(2)
         hTrueAlt.SetLineStyle(10)#dashes
@@ -555,8 +555,8 @@ def generatePlots(hUnfolded,hUncUp,hUncDn,hTruth,hTruthAlt,varName,norm,normFb,l
         hTrueAlt.SetLineColor(ROOT.kRed)
         print "Total Unf Data Integral",hUnf.Integral()
         Truthmaximum = hTrue.GetMaximum()
-        hTrue.SetLineWidth(2*hTrue.GetLineWidth())
-        hTrueAlt.SetLineWidth(2*hTrueAlt.GetLineWidth())
+        hTrue.SetLineWidth(4*hTrue.GetLineWidth())
+        hTrueAlt.SetLineWidth(4*hTrueAlt.GetLineWidth())
 
         if not norm and normFb:
             print "Inclusive fiducial cross section = {} fb".format(hUnf.Integral(1,hUnf.GetNbinsX()))
@@ -602,6 +602,7 @@ def generatePlots(hUnfolded,hUncUp,hUncDn,hTruth,hTruthAlt,varName,norm,normFb,l
 
         hTrue.Draw("HIST")
         hTrueAlt.Draw("HIST")
+        pdb.set_trace()
         
         if(Unfmaximum > Truthmaximum):
             hTrue.SetMaximum(Unfmaximum*args["scaleymax"])
@@ -765,7 +766,7 @@ def generatePlots(hUnfolded,hUncUp,hUncDn,hTruth,hTruthAlt,varName,norm,normFb,l
         xaxis.SetLabelSize(0.162)
         xaxis.SetTitleFont(42)
         xaxis.SetTitleSize(0.18)
-        xaxis.SetTitleOffset(0.9)
+        xaxis.SetTitleOffset(1.2)
         if varName=="mass":
             xaxis.SetNoExponent(True)
         xaxis.Draw("SAME")
@@ -814,14 +815,14 @@ runVariables.append(args['variable'])
 print "runVariables: ",runVariables
 #Plot histograms from these respective root files generated wiht saveUnfolded.py
 if analysis=="ZZ4l2016":
-    fUse = ROOT.TFile("UnfHistsFinal-13Apr2021-ZZ4l2016.root","read")
+    fUse = ROOT.TFile("UnfHistsFinal-18Jun2021-ZZ4l2016.root","read")
     #fUse = ROOT.TFile("UnfHistsFinal-18Apr2020-ZZ4l2016.root","read")
 elif analysis=="ZZ4l2017":
-    fUse = ROOT.TFile("UnfHistsFinal-13Apr2021-ZZ4l2017.root","read")
+    fUse = ROOT.TFile("UnfHistsFinal-22May2021-ZZ4l2017.root","read")
     #fUse = ROOT.TFile("UnfHistsFinal-18Apr2020-ZZ4l2017.root","read")
 elif analysis=="ZZ4l2018":
     if args['lumi'] < 100. :
-        fUse = ROOT.TFile("UnfHistsFinal-14Apr2021-ZZ4l2018.root","read")
+        fUse = ROOT.TFile("UnfHistsFinal-22May2021-ZZ4l2018.root","read")
         #fUse = ROOT.TFile("UnfHistsFinal-18Apr2020-ZZ4l2018.root","read")
     else:
         fUse = ROOT.TFile("allyear_UnfHist.root","read") 

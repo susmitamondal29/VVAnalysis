@@ -18,11 +18,13 @@ def writeOutputListItem(item, directory):
 
 def getHistsInDic(output_list,varList,channels):
     histsChanDic={}
+    exist=False
     for chan in channels:
         if chan=="eemm": 
             #Loop over the variables for which we want unfolded distributions
             histsDic={}
             for var in varList:
+                exist=False
                 #Items are the histograms that the HistTools function saves in a composite list
                 for item in output_list:
                     #print "MCsubItem:",subItem.GetName()
@@ -31,6 +33,7 @@ def getHistsInDic(output_list,varList,channels):
                     else: 
                         itemName=var+"_"+chan
                     if item.GetName()==itemName:
+                        exist=True
                         hist = item.Clone()
                         #Find _mmee hist as well
                         if "Gen" in var: 
@@ -39,12 +42,15 @@ def getHistsInDic(output_list,varList,channels):
                             h2 = output_list.FindObject(var+"_mmee")
                         hist.Add(h2)
                         hist.SetDirectory(0)
+                if not exist:
+                    raise ValueError("Histogram not found:%s"%itemName)
                 histsDic[var]=hist
             histsChanDic[chan]=histsDic
         else:
             #Loop over the variables for which we want unfolded distributions
             histsDic={}
             for var in varList:
+                exist=False
                 #print "var:",var
                 #Items are the histograms that the HistTools function saves in a composite list
                 for item in output_list:
@@ -54,8 +60,11 @@ def getHistsInDic(output_list,varList,channels):
                     else: 
                         itemName=var+"_"+chan
                     if item.GetName()==itemName:
+                        exist=True
                         hist = item.Clone()
                         hist.SetDirectory(0)
+                if not exist:
+                    raise ValueError("Histogram not found:%s"%itemName)
                 histsDic[var]=hist
             histsChanDic[chan]=histsDic
     return histsChanDic

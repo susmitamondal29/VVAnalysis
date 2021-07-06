@@ -78,7 +78,7 @@ class ResponseMatrixMakerBase
 
  protected:
   typedef T ValType;
-
+  //Vec<float>* valuevecfloat=NULL;
   // Event number -> value(s)
   virtual UPtr<UMap<size_t, T> > getTrueValues(TChain& trueTree,
                                                const Vec<Str>& objects,
@@ -276,7 +276,7 @@ class JetBranchResponseMatrixMakerBase : public BranchValueResponseMatrixMaker<T
   // sets jet systematic branches too
   virtual void setRecoBranches(TChain& t, const Vec<Str>& objects);
 
- private:
+  private:
   Vec<float>* valuevecfloat=NULL;
   Vec<float>* value_jesUp=NULL; //T 
   Vec<float>* value_jesDn=NULL;
@@ -306,6 +306,7 @@ class DijetBranchResponseMatrixMaker : public JetBranchResponseMatrixMakerBase<T
   // value branch
   void setRecoBranches(TChain& t, const Vec<Str>& objects);
 
+  virtual T getEventResponse(const Str& syst = "") const;
   // selects for nJets >= 2
   bool selectEvent(const Str& syst = "") const;
 
