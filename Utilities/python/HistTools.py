@@ -1,7 +1,7 @@
 import array
 import ROOT
 import logging
-import math
+import math,pdb
 
 def getDifference(fOut, name, dir1, dir2, ratioFunc=None):
     differences = ROOT.TList()
@@ -269,6 +269,7 @@ def addOverflowAndUnderflow(hist, underflow=True, overflow=True):
         hist.SetBinContent(1, add_underflow)
 
 def makeCompositeHists(hist_file, name, members, lumi, hists=[], underflow=False, overflow=True, rebin=None):
+    #pdb.set_trace()
     composite = ROOT.TList()
     composite.SetName(name)
     SumW={}

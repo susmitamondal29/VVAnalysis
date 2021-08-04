@@ -3,7 +3,7 @@ import UserInput
 import fnmatch
 import glob
 import subprocess
-import os
+import os,pdb
 import json
 import array
 import string
@@ -84,29 +84,36 @@ def getCombinePath():
                             % os.environ["USER"])
     return config['Setup']['combine_path'] + "/"
 def getListOfEWK():
-    return [
-        "zz4l-powheg",
-        "ggZZ4e",
-        "ggZZ4m",
-        "ggZZ4t",
-        "ggZZ2e2mu",
-        "ggZZ2e2tau",
+    with open('listFile.json') as list_json_file:
+        mylist_dict = json.load(list_json_file)
+    return mylist_dict['EWK']
+#    return [
+#        "zz4l-powheg",
+#        "ggZZ4e",
+#        "ggZZ4m",
+#        "ggZZ4t",
+#        "ggZZ2e2mu",
+#        "ggZZ2e2tau",
         #"ggZZ2mu2tau",
-    ]
+#    ]
 
 def getListOfzzNLO():
     return [
         "zz4l-amcatnlo",
         ]
 def getListOfaltSig():
-    return [
-        "zz4l-amcatnlo",
-        "ggZZ4e",
-        "ggZZ4m",
-        "ggZZ4t",
-        "ggZZ2e2mu",
-        "ggZZ2e2tau",
-    ]
+    with open('listFile.json') as list_json_file:
+        mylist_dict = json.load(list_json_file)
+    return mylist_dict['altEWK']
+    
+#    return [
+#        "zz4l-amcatnlo",
+#        "ggZZ4e",
+#        "ggZZ4m",
+#        "ggZZ4t",
+#        "ggZZ2e2mu",
+#        "ggZZ2e2tau",
+#    ]
 def getListOfEWKFilenames(analysis=""):
     if "ZZ4l" in analysis:
         return [
@@ -289,7 +296,8 @@ def fillTemplatedFile(template_file_name, out_file_name, template_dict):
     with open(out_file_name, "w") as outFile:
         outFile.write(result)
 
-def getListOfFilesWithXSec(filelist, manager_path="", selection="ntuples"):
+def getListOfFilesWithXSec(filelist, manager_path="", selection="LooseLeptons"): #"ntuples"):
+    #pdb.set_trace()
     if manager_path is "":
         manager_path = getManagerPath()
     data_path = "%s/%s/FileInfo" % (manager_path, getManagerName())
@@ -365,6 +373,7 @@ def getConfigFileName(config_file_name):
             config_file_name)
 
 def getInputFilesPath(sample_name, selection, analysis, manager_path=""):
+    #pdb.set_trace()
     if manager_path is "":
         manager_path = getManagerPath()
     if ".root" in sample_name:

@@ -275,7 +275,7 @@ def createRatio(h1, h2):
         if(datacontent!=0):
             error = ratiocontent*(math.sqrt(math.pow((dataerror/datacontent),2) + math.pow((stackerror/stackcontent),2)))
         else:
-            error = 2.07
+            error = 2.07 #why 2.07?
         #print "ratio content: ",ratiocontent
         #print "stat error: ", error
         Ratio.SetBinContent(i,ratiocontent)
@@ -312,13 +312,18 @@ def getPrettyLegend(hTrue, data_hist, hAltTrue, error_hist, coords):
     legend.SetBorderSize(2)
     legend.SetTextSize(0.025) #0.033
     legend.SetTextColor(ROOT.kBlack)
-    sigLabel = "POWHEG+MCFM+Pythia8" 
-    sigLabelAlt = "MG5_aMC@NLO+MCFM+Pythia8"
+    with open('listFile.json') as list_json_file:
+        mylist_dict = json.load(list_json_file)
+    sigLabel = mylist_dict["sigLabel"] #"POWHEG+MCFM+Pythia8" 
+    sigLabelAlt = mylist_dict["sigLabelAlt"] #"MG5_aMC@NLO+MCFM+Pythia8"
     if data_hist:
         legend.AddEntry(data_hist, "Data + stat. unc.", "lep")
     legend.AddEntry(error_hist, "Stat. #oplus syst. unc.", "f")
-    legend.AddEntry(hTrue, sigLabel,"lf")
-    legend.AddEntry(hAltTrue, sigLabelAlt,"l")
+    legend.AddEntry(hTrue, sigLabel,"lep")
+    legend.AddEntry(hAltTrue, sigLabelAlt,"lep")
+
+    #legend.AddEntry(hTrue, sigLabel,"lf")
+    #legend.AddEntry(hAltTrue, sigLabelAlt,"l")
     return legend
 def createCanvasPads(varName):
     #if matrix included
@@ -379,7 +384,7 @@ def createPad3(canvas):
     return pad3
 
 #rebin histos and take care of overflow bins
-def rebin(hist,varName):
+def rebin(hist,varName): #didn't handle error, but this function not actually used
     ROOT.SetOwnership(hist, False)
     #No need to rebin certain variables but still might need overflow check
     if varName not in ['eta']:
@@ -408,7 +413,7 @@ def getLumiTextBox():
     texS1.Draw()
     return texS,texS1
 
-def getSigTextBox(x,y,sigLabel,size):
+def getSigTextBox(x,y,sigLabel,size): #check whether actually used
     if sigLabel=="POWHEG+MCFM+Pythia8":
         texS = ROOT.TLatex(x,y, "#bf{POWHEG+MCFM+Pythia8}")
     else:
@@ -476,7 +481,8 @@ def MainErrorBand(hMain,hUncUp,hUncDn,varName,norm,normFb):
             #print "TotErrorUp: ",errorUp, "","TotErrorDn: ",errorDn
             MainGraph.SetPointEYhigh(i-1, errorUp)
             MainGraph.SetPointEYlow(i-1, errorDn)
-        MainGraph.SetFillColorAlpha(1,0.7)
+        MainGraph.SetFillColorAlpha(1,0.3)
+#        MainGraph.SetFillColorAlpha(1,0.7)
         MainGraph.SetFillStyle(3001)
         if norm:
             drawyTitle = _yTitle[varName]
@@ -522,7 +528,7 @@ def generatePlots(hUnfolded,hUncUp,hUncDn,hTruth,hTruthAlt,varName,norm,normFb,l
     hTrue = hTruth.Clone()
     #Alt Signal 
     hTrueAlt = hTruthAlt.Clone()
-    hTrueLeg = hTruthAlt.Clone()
+    hTrueLeg = hTruthAlt.Clone() #doesn't seem to get used
     #lumi provided already in fb-1
     lumifb = lumi
 
@@ -602,7 +608,7 @@ def generatePlots(hUnfolded,hUncUp,hUncDn,hTruth,hTruthAlt,varName,norm,normFb,l
 
         hTrue.Draw("HIST")
         hTrueAlt.Draw("HIST")
-        pdb.set_trace()
+        #pdb.set_trace()
         
         if(Unfmaximum > Truthmaximum):
             hTrue.SetMaximum(Unfmaximum*args["scaleymax"])
@@ -621,8 +627,11 @@ def generatePlots(hUnfolded,hUncUp,hUncDn,hTruth,hTruthAlt,varName,norm,normFb,l
         #hTrue.GetYaxis().SetTitleOffset(1.0)
         hTrueAlt.GetXaxis().SetLabelSize(0)
         hTrueAlt.GetXaxis().SetTitleSize(0)
-        hTrueAlt.Draw("HISTSAME")
-        hTrue.Draw("HISTSAME")
+        hTrueAlt.Draw("PE1SAME") #drawing second time, for updating?
+        hTrue.Draw("PE1SAME")
+
+#        hTrueAlt.Draw("HISTSAME") #drawing second time, for updating?
+#        hTrue.Draw("HISTSAME")
         #hUnf.Sumw2(False)
         #hUnf.SetBinErrorOption(ROOT.TH1.kPoisson)
         hUnf.SetLineColor(ROOT.kBlack)
@@ -664,7 +673,7 @@ def generatePlots(hUnfolded,hUncUp,hUncDn,hTruth,hTruthAlt,varName,norm,normFb,l
         legend = getPrettyLegend(hTrue, hUnf, hTrueAlt, UnfErrBand, coords)
         legend.Draw()
         texS,texS1=getLumiTextBox()
-        sigLabel = "POWHEG+MCFM+Pythia8" 
+        sigLabel = "POWHEG+MCFM+Pythia8" #used?
         sigLabelAlt = "MG5_aMC@NLO+MCFM+Pythia8"
         #if varName=="dphiz1z2" or varName=="drz1z2":
         #    leg = ROOT.TLegend(0.15,0.60,0.15+0.015*len(sigLabelAlt),0.90,"")
@@ -706,7 +715,7 @@ def generatePlots(hUnfolded,hUncUp,hUncDn,hTruth,hTruthAlt,varName,norm,normFb,l
         ratioErrorBand.GetYaxis().SetTitleSize(0)
         ratioErrorBand.Draw("a2")
         
-        sigTex = getSigTextBox(0.15,0.8,sigLabel,0.14)
+        sigTex = getSigTextBox(0.15,0.8,sigLabel,0.14) #used?
         Ratio.Draw("PE1SAME")
         line.SetLineColor(ROOT.kBlack)
         line.Draw("same")
@@ -814,6 +823,9 @@ runVariables=[]
 runVariables.append(args['variable'])
 print "runVariables: ",runVariables
 #Plot histograms from these respective root files generated wiht saveUnfolded.py
+with open('listFile.json') as list_json_file:
+    mylist_dict = json.load(list_json_file)
+
 if analysis=="ZZ4l2016":
     fUse = ROOT.TFile("UnfHistsFinal-18Jun2021-ZZ4l2016.root","read")
     #fUse = ROOT.TFile("UnfHistsFinal-18Apr2020-ZZ4l2016.root","read")
@@ -822,7 +834,9 @@ elif analysis=="ZZ4l2017":
     #fUse = ROOT.TFile("UnfHistsFinal-18Apr2020-ZZ4l2017.root","read")
 elif analysis=="ZZ4l2018":
     if args['lumi'] < 100. :
-        fUse = ROOT.TFile("UnfHistsFinal-22May2021-ZZ4l2018.root","read")
+        fUse = ROOT.TFile(mylist_dict['f18'],"read")
+        #fUse = ROOT.TFile("UnfHistsFinal-2018NewqqZZMC-14Jul2021-ZZ4l2018.root","read")
+        #fUse = ROOT.TFile("UnfHistsFinal-22May2021-ZZ4l2018.root","read")
         #fUse = ROOT.TFile("UnfHistsFinal-18Apr2020-ZZ4l2018.root","read")
     else:
         fUse = ROOT.TFile("allyear_UnfHist.root","read") 

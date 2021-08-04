@@ -19,7 +19,14 @@ from PlotTools import PlotStyle as Style, pdfViaTex
 style = Style()
 ROOT.gStyle.SetLineScalePS(1.8)
 
+with open('listFile.json') as list_json_file:
+    mylist_dict = json.load(list_json_file)
+
 channels = ["eeee","eemm","mmmm"]
+mynominalName=mylist_dict['nomname']
+myaltname= mylist_dict['altname']
+applyreg=mylist_dict["reg"]
+
 #channels = ["eeee"]
 def getComLineArgs():
     parser = UserInput.getDefaultParser()
@@ -336,8 +343,9 @@ def generateResponseClass(varName, channel,sigSamples,sigSamplesPath,sumW,hPUWt,
     responseMakers = {}
     #for sample, file_path in sigFileNames.items():
     #for sample in ConfigureJobs.getListOfFiles(filelist,selection):
+
     for sample in sigSamplesPath.keys():
-        if sample=="zz4l-amcatnlo":
+        if sample==myaltname:
             continue
         #print "sample:", sample #expect zz4l-powheg
         #file_path = ConfigureJobs.getInputFilesPath(sample,selection,analysis)
@@ -367,7 +375,7 @@ def generateResponseClass(varName, channel,sigSamples,sigSamplesPath,sumW,hPUWt,
         responseMakers[sample] = resp
 
     altResponseMakers = {}
-    for sample in ["zz4l-amcatnlo"]:
+    for sample in [myaltname]:#["zz4l-amcatnlo"]:
         #we only need to make new responseMatrix for zz4l-amcatnlo, ggZZ responseMatrices are already done above. 
         file_path=sigSamplesPath[sample]
         #print("where are the histos leaking")
@@ -430,9 +438,9 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
     hResponseSig3 = hResponseNominal["ggZZ4t"].getResponse("pu_Up")
     hResponseSig4 = hResponseNominal["ggZZ2e2tau"].getResponse("pu_Up")
     hResponseSig5 = hResponseNominal["ggZZ2e2mu"].getResponse("pu_Up")
-    hResponseSig6 = hResponseNominal["zz4l-powheg"].getResponse("pu_Up")
+    hResponseSig6 = hResponseNominal[mynominalName].getResponse("pu_Up")
     #This will pop the powheg response matrix from the hResponseNominal Dictionary
-    hResponseNominalTotal = hResponseNominal.pop("zz4l-powheg")
+    hResponseNominalTotal = hResponseNominal.pop(mynominalName)
     #print "hRespNominalTotal: ",hResponseNominalTotal
     #This gets us the response matrix as a TH2D for "zz4l-powheg"
     print "This hResponse is full of leaks here"
@@ -622,7 +630,7 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
                 del cResLumi
         
         hResponsePU = {s:resp for s,resp in responseMakers.items()}
-        hRespPUTot = hResponsePU.pop("zz4l-powheg")
+        hRespPUTot = hResponsePU.pop(mynominalName)
         print "No errors in PU chain?"
         # PU reweight uncertainty
         for sys in ['Up','Down']:
@@ -664,7 +672,7 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
         # lepton efficiency uncertainty
         for lep in set(chan):
             hResponseSyst = {s:resp for s,resp in responseMakers.items()}
-            hRespSystTot = hResponseSyst.pop("zz4l-powheg")
+            hRespSystTot = hResponseSyst.pop(mynominalName)
             print "No errors in systematics chain?"
             for sys in ['Up','Down']:
                 hRespSyst = hRespSystTot.getResponse(lep+'Eff_'+sys)
@@ -729,9 +737,9 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
     print "hResponseNominal:",hResponseNominal
     print "hResponseAltNominal:",hResponseAltNominal
 
-    hResponseSig7 = hResponseAltNominal["zz4l-amcatnlo"].getResponse("pu_Up")
+    hResponseSig7 = hResponseAltNominal[myaltname].getResponse("pu_Up")
     #This will pop the amcnlo response matrix from the hResponseAltNominal Dictionary
-    hResponseAltNominalTotal = hResponseAltNominal.pop("zz4l-amcatnlo")
+    hResponseAltNominalTotal = hResponseAltNominal.pop(myaltname)
 
     hAltResponse = hResponseAltNominalTotal.getResponse('nominal')
     hAltResponse.SetDirectory(0)
@@ -895,13 +903,19 @@ def getUnfolded(hSig, hBkg, hTrue, hResponse, hData, nIter,withRespAndCov=False)
     #return hCov.Clone(),hResp.Clone()
     #return hOut
     if withRespAndCov:
-        return hOut,hCov.Clone(),hResp.Clone()
+        if applyreg:
+            return hOut3,hCov3.Clone(),hResp.Clone()
+        else:
+            return hOut,hCov.Clone(),hResp.Clone()
     
     #del hDataMinusBkg
     #print "DataMinusbkgIntegral: ",hDataMinusBkg, ", ",hDataMinusBkg.Integral()
-    return hOut
+    if applyreg:
+        return hOut3
+    else:
+        return hOut
 
-def _generateUncertainties(hDict,norm):
+def _generateUncertainties(hDict,norm): #hDict is hUnfolded dict
 
     nominalArea = hDict[''].Integral(0,hDict[''].GetNbinsX()+1) #if called after rebin, the overflow bin is 0 already, and do we include underflow bin?
     hErr = {'Up':{},'Down':{}}
@@ -1024,7 +1038,7 @@ sigSampleDic=ConfigureJobs.getListOfFilesWithXSec(ConfigureJobs.getListOfEWK())
 sigSampleList=[str(i) for i in sigSampleDic.keys()]
 print "sigSamples: ",sigSampleList
 
-AltsigSampleDic=ConfigureJobs.getListOfFilesWithXSec(["zz4l-amcatnlo",])
+AltsigSampleDic=ConfigureJobs.getListOfFilesWithXSec([myaltname,])
 AltsigSampleList=[str(i) for i in AltsigSampleDic.keys()]
 print "AltsigSamples: ",AltsigSampleList
 
@@ -1042,7 +1056,8 @@ if args['test']:
         fUse = ROOT.TFile("SystGenFiles/For_unfolding_Hists17May2021_ZZ4l2017_Moriond_fullSyst.root","update")
         #fUse = ROOT.TFile("SystGenFiles/Hists07Jun2020-ZZ4l2017_Moriond.root","update")
     elif analysis=="ZZ4l2018": 
-        fUse = ROOT.TFile("SystGenFiles/For_unfolding_Hists17May2021_ZZ4l2018_MVA_fullSyst.root","update")
+        fUse = ROOT.TFile("SystGenFiles/Syst_qqZZNewMCadded_Hists14Jul2021-ZZ4l2018_MVA.root","update")
+        #fUse = ROOT.TFile("SystGenFiles/For_unfolding_Hists17May2021_ZZ4l2018_MVA_fullSyst.root","update") #Recent results before adding new MC qqZZ
         #fUse = ROOT.TFile("SystGenFiles/Hists08Jun2020-ZZ4l2018_MVA.root","update")
     fOut=fUse
     #pdb.set_trace()
@@ -1079,7 +1094,7 @@ ewkcorr = HistTools.getDifference(fOut, "DataEWKCorrected", "AllData", "AllEWK")
 
 print "Signals: ",ewkSumW
 #print the sum for a sample (zz4l-powheg)
-zzSumWeights = ewkSumW["zz4l-powheg"]  
+zzSumWeights = ewkSumW[mynominalName]  
 #print "sumW (zz4l-powheg): ",zzSumWeights
 
 #getHistInDic function also takes care of adding the histograms in eemm+mmee, hence the input here is channels=[eeee,eemm,mmmm]
@@ -1123,7 +1138,7 @@ for chan in channels:
                 systList.append(varNames[s]+"_CMS_eff_"+lep+sys)
 
 print systList
-if not args['noSyst']: 
+if not args['noSyst']:  #systList has repeated variables, but shouldn't matter as it will just reassigin same value in the dictionary
     hSigSystDic=OutputTools.getHistsInDic(ewkmc,systList,channels)
     hbkgMCSystDic=OutputTools.getHistsInDic(allVVVmc,systList,channels)
 else:
@@ -1256,7 +1271,8 @@ if args['plotResponse']:
         makeSimpleHtml.writeHTML(os.path.expanduser(OutputDirs[cat].replace("/plots", "")), "2D ResponseMatrices (from MC)")
 
 today = datetime.date.today().strftime("%d%b%Y")
-tmpFileName = "UnfHistsFinal-%s-%s.root" % (today, analysis) 
+tmpFileName = "UnfHistsFinal-NewMCRedo-26Jul2021-%s.root" % (analysis) 
+#tmpFileName = "UnfHistsFinal-%s-%s.root" % (today, analysis) 
 #tmpFileName = "UnfHistsFinal-18Apr2020-%s.root" % (analysis) 
 fHistOut = ROOT.TFile.Open(tmpFileName, "update")
 #fOut = ROOT.TFile.Open("/".join([outputFolder, outputFile]), "RECREATE")
