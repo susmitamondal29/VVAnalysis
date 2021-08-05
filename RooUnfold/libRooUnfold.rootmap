@@ -4,6 +4,7 @@ class RooUnfold
 class RooUnfoldBayes
 class RooUnfoldBinByBin
 class RooUnfoldErrors
+class RooUnfoldIds
 class RooUnfoldInvert
 class RooUnfoldParms
 class RooUnfoldResponse
@@ -14,6 +15,7 @@ header RooUnfold.h
 header RooUnfoldBayes.h
 header RooUnfoldBinByBin.h
 header RooUnfoldErrors.h
+header RooUnfoldIds.h
 header RooUnfoldInvert.h
 header RooUnfoldParms.h
 header RooUnfoldResponse.h

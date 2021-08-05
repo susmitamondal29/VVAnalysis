@@ -1,6 +1,6 @@
 //=====================================================================-*-C++-*-
 // File and Version Information:
-//      $Id: RooUnfold.cxx 344 2013-07-29 22:48:37Z T.J.Adye $
+//      $Id$
 //
 // Description:
 //      Unfolding framework base class.
@@ -10,8 +10,8 @@
 //==============================================================================
 
 //____________________________________________________________
-/* BEGIN_HTML
-<p>A base class for several unfolding methods.
+/*! \class RooUnfold
+    \brief A base class for several unfolding methods.
 <p>The unfolding method can either use the constructors for individual unfolding algorithms or the New() method, specifiying the algorithm to be used.
 <p>The resultant distribution can be displayed as a plot (Hreco) or as a bin by bin breakdown of the true, measured and reconstructed values (PrintTable)
 <p>A covariance matrix can be returned using the Ereco() method. A vector of its diagonals can be returned with the ErecoV() method.
@@ -36,6 +36,16 @@
 <li>Can account for both smearing and biasing
 <li>Returns near singular covariance matrices, again leading to very large chi squared values
 </ul>
+<li> RooUnfoldIds: Uses the Bayes method of unfolding based on the method written by Malaescu (<a href="http://arxiv.org/abs/1106.3107">CERN-PH-EP-2011-111</a>)
+<ul>
+<li>Set the number of iterations used to improve the folding matrix
+<li>Regularisation parameters define the level at which values are deemed to be due to statistical fluctuations. Used for modifying the folding matrix, as well as unfolding.
+<li>Returns errors as a full matrix of covariances
+<li>Error processing is much the same as with the kCovToy setting with 1000 toys. This is quite slow but can be switched off.
+<li>Can handle 2 dimensional distributions
+<li>True and measured distributions must have the same binning
+<li>Can account for both smearing and biasing
+</ul>
 <li> RooUnfoldBinByBin: Unfolds using the method of correction factors.
 <ul>
 <li>Returns errors as a diagonal matrix.
@@ -58,7 +68,7 @@
 <li>For small statistics, this method does not produce useful results.
 <li>The inversion method is included largely to illustrate the necessity of a more effective method of unfolding</ul>
 </ul>
-END_HTML */
+*/
 
 /////////////////////////////////////////////////////////////
 
@@ -73,6 +83,7 @@ END_HTML */
 #include "TClass.h"
 #include "TMatrixD.h"
 #include "TNamed.h"
+#include "TBuffer.h"
 #include "TH1.h"
 #include "TH2.h"
 #include "TH3.h"
@@ -95,6 +106,7 @@ END_HTML */
 #ifdef HAVE_DAGOSTINI
 #include "RooUnfoldDagostini.h"
 #endif
+#include "RooUnfoldIds.h"
 
 using std::vector;
 using std::cout;
@@ -120,13 +132,15 @@ RooUnfold::RooUnfold (const RooUnfoldResponse* res, const TH1* meas, const char*
 RooUnfold* RooUnfold::New (Algorithm alg, const RooUnfoldResponse* res, const TH1* meas,Double_t regparm,
                            const char* name, const char* title)
 {
-    /*Unfolds according to the value of the alg enum:
-    0: a dummy unfold
-    1: Unfold via a Bayes method
-    2: Unfold using singlar value decomposition
-    3: Unfold bin by bin.
-    4: Unfold with TUnfold
-    5: Unfold using inversion of response matrix
+    /*!
+      Unfolds according to the value of the alg enum:
+    - 0 = kNone:     dummy unfolding
+    - 1 = kBayes:    Unfold via iterative application of Bayes theorem
+    - 2 = kSVD:      Unfold using singlar value decomposition (SVD)
+    - 3 = kBinByBin: Unfold bin by bin.
+    - 4 = kTUnfold:  Unfold with TUnfold
+    - 5 = kInvert:   Unfold using inversion of response matrix
+    - 7 = kIDS:      Unfold using iterative dynamically stabilized (IDS) method
     */
   RooUnfold* unfold;
   switch (alg) {
@@ -161,6 +175,9 @@ RooUnfold* RooUnfold::New (Algorithm alg, const RooUnfoldResponse* res, const TH
       cerr << "RooUnfoldDagostini is not available" << endl;
       return 0;
 #endif
+    case kIDS:
+      unfold= new RooUnfoldIds      (res, meas);
+      break;
     default:
       cerr << "Unknown RooUnfold method " << Int_t(alg) << endl;
       return 0;
@@ -175,7 +192,7 @@ RooUnfold* RooUnfold::New (Algorithm alg, const RooUnfoldResponse* res, const TH
 
 RooUnfold* RooUnfold::Clone (const char* newname) const
 {
-  // Creates a copy of the unfold object
+  //! Creates a copy of the unfold object
   RooUnfold* unfold= new RooUnfold(*this);
   if (newname) unfold->SetName(newname);
   return unfold;
@@ -194,7 +211,7 @@ void RooUnfold::Destroy()
 RooUnfold::RooUnfold (const RooUnfold& rhs)
   : TNamed (rhs.GetName(), rhs.GetTitle())
 {
-  // Copy constructor.
+  //! Copy constructor.
   Init();
   CopyData (rhs);
 }
@@ -245,7 +262,7 @@ RooUnfold& RooUnfold::Setup (const RooUnfoldResponse* res, const TH1* meas)
 
 void RooUnfold::SetMeasured (const TH1* meas)
 {
-  // Set measured distribution and errors. RooUnfold does not own the histogram.
+  //! Set measured distribution and errors. RooUnfold does not own the histogram.
   _meas= meas;
   delete _vMes; _vMes= 0;
   delete _eMes; _eMes= 0;
@@ -253,7 +270,7 @@ void RooUnfold::SetMeasured (const TH1* meas)
 
 void RooUnfold::SetMeasured (const TVectorD& meas, const TVectorD& err)
 {
-  // Set measured distribution and errors. Should be called after setting response matrix.
+  //! Set measured distribution and errors. Should be called after setting response matrix.
   if (!_measmine) {
     Bool_t oldstat= TH1::AddDirectoryStatus();
     TH1::AddDirectory (kFALSE);
@@ -272,14 +289,14 @@ void RooUnfold::SetMeasured (const TVectorD& meas, const TVectorD& err)
 
 void RooUnfold::SetMeasured (const TVectorD& meas, const TMatrixD& cov)
 {
-  // Set measured distribution and its covariance matrix. Should be called after setting response matrix.
+  //! Set measured distribution and its covariance matrix. Should be called after setting response matrix.
   SetMeasuredCov (cov);
   SetMeasured (meas, Emeasured());
 }
 
 void RooUnfold::SetMeasuredCov (const TMatrixD& cov)
 {
-  // Set covariance matrix on measured distribution.
+  //! Set covariance matrix on measured distribution.
   delete _covL; _covL= 0;
   delete _eMes;
   delete _covMes;
@@ -294,7 +311,7 @@ void RooUnfold::SetMeasuredCov (const TMatrixD& cov)
 
 const TMatrixD& RooUnfold::GetMeasuredCov() const
 {
-  // Get covariance matrix on measured distribution.
+  //! Get covariance matrix on measured distribution.
   if (_covMes) return *_covMes;
   const TVectorD& err= Emeasured();
   _covMes= new TMatrixD (_nm,_nm);
@@ -308,7 +325,7 @@ const TMatrixD& RooUnfold::GetMeasuredCov() const
 
 void RooUnfold::SetResponse (const RooUnfoldResponse* res)
 {
-  // Set response matrix for unfolding.
+  //! Set response matrix for unfolding.
   delete _resmine; _resmine= 0;
   _res= res;
   _overflow= _res->UseOverflowStatus() ? 1 : 0;
@@ -323,14 +340,14 @@ void RooUnfold::SetResponse (const RooUnfoldResponse* res)
 
 void RooUnfold::SetResponse (RooUnfoldResponse* res, Bool_t takeOwnership)
 {
-  // Set response matrix for unfolding, optionally taking ownership of the RooUnfoldResponse object
+  //! Set response matrix for unfolding, optionally taking ownership of the RooUnfoldResponse object
   SetResponse (res);
   if (takeOwnership) _resmine= res;
 }
 
 void RooUnfold::Unfold()
 {
-  // Dummy unfolding - just copies input
+  //! Dummy unfolding - just copies input
   cout << "********************** " << ClassName() << ": dummy unfolding - just copy input **********************" << endl;
   _rec.ResizeTo (_nt);
   Int_t nb= _nm < _nt ? _nm : _nt;
@@ -342,8 +359,8 @@ void RooUnfold::Unfold()
 
 void RooUnfold::GetErrors()
 {
-    //Creates vector of diagonals of covariance matrices.
-    //This may be overridden if it can be computed more quickly without the covariance matrix.
+    //!Creates vector of diagonals of covariance matrices.
+    //!This may be overridden if it can be computed more quickly without the covariance matrix.
     if (!_haveCov) GetCov();
     if (!_haveCov) return;
     _variances.ResizeTo(_nt);
@@ -355,7 +372,7 @@ void RooUnfold::GetErrors()
 
 void RooUnfold::GetCov()
 {
-    //Dummy routine to get covariance matrix. It should be overridden by derived classes.
+  //!Dummy routine to get covariance matrix. It should be overridden by derived classes.
   const TMatrixD& covmeas= GetMeasuredCov();
   Int_t nb= _nm < _nt ? _nm : _nt;
   _cov.ResizeTo (_nt, _nt);
@@ -367,8 +384,8 @@ void RooUnfold::GetCov()
 
 void RooUnfold::GetWgt()
 {
-  // Creates weight matrix
-  // This may be overridden if it can be computed directly without the need for inverting the matrix
+  //! Creates weight matrix
+  //! This may be overridden if it can be computed directly without the need for inverting the matrix
   if (!_haveCov) GetCov();
   if (!_haveCov) return;
   if (!InvertMatrix (_cov, _wgt, "covariance matrix", _verbose)) return;
@@ -377,7 +394,7 @@ void RooUnfold::GetWgt()
 
 void RooUnfold::GetErrMat()
 {
-  // Get covariance matrix from the variation of the results in toy MC tests
+  //! Get covariance matrix from the variation of the results in toy MC tests
   if (_NToys<=1) return;
   _err_mat.ResizeTo(_nt,_nt);
   TVectorD xisum (_nt);
@@ -494,7 +511,7 @@ Double_t RooUnfold::Chi2(const TH1* hTrue,ErrorTreatment DoChi2)
 
 void RooUnfold::PrintTable (std::ostream& o, const TH1* hTrue, ErrorTreatment withError)
 {
-  // Prints entries from truth, measured, and reconstructed data for each bin.
+  //! Prints entries from truth, measured, and reconstructed data for each bin.
   if (withError==kDefault) withError= _withError;
   if (withError==kDefault) withError= kErrors;
   const TH1* hReco= Hreco (withError);
@@ -528,7 +545,7 @@ void RooUnfold::PrintTable (std::ostream& o, const TH1* hTrainTrue, const TH1* h
                             Int_t _nm, Int_t _nt, Bool_t _overflow,
                             ErrorTreatment withError, Double_t chi_squ)
 {
-  // Prints entries from truth, measured, and reconstructed data for each bin.
+  //! Prints entries from truth, measured, and reconstructed data for each bin.
   if (withError==kDefault) withError= hReco->GetSumw2N() ? kErrors : kNoError;
   if (_nm<=0) _nm= hTrain    ->GetNbinsX();
   if (_nt<=0) _nt= hTrainTrue->GetNbinsX();
@@ -690,7 +707,7 @@ TH1* RooUnfold::Hreco (ErrorTreatment withError)
 
 void RooUnfold::GetSettings()
 {
-    //Gets maximum and minimum parameters and step size
+    //!Gets maximum and minimum parameters and step size
     _minparm=0;
     _maxparm=0;
     _stepsizeparm=0;
@@ -699,44 +716,44 @@ void RooUnfold::GetSettings()
 
 Double_t RooUnfold::GetMinParm() const
 {
-    //Get minimum regularisation parameter for unfolding method
+    //!Get minimum regularisation parameter for unfolding method
     return _minparm;
 }
 
 Double_t RooUnfold::GetMaxParm() const
 {
-    //Get maximum regularisation parameter for unfolding method
+    //!Get maximum regularisation parameter for unfolding method
     return _maxparm;
 }
 
 Double_t RooUnfold::GetStepSizeParm() const
 {
-    //Get suggested step size for unfolding distribution
+    //!Get suggested step size for unfolding distribution
     return _stepsizeparm;
 }
 
 Double_t RooUnfold::GetDefaultParm() const
 {
-    //Get suggested regularisation parameter.
+    //!Get suggested regularisation parameter.
     return _defaultparm;
 }
 
 RooUnfold* RooUnfold::RunToy() const
 {
-  // Returns new RooUnfold object with smeared measurements and
-  // (if IncludeSystematics) response matrix for use as a toy.
-  // Use multiple toys to find spread of unfolding results.
+  //! Returns new RooUnfold object with smeared measurements and
+  //! (if IncludeSystematics) response matrix for use as a toy.
+  //! Use multiple toys to find spread of unfolding results.
   TString name= GetName();
   name += "_toy";
   RooUnfold* unfold = Clone(name);
 
-  // Make new smeared response matrix
+  //! Make new smeared response matrix
   if (_dosys) unfold->SetResponse (_res->RunToy(), kTRUE);
   if (_dosys==2) return unfold;
 
   if (_haveCovMes) {
 
-    // _covL is a lower triangular matrix for which the covariance matrix, V = _covL * _covL^T.
+    //! _covL is a lower triangular matrix for which the covariance matrix, V = _covL * _covL^T.
     if (!_covL) {
       TDecompChol c(*_covMes);
       c.Decompose();
@@ -795,7 +812,7 @@ void RooUnfold::Print(Option_t* /*opt*/) const
 
 TMatrixD RooUnfold::CutZeros(const TMatrixD& ereco)
 {
-    //Removes row & column if all their elements are 0.
+    //!Removes row & column if all their elements are 0.
     vector<int> diags;
         int missed=0;
         for (int i=0; i<ereco.GetNrows(); i++){
@@ -948,10 +965,10 @@ TH1D* RooUnfold::HistNoOverflow (const TH1* h, Bool_t overflow)
 
 TH1* RooUnfold::Resize (TH1* h, Int_t nx, Int_t ny, Int_t nz)
 {
-  // Resize a histogram with a different number of bins.
-  // Contents and errors are copied to the same bin numbers (the overflow bin
-  // is copied to the new overflow bin) in the new histogram.
-  // If the new histogram is larger than the old, the extra bins are zeroed.
+  //! Resize a histogram with a different number of bins.
+  //! Contents and errors are copied to the same bin numbers (the overflow bin
+  //! is copied to the new overflow bin) in the new histogram.
+  //! If the new histogram is larger than the old, the extra bins are zeroed.
   Int_t mx= h->GetNbinsX(), my= h->GetNbinsY(), mz= h->GetNbinsZ();
   Int_t nd= h->GetDimension();
   if (nx<0 || nd<1) nx= mx;
@@ -1049,7 +1066,7 @@ TH1* RooUnfold::Resize (TH1* h, Int_t nx, Int_t ny, Int_t nz)
 
 TMatrixD& RooUnfold::ABAT (const TMatrixD& a, const TMatrixD& b, TMatrixD& c)
 {
-  // Fills C such that C = A * B * A^T. Note that C cannot be the same object as A.
+  //! Fills \f$C\f$ such that \f$C = A * B * A^T\f$. Note that \f$C\f$ cannot be the same object as \f$A\f$.
   TMatrixD d (b, TMatrixD::kMultTranspose, a);
   c.Mult (a, d);
   return c;
@@ -1057,8 +1074,8 @@ TMatrixD& RooUnfold::ABAT (const TMatrixD& a, const TMatrixD& b, TMatrixD& c)
 
 TMatrixD& RooUnfold::ABAT (const TMatrixD& a, const TVectorD& b, TMatrixD& c)
 {
-  // Fills C such that C = A * B * A^T, where B is a diagonal matrix specified by the vector.
-  // Note that C cannot be the same object as A.
+  //! Fills \f$C\f$ such that \f$C = A * B * A^T\f$, where \f$B\f$ is a diagonal matrix specified by the vector.
+  //! Note that \f$C\f$ cannot be the same object as \f$A\f$.
   TMatrixD d (TMatrixD::kTransposed, a);
   d.NormByColumn (b, "M");
   c.Mult (a, d);
@@ -1067,8 +1084,8 @@ TMatrixD& RooUnfold::ABAT (const TMatrixD& a, const TVectorD& b, TMatrixD& c)
 
 Int_t RooUnfold::InvertMatrix(const TMatrixD& mat, TMatrixD& inv, const char* name, Int_t verbose)
 {
-  // Invert a matrix using Single Value Decomposition: inv = mat^-1.
-  // Can use InvertMatrix(mat,mat) to invert in-place.
+  //! Invert a matrix using Single Value Decomposition: inv = mat^-1.
+  //! Can use InvertMatrix(mat,mat) to invert in-place.
   Int_t ok= 1;
   TDecompSVD svd (mat);
   const Double_t cond_max= 1e17;
@@ -1118,7 +1135,7 @@ Int_t RooUnfold::InvertMatrix(const TMatrixD& mat, TMatrixD& inv, const char* na
 
 void RooUnfold::Streamer (TBuffer &R__b)
 {
-  // Stream an object of class RooUnfold.
+  //! Stream an object of class RooUnfold.
   if (R__b.IsReading()) {
     // Don't add our histograms to the currect directory.
     // We own them and we don't want them to disappear when the file is closed.
