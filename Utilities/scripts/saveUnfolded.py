@@ -992,6 +992,67 @@ def _sumUncertainties(errDict,varName):
 
     return hUncUp, hUncDn
 
+def _sumUncertainties_info(errDict,varName,hUnf): #same as above but used to printout info
+    
+    ferrinfo=open("ErrorInfo.log",'w')
+    ferrinfo.write("Var: %s \n"%varName)
+    tmparea= hUnf.Integral(1,hUnf.GetNbinsX())
+    if varName == "eta":
+        histbins=array.array('d',[0.,1.0,2.0,3.0,4.0,5.0,6.0])
+    else:
+        histbins=array.array('d',_binning[varName])
+    #print "histbins: ",histbins
+    hUncUp=ROOT.TH1D("hUncUp","Total Up Uncert.",len(histbins)-1,histbins)
+    hUncDn=ROOT.TH1D("hUncDn","Total Dn Uncert.",len(histbins)-1,histbins)
+    sysList = errDict['Up'].keys()
+    #pdb.set_trace()
+    print "sysList: ",sysList
+    #print "hUncUp: ",hUncUp,"",hUncUp.Integral()
+    #print "hUncDown: ",hUncDn,"",hUncDn.Integral()
+    totUncUp=totUncDn=0.
+    UncUpHistos= [errDict['Up'][sys] for sys in sysList]
+    UncDnHistos= [errDict['Down'][sys] for sys in sysList]
+    print "UncUpHistos: ",UncUpHistos
+    print "UncDnHistos: ",UncDnHistos
+    for i,sys in enumerate(sysList):
+        print "systematic: ",sys
+        print "UncUp: ",UncUpHistos[i].Integral()
+        print "UncDn: ",UncDnHistos[i].Integral()
+    LumiUp = errDict['Up']['generator'] #lumi ->generator??
+    LumiDn = errDict['Down']['generator']
+    print "GeneratorUp: ",LumiUp.Integral()
+    print "GeneratorDn: ",LumiDn.Integral()
+    for i in range(1,hUncUp.GetNbinsX()+1):
+        ferrinfo.write("Bin %s\n"%i)
+        for j,(h1, h2) in enumerate(zip(UncUpHistos,UncDnHistos)):
+            ferrinfo.write("Syst: %s \n"%sysList[j])
+            ferrinfo.write("histUp: %s \n"%(h1.GetBinContent(i)))
+            ferrinfo.write("histDn: %s \n"%(h2.GetBinContent(i)))
+            ferrinfo.write("Chosen max/min %s/%s \n"%(max(h1.GetBinContent(i),h2.GetBinContent(i)),min(h1.GetBinContent(i),h2.GetBinContent(i))))
+            totUncUp += max(h1.GetBinContent(i),h2.GetBinContent(i))**2
+            totUncDn += min(h1.GetBinContent(i),h2.GetBinContent(i))**2
+
+        totUncUp = math.sqrt(totUncUp)
+        totUncDn = math.sqrt(totUncDn)
+        ferrinfo.write("totSysUncUp: %s \n"%totUncUp)
+        ferrinfo.write("totSysUncDn: %s \n"%totUncDn)
+        ferrinfo.write("Stat Unc: %s \n"%(hUnf.GetBinError(i)))
+        finalup = (totUncUp**2+hUnf.GetBinError(i)**2)**0.5
+        finaldn = (totUncDn**2+hUnf.GetBinError(i)**2)**0.5
+        normup = finalup/tmparea/hUnf.GetBinWidth(i)
+        normdn = finaldn/tmparea/hUnf.GetBinWidth(i)
+        ferrinfo.write("Sys+stat Combined up: %s\n"%finalup)
+        ferrinfo.write("Sys+stat Combined dn: %s\n"%finaldn)
+        ferrinfo.write("norm Combined up: %s\n"%(format(normup,".2e")))
+        ferrinfo.write("norm Combined dn: %s\n"%(format(normdn,".2e")))
+        
+        hUncUp.SetBinContent(i,totUncUp)
+        hUncDn.SetBinContent(i,totUncDn)
+    print("hUncUp: ",hUncUp,"",hUncUp.Integral()) 
+    print("hUncDown: ",hUncDn,"",hUncDn.Integral())
+
+    return hUncUp, hUncDn
+
 def _combineChannelUncertainties(*errDicts):
     hUncTot = {}
     uncList = []
@@ -1056,7 +1117,8 @@ if args['test']:
         fUse = ROOT.TFile("SystGenFiles/For_unfolding_Hists17May2021_ZZ4l2017_Moriond_fullSyst.root","update")
         #fUse = ROOT.TFile("SystGenFiles/Hists07Jun2020-ZZ4l2017_Moriond.root","update")
     elif analysis=="ZZ4l2018": 
-        fUse = ROOT.TFile("SystGenFiles/Syst_qqZZNewMCadded_Hists14Jul2021-ZZ4l2018_MVA.root","update")
+        fUse = ROOT.TFile("SystGenFiles/Syst_qqZZNewMCadded_Hists30Aug2021-ZZ4l2018_MVA.root","update")
+        #fUse = ROOT.TFile("SystGenFiles/Syst_qqZZNewMCadded_Hists14Jul2021-ZZ4l2018_MVA.root","update") #Recent results after adding new MC qqZZ first Round
         #fUse = ROOT.TFile("SystGenFiles/For_unfolding_Hists17May2021_ZZ4l2018_MVA_fullSyst.root","update") #Recent results before adding new MC qqZZ
         #fUse = ROOT.TFile("SystGenFiles/Hists08Jun2020-ZZ4l2018_MVA.root","update")
     fOut=fUse
@@ -1233,7 +1295,7 @@ for varName in runVariables:
         print "hErr.values(): ",hErr.values()
         if not args['noSyst']:
             hErrTot = _combineChannelUncertainties(*hErr.values())
-            hTotUncUp, hTotUncDn = _sumUncertainties(hErrTot,varName)
+            hTotUncUp, hTotUncDn = _sumUncertainties_info(hErrTot,varName,hTot.Clone())
         #Saving Total histograms
         hTotalData = hTotData.Clone()
         TotDatName = "tot_"+varName+"_data"
