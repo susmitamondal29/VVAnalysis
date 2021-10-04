@@ -14,7 +14,7 @@ void ZZSelector::Init(TTree *tree)
         {pileupUp, "CMS_pileupUp"},
         {pileupDown, "CMS_pileupDown"},
     }; 
-    doSystematics_ = false;//true;
+    doSystematics_ = true;//false;//true;
     
     //This would be set true inside ZZBackground Selector
     //isNonPrompt_ = false;
@@ -22,7 +22,20 @@ void ZZSelector::Init(TTree *tree)
     systHists_ = {
         "yield",
         "Mass",
+	"nJets",
+	"jetPt[1]",
 	"jetPt[0]",
+	"jetEta[0]",
+	"jetEta[1]",
+	"absjetEta[0]",
+	"absjetEta[1]",
+	"mjj",
+	"dEtajj",
+	"Mass0j",
+	"Mass1j",
+	"Mass2j",
+	"Mass3j",
+	"Mass4j",
         "ZMass",
         "ZZPt",
         "ZZEta",
@@ -42,7 +55,7 @@ void ZZSelector::Init(TTree *tree)
 
     hists1D_ = {
       "yield", "Z1Mass","Z2Mass","ZMass","ZZPt","ZZEta","dPhiZ1Z2","dRZ1Z2","ZPt","LepPt","LepEta",
-      "Mass","Mass0j","Mass1j","Mass2j","Mass3j","Mass4j","nJets","jetPt[0]","jetPt[1]","jetPt[2]","jetEta[0]","jetEta[1]","jetEta[2]","jetPhi[0]","jetPhi[1]","jetPhi[2]","mjj","dEtajj","SIP3D","jetPt[01]","jetEta[01]","PVDZ","deltaPVDZ_sameZ","deltaPVDZ_diffZ"
+      "Mass","Mass0j","Mass1j","Mass2j","Mass3j","Mass4j","nJets","jetPt[0]","jetPt[1]","jetPt[2]","jetEta[0]","jetEta[1]","absjetEta[0]","absjetEta[1]","jetEta[2]","jetPhi[0]","jetPhi[1]","jetPhi[2]","mjj","dEtajj","SIP3D","jetPt[01]","jetEta[01]","PVDZ","deltaPVDZ_sameZ","deltaPVDZ_diffZ"
     };
 
     weighthists1D_ = {
@@ -790,14 +803,16 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
 
     if (jetPt->size() > 0 && jetPt->size() == jetEta->size()) {
         SafeHistFill(histMap1D_, getHistName("jetPt[0]", variation.second), jetPt->at(0), weight);
-	if (jetPt->size() ==2 && jetPt->size() == jetEta->size()) {        
-	  SafeHistFill(histMap1D_, getHistName("jetEta[0]", variation.second), jetEta->at(0), weight);}
+	//if (jetPt->size() ==2 && jetPt->size() == jetEta->size()) {        
+	SafeHistFill(histMap1D_, getHistName("jetEta[0]", variation.second), jetEta->at(0), weight);//}
+	SafeHistFill(histMap1D_, getHistName("absjetEta[0]", variation.second), std::abs(jetEta->at(0)), weight);	
         SafeHistFill(histMap1D_, getHistName("jetPhi[0]", variation.second), jetPhi->at(0), weight);
     }
     if (jetPt->size() > 1 && jetPt->size() == jetEta->size()) {
         SafeHistFill(histMap1D_, getHistName("jetPt[1]", variation.second), jetPt->at(1), weight);
-	if (jetPt->size() ==2 && jetPt->size() == jetEta->size()) {
-	  SafeHistFill(histMap1D_, getHistName("jetEta[1]", variation.second), jetEta->at(1), weight);}
+	//if (jetPt->size() ==2 && jetPt->size() == jetEta->size()) {
+	SafeHistFill(histMap1D_, getHistName("jetEta[1]", variation.second), jetEta->at(1), weight);//}
+	SafeHistFill(histMap1D_, getHistName("absjetEta[1]", variation.second), std::abs(jetEta->at(1)), weight);
         SafeHistFill(histMap1D_, getHistName("jetPhi[1]", variation.second), jetPhi->at(1), weight);
 	SafeHistFill(histMap1D_, getHistName("dEtajj", variation.second), dEtajj, weight);
 	SafeHistFill(histMap1D_, getHistName("mjj", variation.second), mjj, weight);

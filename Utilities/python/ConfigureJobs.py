@@ -88,6 +88,7 @@ def getListOfGenFilenames(analysis='ZZ'):
         return [
             "zz4l-amcatnlo",
             "zz4l-powheg",
+            "qqZZSpec",
             #"zzjj4l-ewk",
             "ggZZ4e",
             "ggZZ4m",

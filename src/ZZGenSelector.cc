@@ -9,6 +9,7 @@ void ZZGenSelector::Init(TTree *tree)
         "GenMass",
 	"GenMass0j","GenMass1j","GenMass2j","GenMass3j","GenMass4j",
 	"Genmjj",
+	"GennJets",
         "Genyield",
         "GenZMass",
         "GenZZPt",
@@ -22,6 +23,8 @@ void ZZGenSelector::Init(TTree *tree)
 	"GenjetPt[1]",
 	"GenjetEta[0]",
 	"GenjetEta[1]",
+	"GenabsjetEta[0]",
+	"GenabsjetEta[1]",
 	"GendEtajj",
     };
 
@@ -45,6 +48,7 @@ void ZZGenSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::
     b_GenjetPt->GetEntry(entry);
     b_GenjetEta->GetEntry(entry);
     b_Genmjj->GetEntry(entry);
+
     //std::cout<<"Is the ZZGenSelectorBase fine until here"<<std::endl;
     if (channel_ == eeee || channel_ == eemm || channel_ == mmee || channel_ == mmmm) {
       b_Genl4Pt->GetEntry(entry);
@@ -207,6 +211,7 @@ void ZZGenSelector::SetBranchesUWVV() {
     fChain->SetBranchAddress("jetPt",&GenjetPt,&b_GenjetPt);
     fChain->SetBranchAddress("jetEta",&GenjetEta,&b_GenjetEta);
     fChain->SetBranchAddress("mjj",&Genmjj,&b_Genmjj);  
+
 }
 
 void ZZGenSelector::SetVariables(Long64_t entry) {
@@ -269,6 +274,7 @@ void ZZGenSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::st
 
     SafeHistFill(histMap1D_, getHistName("Genyield", variation.second), 1, Genweight);
     SafeHistFill(histMap1D_, getHistName("GenMass", variation.second), GenMass,Genweight);
+    SafeHistFill(histMap1D_, getHistName("GennJets", variation.second), GenjetPt->size(),Genweight);
     SafeHistFill(histMap1D_, getHistName("GenZMass", variation.second), GenZ1mass, Genweight);
     SafeHistFill(histMap1D_, getHistName("GenZMass", variation.second), GenZ2mass, Genweight);
     SafeHistFill(histMap1D_, getHistName("GenZPt", variation.second), GenZ1pt, Genweight);
@@ -291,10 +297,12 @@ void ZZGenSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::st
     //std::cout<<"bug in selection?"<<std::endl;
     if (GenjetPt->size() > 0 && GenjetPt->size() == GenjetEta->size()) {
       SafeHistFill(histMap1D_, getHistName("GenjetPt[0]", variation.second), GenjetPt->at(0), Genweight);
-      SafeHistFill(histMap1D_, getHistName("GenjetEta[0]", variation.second), GenjetEta->at(0), Genweight);}
+      SafeHistFill(histMap1D_, getHistName("GenjetEta[0]", variation.second), GenjetEta->at(0), Genweight);
+      SafeHistFill(histMap1D_, getHistName("GenabsjetEta[0]", variation.second), std::abs(GenjetEta->at(0)), Genweight);}
     if (GenjetPt->size() > 1 && GenjetPt->size() == GenjetEta->size()) {
       SafeHistFill(histMap1D_, getHistName("GenjetPt[1]", variation.second), GenjetPt->at(1), Genweight);
       SafeHistFill(histMap1D_, getHistName("GenjetEta[1]", variation.second), GenjetEta->at(1), Genweight);
+      SafeHistFill(histMap1D_, getHistName("GenabsjetEta[1]", variation.second), std::abs(GenjetEta->at(1)), Genweight);
       SafeHistFill(histMap1D_, getHistName("Genmjj", variation.second), Genmjj, Genweight);
       SafeHistFill(histMap1D_, getHistName("GendEtajj", variation.second), std::abs(GenjetEta->at(1)-GenjetEta->at(0)), Genweight);}
 
