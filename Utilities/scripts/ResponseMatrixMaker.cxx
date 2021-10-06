@@ -108,8 +108,8 @@ ResponseMatrixMakerBase<T>::ResponseMatrixMakerBase(const Str& channel,
   channel(channel),
   binning(binning),
   nPDFVariations(100),
-  iAlphaSUp(nPDFVariations),
-  iAlphaSDn(nPDFVariations+1)
+  iAlphaSDn(nPDFVariations), //I switched the up down from the original codes and expect this to be correct
+  iAlphaSUp(nPDFVariations+1)
 {
   scale = 1.;
   skipSyst = false;
@@ -258,9 +258,12 @@ void ResponseMatrixMakerBase<T>::setup()
   // Scale and PDF systematics only done for samples that have LHE info (e.g.
   // not MCFM)
   // Not doing pdf and scale systematics at the moment. 
-  //bool hasLHE = bool(recoTree->FindBranch("pdfWeights")); 
-  bool hasLHE = false;
-  const Vec<size_t> scaleIndicesWeCareAbout = {1,2,3,4,6,8};
+  // -> Now include these systematics
+  bool hasLHE = bool(recoTree->FindBranch("pdfWeights")); 
+  //bool hasLHE = false;
+
+  //see https://twiki.cern.ch/twiki/bin/view/CMS/HowToPDF#How_to_retrieve_LHE_weights_info
+  const Vec<size_t> scaleIndicesWeCareAbout = {1,2,3,4,6,8}; 
   if(hasLHE && !skipSyst)
     {
       for(auto i : scaleIndicesWeCareAbout)
@@ -274,7 +277,7 @@ void ResponseMatrixMakerBase<T>::setup()
       if(!skipSyst)
         {
           Vec<float> iterationBins;
-          for(size_t i = 0; i <= nPDFVariations; ++i)
+          for(size_t i = 0; i <= nPDFVariations; ++i) //binning points 0 to 100
             iterationBins.push_back(float(i));
           pdfResponses = TH3D("pdfResponses", "",
                               binning.size()-1, &binning[0],
@@ -451,7 +454,9 @@ void ResponseMatrixMakerBase<T>::setup()
                     this->fillResponse(scaleResponses.at(ind), val, trueVal,
                                        nominalWeightScaleNorm * scaleWeights.at(scaleIndicesWeCareAbout.at(ind)));
 
-                  // fill the 3-D histogram with one response for each PDF variation
+                  //In our ntuplizer uwvv codes, scaleWeight corresponds to lhe weights index 0 to 8, and pdf weights 9 to 9999. 
+
+		  // fill the 3-D histogram with one response for each PDF variation
                   float nominalWeightPDFNorm = nominalWeight / pdfAndAlphaSWeights.at(0);
                   for(size_t ind = 0; ind < nPDFVariations; ++ind)
                     this->fillResponse(pdfResponses, val, trueVal, ind,

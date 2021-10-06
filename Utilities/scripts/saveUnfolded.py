@@ -669,6 +669,52 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
             del hBkgPU
             del hRespPU
 
+#Add systematics for scales and PDF 
+
+        hResponsePS = {s:resp for s,resp in responseMakers.items()} #sample and response classes
+        hRespPSTot = hResponsePS.pop(mynominalName)
+        # PDF and scale uncertainty
+        nscales = 6 # six scale variation indices 1,2,3,4,6,8
+        npdf = 100
+        scale_pdf_syslist = ['scale%s'%i for i in range(0,nscales)] + ['pdf%s'%i for i in range(0,npdf)] + ['alphas_up','alphas_dn']
+        for sys in scale_pdf_syslist:
+            if 'scale' in sys:
+                hRespPS = hRespPSTot.getScaleResponses() #vec<TH2D>
+                hRespPS.SetDirectory(0)
+                for resp in hResponsePS.values():
+                    respMatPS = resp.getScaleResponses()
+                    hRespPS.Add(respMatPS)
+                    respMatPS.SetDirectory(0)
+                    del respMatPS
+            #print "hSigSystDic: ",hSigSystDic
+            hSigPS = hSigSystDic[chan][varNames[varName]+"_CMS_pileup"+sys]
+            hSigPS.SetDirectory(0)
+            #print 'pu_'+sys 
+            #print "sigHist: ", hSigPS,", ",hSigPS.Integral()
+            hBkgPS = hbkgDic[chan][varNames[varName]+"_Fakes"]
+            hBkgPS.SetDirectory(0)
+            #print "NonPromptHist: ",hBkgPS,", ",hBkgPS.Integral()
+            hBkgMCPS = hbkgMCSystDic[chan][varNames[varName]+"_CMS_pileup"+sys]
+            hBkgMCPS.SetDirectory(0)
+            #print "VVVHist: ",hBkgMCPS,", ",hBkgMCPS.Integral()
+            hBkgPSTotal=hBkgPS.Clone()
+            hBkgPSTotal.Add(hBkgMCPS)
+            #print "TotBkgPSHist: ",hBkgPSTotal,", ",hBkgPSTotal.Integral()
+            hSigPS=rebin(hSigPS,varName)
+            hBkgPSTotal=rebin(hBkgPSTotal,varName)
+            #print "TotBkgPSHist after Rebinning: ",hBkgPSTotal,", ",hBkgPSTotal.Integral()
+            
+            hUnfolded['pu_'+sys] = getUnfolded(hSigPS,
+                                                     hBkgPSTotal,
+                                                     hTruth[''],
+                                                     hRespPS,
+                                                     hData, nIter)
+            del hSigPS
+            del hBkgMCPS
+            del hBkgPS
+            del hRespPS
+
+
         # lepton efficiency uncertainty
         for lep in set(chan):
             hResponseSyst = {s:resp for s,resp in responseMakers.items()}
