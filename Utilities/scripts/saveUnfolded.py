@@ -670,7 +670,7 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
             del hRespPU
 
 #Add systematics for scales and PDF 
-
+        #pdb.set_trace()
         hResponsePS = {s:resp for s,resp in responseMakers.items()} #sample and response classes
         hRespPSTot = hResponsePS.pop(mynominalName)
         # PDF and scale uncertainty
@@ -683,11 +683,11 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
             histPS.SetDirectory(0)
             PSlist.append(histPS)
         for resp in hResponsePS.values():
-            respMatPS = resp.getScaleResponses()
-            for i,PSMat in enumerate(respMatPS):
-                PSlist[i].Add(PSMat)
-                PSMat.SetDirectory(0)
-                del PSMat
+            respMatPS = resp.getResponse('nominal')
+            for i, item in enumerate(PSlist):
+                PSlist[i].Add(respMatPS)
+            respMatPS.SetDirectory(0)
+            del respMatPS
         
         scale_pdf_syslist = ['scale%s'%i for i in range(1,nscales)] + ['pdf%s'%i for i in range(10,109)] + ['alphas_up','alphas_dn']
         hSigPSt = hSigSystDic[chan][varNames[varName]+"_lheWeights"]
@@ -700,13 +700,13 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
         hBkgMCPSt = hbkgMCSystDic[chan][varNames[varName]+"_lheWeights"]
         hBkgMCPSt.SetDirectory(0)
         #print "VVVHist: ",hBkgMCPS,", ",hBkgMCPS.Integral()
-        hBkgPSTotalt=hBkgPSt.Clone()
-        hBkgPSTotalt.Add(hBkgMCPSt)
+        #hBkgPSTotalt=hBkgPSt.Clone()
+        #hBkgPSTotalt.Add(hBkgMCPSt)
         #print "TotBkgPSHist: ",hBkgPSTotal,", ",hBkgPSTotal.Integral()
-        hSigPSt=rebin(hSigPSt,varName)
-        hBkgPSTotalt=rebin(hBkgPSTotalt,varName)
+        #hSigPSt=rebin(hSigPSt,varName)
+        #hBkgPSTotalt=rebin(hBkgPSTotalt,varName)
             
-        for i in range(0,111): #pick all indices other than nominal
+        for i in range(0,112): #pick all indices other than nominal
             if i == 0 or i == 9:
                 continue
             #print "hSigSystDic: ",hSigSystDic
@@ -718,7 +718,7 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
             #print "sigHist: ", hSigPS,", ",hSigPS.Integral()
         
             #print "NonPromptHist: ",hBkgPS,", ",hBkgPS.Integral()
-            hBkgMCPS = hBkgMCPSt.ProjectionX("PS%s"%i,i+1,i+1,"e")
+            hBkgMCPS = hBkgMCPSt.ProjectionX("PSBkg%s"%i,i+1,i+1,"e")
             hBkgMCPS.SetDirectory(0)
             #print "VVVHist: ",hBkgMCPS,", ",hBkgMCPS.Integral()
             hBkgPSTotal=hBkgPSt.Clone()
@@ -733,7 +733,7 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
                                                      hTruth[''],
                                                      PSlist[i],
                                                      hData, nIter)
-            del hSigPS # This just deleting the variable not the histogram? What is the purpose?
+            del hSigPS # This just deletes the variable not the histogram? What is the purpose?
             del hBkgMCPS
             #del hBkgPS
             #del hRespPS 
