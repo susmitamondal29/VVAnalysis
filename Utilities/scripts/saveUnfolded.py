@@ -674,46 +674,74 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
         hResponsePS = {s:resp for s,resp in responseMakers.items()} #sample and response classes
         hRespPSTot = hResponsePS.pop(mynominalName)
         # PDF and scale uncertainty
-        nscales = 6 # six scale variation indices 1,2,3,4,6,8
-        npdf = 100
-        scale_pdf_syslist = ['scale%s'%i for i in range(0,nscales)] + ['pdf%s'%i for i in range(0,npdf)] + ['alphas_up','alphas_dn']
-        for sys in scale_pdf_syslist:
-            if 'scale' in sys:
-                hRespPS = hRespPSTot.getScaleResponses() #vec<TH2D>
-                hRespPS.SetDirectory(0)
-                for resp in hResponsePS.values():
-                    respMatPS = resp.getScaleResponses()
-                    hRespPS.Add(respMatPS)
-                    respMatPS.SetDirectory(0)
-                    del respMatPS
+        nscales = 9 # six scale variation indices 1,2,3,4,6,8
+        npdf = 103
+        #indices run from 0 to 111 for nominal, scale, pdf+alpha_s
+        PSlist = []
+        hRespPS = hRespPSTot.getScaleResponses() #vec<TH2D>
+        for histPS in hRespPS:
+            histPS.SetDirectory(0)
+            PSlist.append(histPS)
+        for resp in hResponsePS.values():
+            respMatPS = resp.getScaleResponses()
+            for i,PSMat in enumerate(respMatPS):
+                PSlist[i].Add(PSMat)
+                PSMat.SetDirectory(0)
+                del PSMat
+        
+        scale_pdf_syslist = ['scale%s'%i for i in range(1,nscales)] + ['pdf%s'%i for i in range(10,109)] + ['alphas_up','alphas_dn']
+        hSigPSt = hSigSystDic[chan][varNames[varName]+"_lheWeights"]
+        hSigPSt.SetDirectory(0)
+        #print 'pu_'+sys 
+        #print "sigHist: ", hSigPS,", ",hSigPS.Integral()
+        hBkgPSt = hbkgDic[chan][varNames[varName]+"_Fakes"]
+        hBkgPSt.SetDirectory(0)
+        #print "NonPromptHist: ",hBkgPS,", ",hBkgPS.Integral()
+        hBkgMCPSt = hbkgMCSystDic[chan][varNames[varName]+"_lheWeights"]
+        hBkgMCPSt.SetDirectory(0)
+        #print "VVVHist: ",hBkgMCPS,", ",hBkgMCPS.Integral()
+        hBkgPSTotalt=hBkgPSt.Clone()
+        hBkgPSTotalt.Add(hBkgMCPSt)
+        #print "TotBkgPSHist: ",hBkgPSTotal,", ",hBkgPSTotal.Integral()
+        hSigPSt=rebin(hSigPSt,varName)
+        hBkgPSTotalt=rebin(hBkgPSTotalt,varName)
+            
+        for i in range(0,111): #pick all indices other than nominal
+            if i == 0 or i == 9:
+                continue
             #print "hSigSystDic: ",hSigSystDic
-            hSigPS = hSigSystDic[chan][varNames[varName]+"_CMS_pileup"+sys]
+
+            binnum = i + 1 # 1st bin corresponds to 0
+            hSigPS = hSigPSt.ProjectionX("PS%s"%i,i+1,i+1,"e") #expect e option to instruct computing the error
             hSigPS.SetDirectory(0)
             #print 'pu_'+sys 
             #print "sigHist: ", hSigPS,", ",hSigPS.Integral()
-            hBkgPS = hbkgDic[chan][varNames[varName]+"_Fakes"]
-            hBkgPS.SetDirectory(0)
+        
             #print "NonPromptHist: ",hBkgPS,", ",hBkgPS.Integral()
-            hBkgMCPS = hbkgMCSystDic[chan][varNames[varName]+"_CMS_pileup"+sys]
+            hBkgMCPS = hBkgMCPSt.ProjectionX("PS%s"%i,i+1,i+1,"e")
             hBkgMCPS.SetDirectory(0)
             #print "VVVHist: ",hBkgMCPS,", ",hBkgMCPS.Integral()
-            hBkgPSTotal=hBkgPS.Clone()
+            hBkgPSTotal=hBkgPSt.Clone()
             hBkgPSTotal.Add(hBkgMCPS)
             #print "TotBkgPSHist: ",hBkgPSTotal,", ",hBkgPSTotal.Integral()
             hSigPS=rebin(hSigPS,varName)
             hBkgPSTotal=rebin(hBkgPSTotal,varName)
             #print "TotBkgPSHist after Rebinning: ",hBkgPSTotal,", ",hBkgPSTotal.Integral()
             
-            hUnfolded['pu_'+sys] = getUnfolded(hSigPS,
+            hUnfolded['PS_'+str(i)] = getUnfolded(hSigPS,
                                                      hBkgPSTotal,
                                                      hTruth[''],
-                                                     hRespPS,
+                                                     PSlist[i],
                                                      hData, nIter)
-            del hSigPS
+            del hSigPS # This just deleting the variable not the histogram? What is the purpose?
             del hBkgMCPS
-            del hBkgPS
-            del hRespPS
-
+            #del hBkgPS
+            #del hRespPS 
+            #don't delete hBkgTotal in the original codes?
+        del hBkgPSt
+        for item in PSlist:
+            del item
+        
 
         # lepton efficiency uncertainty
         for lep in set(chan):
@@ -1239,6 +1267,8 @@ print "runVariables: ",runVariables
 ##Systematic histos
 systList=[]
 for chan in channels:
+    for s in runVariables:
+        systList.append(varNames[s]+"_lheWeights")
     for sys in ["Up","Down"]: 
         for s in runVariables:
             systList.append(varNames[s]+"_CMS_pileup"+sys)

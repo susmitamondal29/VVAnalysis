@@ -265,15 +265,23 @@ void ResponseMatrixMakerBase<T>::setup()
   //see https://twiki.cern.ch/twiki/bin/view/CMS/HowToPDF#How_to_retrieve_LHE_weights_info
   const Vec<size_t> scaleIndicesWeCareAbout = {1,2,3,4,6,8}; 
   if(hasLHE && !skipSyst)
-    {
-      for(auto i : scaleIndicesWeCareAbout)
+    {//Change the codes to store all scale,PDF+alpha_s variations in a single vector.
+       for(size_t i = 0; i <= 111; ++i ) //scale 0 to 8, followed by 103 pdf+alpha_s variations
         {
           scaleResponses.push_back(
-            TH2D(("scaleVariation"+std::to_string(i)).c_str(), "",
+            TH2D(("scalePDFAlphasVariation"+std::to_string(i)).c_str(), "",
                  binning.size()-1, &binning[0],
                  binning.size()-1, &binning[0]));
+
+    //   for(auto i : scaleIndicesWeCareAbout)
+    //     {
+    //       scaleResponses.push_back(
+    //         TH2D(("scaleVariation"+std::to_string(i)).c_str(), "",
+    //              binning.size()-1, &binning[0],
+    //              binning.size()-1, &binning[0]));
         }
 
+      //This part remains the same, but the pdfResponses part is no longer used.
       if(!skipSyst)
         {
           Vec<float> iterationBins;
@@ -450,14 +458,24 @@ void ResponseMatrixMakerBase<T>::setup()
                 {
                   // fill once for each scale variation
                   float nominalWeightScaleNorm = nominalWeight / scaleWeights.at(0);
+                  for(size_t ind = 0; ind < 9; ++ind)
+                    this->fillResponse(scaleResponses.at(ind), val, trueVal,
+                                       nominalWeightScaleNorm * scaleWeights.at(ind));
+                  /* float nominalWeightScaleNorm = nominalWeight / scaleWeights.at(0);
                   for(size_t ind = 0; ind < scaleIndicesWeCareAbout.size(); ++ind)
                     this->fillResponse(scaleResponses.at(ind), val, trueVal,
-                                       nominalWeightScaleNorm * scaleWeights.at(scaleIndicesWeCareAbout.at(ind)));
+                                       nominalWeightScaleNorm * scaleWeights.at(scaleIndicesWeCareAbout.at(ind))); */
 
-                  //In our ntuplizer uwvv codes, scaleWeight corresponds to lhe weights index 0 to 8, and pdf weights 9 to 9999. 
+                  float nominalWeightPDFNorm = nominalWeight / pdfAndAlphaSWeights.at(0);
+                  for(size_t ind = 0; ind <= nPDFVariations+2; ++ind)
+                    this->fillResponse(scaleResponses.at(ind+9), val, trueVal,
+                                       nominalWeightPDFNorm * pdfAndAlphaSWeights.at(ind));
+
+                  // the last two items in the PDF weight vector are alpha_S variations
+                 //In our ntuplizer uwvv codes, scaleWeight corresponds to lhe weights index 0 to 8, and pdf weights 9 to 9999 (used until 111). 
 
 		  // fill the 3-D histogram with one response for each PDF variation
-                  float nominalWeightPDFNorm = nominalWeight / pdfAndAlphaSWeights.at(0);
+                  //float nominalWeightPDFNorm = nominalWeight / pdfAndAlphaSWeights.at(0);
                   for(size_t ind = 0; ind < nPDFVariations; ++ind)
                     this->fillResponse(pdfResponses, val, trueVal, ind,
                                        nominalWeightPDFNorm * pdfAndAlphaSWeights.at(ind));
