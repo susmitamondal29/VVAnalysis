@@ -989,10 +989,23 @@ def getUnfolded(hSig, hBkg, hTrue, hResponse, hData, nIter,withRespAndCov=False)
     else:
         return hOut
 
-def _generateUncertainties(hDict,norm): #hDict is hUnfolded dict
+def _generateUncertainties(hDict,varName,norm): #hDict is hUnfolded dict
 
     nominalArea = hDict[''].Integral(0,hDict[''].GetNbinsX()+1) #if called after rebin, the overflow bin is 0 already, and do we include underflow bin?
     hErr = {'Up':{},'Down':{}}
+    pdflist={}
+    scaleindlist = [str(i) for i in range(1,9)] # 1 to 8. 0,9 has been skipped in preparing hUnfolded
+    scalenamelist = ['PS_'+str(i) for i in [1,2,3,4,6,8]]
+    scalehists = [hDict[sys] for sys in scalenamelist]
+
+    if varName == "eta":
+        histbins=array.array('d',[0.,1.0,2.0,3.0,4.0,5.0,6.0])
+    else:
+        histbins=array.array('d',_binning[varName])
+    
+    hUncScaleUp=ROOT.TH1D("hUncScaleUp","QCD scale uncertainty up.",len(histbins)-1,histbins)
+    hUncScaleDn=ROOT.TH1D("hUncScaleDn","QCD scale uncertainty down.",len(histbins)-1,histbins)
+
     for sys, h in hDict.iteritems():
         if not sys:
             continue
@@ -1005,9 +1018,9 @@ def _generateUncertainties(hDict,norm): #hDict is hUnfolded dict
         #if sys=="generator":
         #print "Unc: ",he.Integral()
         #print "nominalArea:",nominalArea
-        #Subtract the nominal histogram from the SysUp or Down histogram
-
-        he.Add(hDict[''],-1)
+        #Subtract the nominal histogram from the SysUp or Down and pdf/scale histograms other than alpha_s variations
+        if not ('111' in sys or '110' in sys or sys.replace('PS_','') in scaleindlist): #last two correspond to alpha_s variation
+            he.Add(hDict[''],-1)
         sysName = sys.replace('_Up','').replace('_Down','')
         #if sys=="generator":
         print "Unc after nominal subtraction: ",he.Integral()
@@ -1015,11 +1028,33 @@ def _generateUncertainties(hDict,norm): #hDict is hUnfolded dict
             hErr['Up'][sysName] = he
         elif '_Down' in sys:
             hErr['Down'][sysName] = he
+        elif 'PS_' in sys and not ('111' in sys or '110' in sys or sys.replace('PS_','') in scaleindlist):
+            hErr['Up'][sys] = he
+            hErr['Down'][sys] = he.Clone() #these pdf variations get into the square sum 
         else:
             hErr['Up'][sysName] = he
             he2 = he.Clone()
             hErr['Down'][sysName] = he2
-    
+
+    h_alphas_up = hDict['PS_111'].Clone()
+    h_alphas_down = hDict['PS_110'].Clone()
+    h_alphas = h_alphas_up.Clone()
+    h_alphas.Add(h_alphas_down,-1)
+    h_alphas.Scale(0.5)
+    hErr['Up']['alpha_s'] = h_alphas
+    hErr['Down']['alpha_s'] = h_alphas.Clone()
+
+    for i in range(1,hUncScaleUp.GetNbinsX()+1):
+        tmpcontent = [h.GetBinContent[i] for h in scalehists]
+        maxi=max(tmpcontent)
+        mini=min(tmpcontent)
+        hUncScaleUp.SetBinContent(i,maxi)
+        hUncScaleDn.SetBinContent(i,mini)
+
+    hUncScaleUp.Add(hDict[''],-1)
+    hUncScaleDn.Add(hDict[''],-1)
+    hErr['Up']['QCD_scales'] = hUncScaleUp
+    hErr['Down']['QCD_scales'] = hUncScaleDn
     return hErr
 
 def _sumUncertainties(errDict,varName):
@@ -1066,9 +1101,9 @@ def _sumUncertainties(errDict,varName):
 
     return hUncUp, hUncDn
 
-def _sumUncertainties_info(errDict,varName,hUnf): #same as above but used to printout info
+def _sumUncertainties_info(errDict,varName,hUnf,chan=''): #same as above but used to printout info
     
-    ferrinfo=open("ErrorInfo.log",'w')
+    ferrinfo=open("ErrorInfo%s.log"%chan,'w')
     ferrinfo.write("Var: %s \n"%varName)
     tmparea= hUnf.Integral(1,hUnf.GetNbinsX())
     if varName == "eta":
@@ -1098,6 +1133,7 @@ def _sumUncertainties_info(errDict,varName,hUnf): #same as above but used to pri
     print "GeneratorDn: ",LumiDn.Integral()
     for i in range(1,hUncUp.GetNbinsX()+1):
         ferrinfo.write("Bin %s\n"%i)
+        totUncUp=totUncDn=0. #should be reset each time but not done in original codes?
         for j,(h1, h2) in enumerate(zip(UncUpHistos,UncDnHistos)):
             ferrinfo.write("Syst: %s \n"%sysList[j])
             ferrinfo.write("histUp: %s \n"%(h1.GetBinContent(i)))
@@ -1320,9 +1356,9 @@ for varName in runVariables:
         #print("returning truth? ",hTrue[chan])
 
         if not args['noSyst']: 
-            hErr[chan]= _generateUncertainties(hUnfolded[chan],norm)
+            hErr[chan]= _generateUncertainties(hUnfolded[chan],varName,norm)
             print "hErr[",chan,"]: ",hErr[chan]
-            (hUncUp, hUncDn) = _sumUncertainties(hErr[chan],varName)
+            (hUncUp, hUncDn) = _sumUncertainties_info(hErr[chan],varName,chan)
         #hErrTrue[chan] = _generateUncertainties(hTrue[chan],norm)
         #(hTrueUncUp, hTrueUncDn) = _sumUncertainties(hErrTrue[chan],varName)
             hDataSave = hDataDict[chan].Clone()
