@@ -1006,6 +1006,24 @@ def _generateUncertainties(hDict,varName,norm): #hDict is hUnfolded dict
     hUncScaleUp=ROOT.TH1D("hUncScaleUp","QCD scale uncertainty up.",len(histbins)-1,histbins)
     hUncScaleDn=ROOT.TH1D("hUncScaleDn","QCD scale uncertainty down.",len(histbins)-1,histbins)
 
+    avghist = None
+    firstadd = True
+    for sys, h in hDict.iteritems():
+        if not sys:
+            continue
+        he = h.Clone()
+        if norm:
+            he.Scale(nominalArea/(he.Integral(0,he.GetNbinsX()+1)))
+
+        if 'PS' in sys and not ('111' in sys or '110' in sys or sys.replace('PS_','') in scaleindlist):
+            if firstadd:
+                avghist = he.Clone()
+                firstadd = False
+            else:
+                avghist.Add(he)
+    
+    avghist.Scale(0.01) #divided by 100
+
     for sys, h in hDict.iteritems():
         if not sys:
             continue
@@ -1014,13 +1032,20 @@ def _generateUncertainties(hDict,varName,norm): #hDict is hUnfolded dict
         if norm:
             he.Scale(nominalArea/(he.Integral(0,he.GetNbinsX()+1)))
 
+        #if sys.replace('PS_','') in scaleindlist:
+        #    pdb.set_trace()
         #print "systematic: ",sys
         #if sys=="generator":
         #print "Unc: ",he.Integral()
         #print "nominalArea:",nominalArea
         #Subtract the nominal histogram from the SysUp or Down and pdf/scale histograms other than alpha_s variations
-        if not ('111' in sys or '110' in sys or sys.replace('PS_','') in scaleindlist): #last two correspond to alpha_s variation
+
+        if not 'PS' in sys:
             he.Add(hDict[''],-1)
+        elif not ('111' in sys or '110' in sys or sys.replace('PS_','') in scaleindlist): #last two correspond to alpha_s variation
+            #he.Add(avghist,-1)
+            he.Add(hDict[''],-1)
+
         sysName = sys.replace('_Up','').replace('_Down','')
         #if sys=="generator":
         print "Unc after nominal subtraction: ",he.Integral()
@@ -1028,14 +1053,15 @@ def _generateUncertainties(hDict,varName,norm): #hDict is hUnfolded dict
             hErr['Up'][sysName] = he
         elif '_Down' in sys:
             hErr['Down'][sysName] = he
-        elif 'PS_' in sys and not ('111' in sys or '110' in sys or sys.replace('PS_','') in scaleindlist):
-            hErr['Up'][sys] = he
-            hErr['Down'][sys] = he.Clone() #these pdf variations get into the square sum 
+        elif 'PS_' in sys: 
+            if not ('111' in sys or '110' in sys or sys.replace('PS_','') in scaleindlist):
+                hErr['Up'][sys] = he
+                hErr['Down'][sys] = he.Clone() #these pdf variations get into the square sum 
         else:
             hErr['Up'][sysName] = he
             he2 = he.Clone()
             hErr['Down'][sysName] = he2
-
+    #pdb.set_trace()
     h_alphas_up = hDict['PS_111'].Clone()
     h_alphas_down = hDict['PS_110'].Clone()
     h_alphas = h_alphas_up.Clone()
@@ -1045,7 +1071,7 @@ def _generateUncertainties(hDict,varName,norm): #hDict is hUnfolded dict
     hErr['Down']['alpha_s'] = h_alphas.Clone()
 
     for i in range(1,hUncScaleUp.GetNbinsX()+1):
-        tmpcontent = [h.GetBinContent[i] for h in scalehists]
+        tmpcontent = [h.GetBinContent(i) for h in scalehists]
         maxi=max(tmpcontent)
         mini=min(tmpcontent)
         hUncScaleUp.SetBinContent(i,maxi)
@@ -1134,16 +1160,26 @@ def _sumUncertainties_info(errDict,varName,hUnf,chan=''): #same as above but use
     for i in range(1,hUncUp.GetNbinsX()+1):
         ferrinfo.write("Bin %s\n"%i)
         totUncUp=totUncDn=0. #should be reset each time but not done in original codes?
+        PS_sum = 0.
         for j,(h1, h2) in enumerate(zip(UncUpHistos,UncDnHistos)):
-            ferrinfo.write("Syst: %s \n"%sysList[j])
-            ferrinfo.write("histUp: %s \n"%(h1.GetBinContent(i)))
-            ferrinfo.write("histDn: %s \n"%(h2.GetBinContent(i)))
-            ferrinfo.write("Chosen max/min %s/%s \n"%(max(h1.GetBinContent(i),h2.GetBinContent(i)),min(h1.GetBinContent(i),h2.GetBinContent(i))))
-            totUncUp += max(h1.GetBinContent(i),h2.GetBinContent(i))**2
-            totUncDn += min(h1.GetBinContent(i),h2.GetBinContent(i))**2
+            if not 'PS' in sysList[j]: #only 10 to 109 in the list
+                ferrinfo.write("Syst: %s \n"%sysList[j])
+                ferrinfo.write("histUp: %s \n"%(h1.GetBinContent(i)))
+                ferrinfo.write("histDn: %s \n"%(h2.GetBinContent(i)))
+                #ferrinfo.write("Chosen max/min %s/%s \n"%(max(h1.GetBinContent(i),h2.GetBinContent(i)),min(h1.GetBinContent(i),h2.GetBinContent(i))))
+                totUncUp += max(h1.GetBinContent(i),h2.GetBinContent(i))**2
+                totUncDn += min(h1.GetBinContent(i),h2.GetBinContent(i))**2
+            else: #already satify in generateUncertainties#if not ('111' in sys or '110' in sys or sys.replace('PS_','') in scaleindlist):
+                PS_sum += h1.GetBinContent(i)**2 
 
+        #PS_sum = PS_sum/(100-1)
+        totUncUp += PS_sum
+        totUncDn += PS_sum
         totUncUp = math.sqrt(totUncUp)
         totUncDn = math.sqrt(totUncDn)
+        PS_sum = math.sqrt(PS_sum)
+        ferrinfo.write("Syst: PDF (not alpha_s) Value:%s \n"%PS_sum)
+        
         ferrinfo.write("totSysUncUp: %s \n"%totUncUp)
         ferrinfo.write("totSysUncDn: %s \n"%totUncDn)
         ferrinfo.write("Stat Unc: %s \n"%(hUnf.GetBinError(i)))
@@ -1181,7 +1217,7 @@ def _combineChannelUncertainties(*errDicts):
             #print "histTot histbins: ",histbins
             histTot=ROOT.TH1D("histTot","Tot Uncert.",len(histbins)-1,histbins)
             ROOT.SetOwnership(histTot,False)
-            hUncTot[sys][unc] = histTot
+            hUncTot[sys][unc] = histTot.Clone() #clone just in case in new codes
             for errDict in errDicts:
                 try:
                     hUncTot[sys][unc].Add(errDict[sys][unc])
@@ -1358,7 +1394,7 @@ for varName in runVariables:
         if not args['noSyst']: 
             hErr[chan]= _generateUncertainties(hUnfolded[chan],varName,norm)
             print "hErr[",chan,"]: ",hErr[chan]
-            (hUncUp, hUncDn) = _sumUncertainties_info(hErr[chan],varName,chan)
+            (hUncUp, hUncDn) = _sumUncertainties_info(hErr[chan],varName,hUnfolded[chan][''],chan)
         #hErrTrue[chan] = _generateUncertainties(hTrue[chan],norm)
         #(hTrueUncUp, hTrueUncDn) = _sumUncertainties(hErrTrue[chan],varName)
             hDataSave = hDataDict[chan].Clone()
