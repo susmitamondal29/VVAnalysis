@@ -215,11 +215,11 @@ class BranchValueResponseMatrixMaker : public SimpleValueResponseMatrixMakerBase
                                                const Str& syst = "") const;
 
   // Point branches to correct addresses (child member objects)
-  virtual void setRecoBranches(TChain& t, const Vec<Str>& objects);
+  virtual void setRecoBranches(TChain& t, const Vec<Str>& objects) override;
 
   // Use these branches to get the values to put into a response histo
   // Option can be a systematic to apply or whatever
-  virtual T getEventResponse(const Str& option = "") const;
+  virtual T getEventResponse(const Str& option = "") const override;
 
   virtual bool selectEvent(const Str& option = "") const {return true;}
 
@@ -267,14 +267,14 @@ class JetBranchResponseMatrixMakerBase : public BranchValueResponseMatrixMaker<T
  protected:
   typedef typename BranchValueResponseMatrixMaker<T>::ValType ValType;
 
-  virtual T getEventResponse(const Str& syst = "") const;
+  virtual T getEventResponse(const Str& syst = "") const override;
   float my_doNotUse1;
   float my_doNotUse2;
   float * my_mZ1=NULL;
   float * my_mZ2=NULL;
 
   // sets jet systematic branches too
-  virtual void setRecoBranches(TChain& t, const Vec<Str>& objects);
+  virtual void setRecoBranches(TChain& t, const Vec<Str>& objects) override;
 
   private:
   Vec<float>* valuevecfloat=NULL;
@@ -298,17 +298,17 @@ class DijetBranchResponseMatrixMaker : public JetBranchResponseMatrixMakerBase<T
 
   virtual UPtr<UMap<size_t, T> > getTrueValues(TChain& trueTree,
                                                    const Vec<Str>& objects,
-                                                   const Str& syst = "") const;
+                                                   const Str& syst = "") const override; //Overide here
 
   //virtual void fillResponse(TH2D& h, const T& val, const T& trueVal, float w) const;
 
   // gets nJets branch (and nJets systematic branches) as well as the
   // value branch
-  void setRecoBranches(TChain& t, const Vec<Str>& objects);
+  void setRecoBranches(TChain& t, const Vec<Str>& objects) override;
 
-  virtual T getEventResponse(const Str& syst = "") const;
+  virtual T getEventResponse(const Str& syst = "") const override;
   // selects for nJets >= 2
-  bool selectEvent(const Str& syst = "") const;
+  bool selectEvent(const Str& syst = "") const override;
 
  private:
   float mjj;
@@ -318,6 +318,11 @@ class DijetBranchResponseMatrixMaker : public JetBranchResponseMatrixMakerBase<T
   unsigned int nJets_jesDn;
   unsigned int nJets_jerUp;
   unsigned int nJets_jerDn;
+
+  float mjj_jesUp;
+  float mjj_jesDn;
+  float mjj_jerUp;
+  float mjj_jerDn;
 };
 
 class testJets : public DijetBranchResponseMatrixMaker<float>

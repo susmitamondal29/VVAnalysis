@@ -190,8 +190,12 @@ void ResponseMatrixMakerBase<T>::setup()
   //std::cout<<binning<<std::endl;
   // set up lots of things
   Vec<Str> systs = Vec<Str>({"nominal",
-        "pu_Up","pu_Down",
+        "pu_Up","pu_Down","jes_up","jes_dn","jer_up","jer_dn",
         //"pdf_Up","pdf_Down",
+        });
+  
+  Vec<Str> jsysts = Vec<Str>({"jes_up","jes_dn","jer_up","jer_dn",
+        
         });
   //const bool isJetVar = (varName.find("jet") != Str::npos ||
   //                       varName.find("Jet") != Str::npos ||
@@ -388,6 +392,27 @@ void ResponseMatrixMakerBase<T>::setup()
 
       T& trueVal = iTrue->second;
       //if(this->getVar().c_str() == "jetPt0"){trueVal=trueVal.at(0);}
+
+      //Do JES and JER systematics here
+      for(auto& js : jsysts){
+        if(this->selectEvent(js))
+        {  
+         
+          T val = this->getEventResponse(js);
+	
+          const float nominalWeight = scale * puWt * lepSF * genWeight;
+	 
+
+	        if (val >= upperEdge){val=binCenter;}
+	   
+          if (trueVal >= upperEdge){trueVal=binCenter;}
+	  
+         
+          this->fillResponse(responses[js], val, trueVal, nominalWeight);
+
+        }
+      }
+
       if(this->selectEvent())
         {  
           // Nominal value
@@ -767,36 +792,37 @@ JetBranchResponseMatrixMakerBase<T>::JetBranchResponseMatrixMakerBase(const Str&
 template<typename T>
 T JetBranchResponseMatrixMakerBase<T>::getEventResponse(const Str& syst) const
 {
-  if(syst.find("jes_up") != Str::npos)
-    return value_jesUp->at(0);
-  if(syst.find("jes_dn") != Str::npos)
-    return value_jesDn->at(0);
-  if(syst.find("jer_up") != Str::npos)
-    return value_jerUp->at(0);
-  if(syst.find("jer_dn") != Str::npos)
-    return value_jerDn->at(0);
+  Vec<float>* tmp_jvec = valuevecfloat;
+  if(syst.find("jes_up") != Str::npos){
+    tmp_jvec = value_jesUp;}
+  if(syst.find("jes_dn") != Str::npos){
+    tmp_jvec = value_jesDn;}
+  if(syst.find("jer_up") != Str::npos){
+    tmp_jvec = value_jerUp;}
+  if(syst.find("jer_dn") != Str::npos){
+    tmp_jvec = value_jerDn;}
 
   if(this->getVar()=="jetPt[0]"){
     //std::cout<<"response value"<<valuevecfloat->at(0)<<std::endl;
-    return valuevecfloat->at(0);}
+    return tmp_jvec->at(0);}
   else if(this->getVar()=="jetPt[1]"){
     //std::cout<<"response value"<<valuevecfloat->at(0)<<std::endl;
-    return valuevecfloat->at(1);}
+    return tmp_jvec->at(1);}
   else if(this->getVar()=="jetEta[0]"){
     //std::cout<<"response value"<<valuevecfloat->at(0)<<std::endl;
-    return valuevecfloat->at(0);}
+    return tmp_jvec->at(0);}
   else if(this->getVar()=="jetEta[1]"){
     //std::cout<<"response value"<<valuevecfloat->at(0)<<std::endl;
-    return valuevecfloat->at(1);}
+    return tmp_jvec->at(1);}
   else if(this->getVar()=="absjetEta[0]"){
     //std::cout<<"response value"<<valuevecfloat->at(0)<<std::endl;
-    return std::abs(valuevecfloat->at(0));}
+    return std::abs(tmp_jvec->at(0));}
   else if(this->getVar()=="absjetEta[1]"){
     //std::cout<<"response value"<<valuevecfloat->at(0)<<std::endl;
-    return std::abs(valuevecfloat->at(1));}
+    return std::abs(tmp_jvec->at(1));}
   else if(this->getVar()=="dEtajj"){
     //std::cout<<"response value"<<valuevecfloat->at(0)<<std::endl;
-    return std::abs(valuevecfloat->at(1)-valuevecfloat->at(0));}
+    return std::abs(tmp_jvec->at(1)-tmp_jvec->at(0));}
 
   else{return BranchValueResponseMatrixMaker<T>::getEventResponse(syst);}
   //return BranchValueResponseMatrixMaker<T>::getEventResponse(syst);
@@ -927,14 +953,47 @@ DijetBranchResponseMatrixMaker<T>::setRecoBranches(TChain& t, const Vec<Str>& ob
   t.SetBranchAddress("nJets_jesDown", &nJets_jesDn);
   t.SetBranchAddress("nJets_jerUp", &nJets_jerUp);
   t.SetBranchAddress("nJets_jerDown", &nJets_jerDn);
+  t.SetBranchAddress("mjj_jesUp", &mjj_jesUp);
+  t.SetBranchAddress("mjj_jesDown", &mjj_jesDn);
+  t.SetBranchAddress("mjj_jerUp", &mjj_jerUp);
+  t.SetBranchAddress("mjj_jerDown", &mjj_jerDn);
 }
 
 template<typename T>
 T DijetBranchResponseMatrixMaker<T>::getEventResponse(const Str& syst) const
 {
   //std::cout<<"getEventResponse overwrite success======================================="<<std::endl;
-  if(this->getVar()=="nJets"){return nJets;}
-  else if(this->getVar()=="mjj"){return mjj;}
+  
+  if(this->getVar()=="nJets")
+  {
+    unsigned int tmp_val = nJets;
+    if(syst.find("jes_up") != Str::npos){
+    tmp_val = nJets_jesUp;}
+  else if(syst.find("jes_dn") != Str::npos){
+    tmp_val= nJets_jesDn;}
+  else if(syst.find("jer_up") != Str::npos){
+    tmp_val = nJets_jerUp;}
+  else if(syst.find("jer_dn") != Str::npos){
+    tmp_val= nJets_jerDn;}
+  
+  return tmp_val;
+  }
+
+  else if(this->getVar()=="mjj")
+  {
+    float tmp_val = mjj;
+    if(syst.find("jes_up") != Str::npos){
+    tmp_val = mjj_jesUp;}
+  else if(syst.find("jes_dn") != Str::npos){
+    tmp_val= mjj_jesDn;}
+  else if(syst.find("jer_up") != Str::npos){
+    tmp_val = mjj_jerUp;}
+  else if(syst.find("jer_dn") != Str::npos){
+    tmp_val= mjj_jerDn;}
+  
+  return tmp_val;
+  }
+   // return mjj;}
   else{return JetBranchResponseMatrixMakerBase<T>::getEventResponse(syst);}
   //return BranchValueResponseMatrixMaker<T>::getEventResponse(syst);
 }
@@ -957,38 +1016,41 @@ DijetBranchResponseMatrixMaker<T>::selectEvent(const Str& syst) const
   float mZ2=*(JetBranchResponseMatrixMakerBase<T>::my_mZ2);
   bool  mass_sel = mZ1 > 60. && mZ1 < 120. && mZ2 > 60. && mZ2 < 120.;
   //std::cout<<"Confirm mZ1,mZ2:  "<<mZ1<<" "<<mZ2<<std::endl;
-  if(syst.empty()){
+  unsigned int tmp_nJets = nJets;
+  if(syst.empty()){tmp_nJets = nJets;}
+  else if(syst.find("jes_up") != Str::npos)
+    {tmp_nJets = nJets_jesUp;}
+  else if(syst.find("jes_dn") != Str::npos)
+    {tmp_nJets = nJets_jesDn;} 
+  else if(syst.find("jer_up") != Str::npos)
+    {tmp_nJets = nJets_jerUp ;}
+  else if(syst.find("jer_dn") != Str::npos)
+    {tmp_nJets = nJets_jerDn ;}
+
     //std::cout<<"===========================Selection with no syst entered==============="<<std::endl; 
     //std::cout<<this->getVar().c_str()<<" "<<this->getVar()<<"  "<<(this->getVar().c_str()==this->getVar())<<std::endl;
     //std::cout<<(this->getVar().c_str()=="jetEta[0]")<<std::endl;
     //std::cout<<(this->getVar()=="jetEta[0]")<<std::endl;
     //std::cout<<"==================size unequal========================"<<nJets<<" vs "<< this->valuevecfloat->size()<<std::endl;
 
-    if (this->getVar() == "Mass0j") {return nJets == 0 && mass_sel;}
-    if (this->getVar() == "Mass1j") {return nJets == 1 && mass_sel;}
-    if (this->getVar() == "Mass2j") {return nJets == 2 && mass_sel;}
-    if (this->getVar() == "Mass3j") {return nJets == 3 && mass_sel;}
-    if (this->getVar() == "Mass4j") {return nJets >= 4 && mass_sel;}
+    if (this->getVar() == "Mass0j") {return tmp_nJets == 0 && mass_sel;}
+    if (this->getVar() == "Mass1j") {return tmp_nJets == 1 && mass_sel;}
+    if (this->getVar() == "Mass2j") {return tmp_nJets == 2 && mass_sel;}
+    if (this->getVar() == "Mass3j") {return tmp_nJets == 3 && mass_sel;}
+    if (this->getVar() == "Mass4j") {return tmp_nJets >= 4 && mass_sel;}
     if (this->getVar() == "nJets") {return mass_sel;}
-    if (this->getVar() == "mjj") {return nJets >= 2 && mass_sel;}
-    if (this->getVar() == "dEtajj") {return nJets >= 2 && mass_sel;}
+    if (this->getVar() == "mjj") {return tmp_nJets >= 2 && mass_sel;}
+    if (this->getVar() == "dEtajj") {return tmp_nJets >= 2 && mass_sel;}
     if (this->getVar() == "Mass") {return  mass_sel;}// && mjj>100 && Mass>180;
-    if (this->getVar() == "jetPt[0]") {return nJets >= 1 && mass_sel;}
-    if (this->getVar() == "jetPt[1]") {return nJets >= 2 && mass_sel;}
-    if (this->getVar() == "jetEta[0]") {return nJets >= 1 && mass_sel;}
-    if (this->getVar() == "jetEta[1]") {return nJets >= 2 && mass_sel;}
-    if (this->getVar() == "absjetEta[0]") {return nJets >= 1 && mass_sel;}
-    if (this->getVar() == "absjetEta[1]") {return nJets >= 2 && mass_sel;}
+    if (this->getVar() == "jetPt[0]") {return tmp_nJets >= 1 && mass_sel;}
+    if (this->getVar() == "jetPt[1]") {return tmp_nJets >= 2 && mass_sel;}
+    if (this->getVar() == "jetEta[0]") {return tmp_nJets >= 1 && mass_sel;}
+    if (this->getVar() == "jetEta[1]") {return tmp_nJets >= 2 && mass_sel;}
+    if (this->getVar() == "absjetEta[0]") {return tmp_nJets >= 1 && mass_sel;}
+    if (this->getVar() == "absjetEta[1]") {return tmp_nJets >= 2 && mass_sel;}
   }
 
-  if(syst.find("jes_up") != Str::npos)
-    {return nJets_jesUp >= 1 && mass_sel;}// && mjj>100 && Mass>180;}
-  if(syst.find("jes_dn") != Str::npos)
-    {return nJets_jesDn >= 1 && mass_sel;} //&& mjj>100 && Mass>180;}
-  if(syst.find("jer_up") != Str::npos)
-    {return nJets_jerUp >= 1 && mass_sel;}// && mjj>100 && Mass>180;}
-  if(syst.find("jer_dn") != Str::npos)
-    {return nJets_jerDn >= 1 && mass_sel;}// && mjj>100 && Mass>180;}
+  
 
   std::cout<<"======================NO MATCH in selection!====================================="<<std::endl;
   return mass_sel;
