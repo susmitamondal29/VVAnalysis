@@ -198,6 +198,7 @@ void SelectorBase::InitializeHistogramsFromConfig() {
 
     InitializeHistMap(hists1D_, histMap1D_);
     InitializeHistMap(weighthists1D_, weighthistMap1D_);
+    InitializeHistMap(jethists1D_, jethistMap1D_);
 
     for (auto && entry : *histInfo) {  
         TNamed* currentHistInfo = dynamic_cast<TNamed*>(entry);
@@ -264,6 +265,13 @@ void SelectorBase::InitializeHistogramFromConfig(std::string name, std::string c
             AddObject<TH2D>(weighthistMap1D_[histName], 
                 (name+"_lheWeights_"+channel).c_str(), histData[0].c_str(),
                 nbins, xmin, xmax, 1000, 0, 1000);
+        }
+
+       if (isMC_ && !isNonPrompt_ && (jethistMap1D_.find(histName) != jethistMap1D_.end())) { 
+           //std::cout<<"Is weightHists getting filled?"<<std::endl;
+            AddObject<TH2D>(jethistMap1D_[histName], 
+                (name+"_jetsysts_"+channel).c_str(), histData[0].c_str(),
+                nbins, xmin, xmax, 4, 0, 4); // 4 systs for JES and JER
         }
     }
     else {
