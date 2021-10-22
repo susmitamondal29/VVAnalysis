@@ -1048,7 +1048,7 @@ DijetBranchResponseMatrixMaker<T>::selectEvent(const Str& syst) const
     if (this->getVar() == "jetEta[1]") {return tmp_nJets >= 2 && mass_sel;}
     if (this->getVar() == "absjetEta[0]") {return tmp_nJets >= 1 && mass_sel;}
     if (this->getVar() == "absjetEta[1]") {return tmp_nJets >= 2 && mass_sel;}
-  }
+  
 
   
 

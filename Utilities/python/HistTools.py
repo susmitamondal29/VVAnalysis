@@ -287,7 +287,8 @@ def makeCompositeHists(hist_file, name, members, lumi, hists=[], underflow=False
             sumweights_hist = hist_file.Get("/".join([directory.split("__")[0], "sumweights"]))
             if not sumweights_hist:
                 raise RuntimeError("Failed to find sumWeights for dataset %s" % directory)
-            sumweights = sumweights_hist.Integral(1, sumweights_hist.GetNbinsX()+2)
+            #pdb.set_trace()
+            sumweights = sumweights_hist.Integral(1, sumweights_hist.GetNbinsX()+2) #+1 instead of +2? For overbin integral doesn't matter how many extra bins.
             sumweights_hist.Delete()
         for histname in hists:
             if histname == "sumweights": continue
@@ -301,6 +302,56 @@ def makeCompositeHists(hist_file, name, members, lumi, hists=[], underflow=False
                 sumhist = composite.FindObject(hist.GetName())
                 if sumweights:
                     hist.Scale(members[directory.split("__")[0]]*1000*lumi/sumweights)
+                    #Save sumweights in SumW dictionary
+                    SumW.update({directory:sumweights})
+                addOverflowAndUnderflow(hist, underflow, overflow)
+            else:
+                raise RuntimeError("hist %s was not produced for "
+                    "dataset %s!" % (histname, directory))
+            if not sumhist:
+                sumhist = hist.Clone()
+                composite.Add(sumhist)
+            else:
+                sumhist.Add(hist)
+            hist.Delete()
+    return composite,SumW
+
+def makeCompositeHists_scaling(hist_file, name, members, lumi, hists=[], underflow=False, overflow=True, rebin=None,scale_sample="ggZZ",scale_fac=1.):
+    #pdb.set_trace()
+    composite = ROOT.TList()
+    composite.SetName(name)
+    SumW={}
+    for directory in [str(i) for i in members.keys()]:
+        # For aQGC, the different plot groups should already be in their own files
+        if "aqgc" in directory:
+            directory = name
+        if not hist_file.Get(directory):
+            logging.warning("Skipping invalid filename %s" % directory)
+            continue
+        if hists == []:
+            hists = [i.GetName() for i in hist_file.Get(directory).GetListOfKeys()]
+        sumweights = 0
+        if "data" not in directory.lower():
+            sumweights_hist = hist_file.Get("/".join([directory.split("__")[0], "sumweights"]))
+            if not sumweights_hist:
+                raise RuntimeError("Failed to find sumWeights for dataset %s" % directory)
+            #pdb.set_trace()
+            sumweights = sumweights_hist.Integral(1, sumweights_hist.GetNbinsX()+2) #+1 instead of +2?
+            sumweights_hist.Delete()
+        for histname in hists:
+            if histname == "sumweights": continue
+            tmphist = hist_file.Get("/".join([directory, histname]))
+            if not tmphist: 
+                raise RuntimeError("Failed to produce histogram %s" % "/".join([directory, histname]))
+            toRebin = rebin and not "TH2" in tmphist.ClassName()
+            hist = tmphist.Clone() if not toRebin else tmphist.Rebin(len(rebin)-1, histname, rebin)
+            tmphist.Delete()
+            if hist:
+                sumhist = composite.FindObject(hist.GetName())
+                if sumweights:
+                    hist.Scale(members[directory.split("__")[0]]*1000*lumi/sumweights)
+                    if scale_sample in directory:
+                        hist.Scale(scale_fac)
                     #Save sumweights in SumW dictionary
                     SumW.update({directory:sumweights})
                 addOverflowAndUnderflow(hist, underflow, overflow)

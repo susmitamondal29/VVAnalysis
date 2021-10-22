@@ -571,6 +571,50 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
         #cCov.Print("%s/covariance_%s.pdf" % (plotDir,varName))
         del cCov
     if not args['noSyst']: 
+        #ggZZ xsec
+        xsecScale = {'Up':1.+0.18,'Down':1.-0.14}
+        for sys, scale in xsecScale.iteritems():
+            #print "lumi uncert.",sys
+            #print "scale: ",scale
+            if "Up" in sys:
+                hSigGX = hSigDic_ggZZup[chan][varNames[varName]]
+            else:
+                hSigGX = hSigDic_ggZZdn[chan][varNames[varName]]
+            hSigGX.SetDirectory(0)
+
+            hBkgGX = hbkgDic[chan][varNames[varName]+"_Fakes"]
+            hBkgGX.SetDirectory(0)
+            hBkgMCGX = hbkgMCDic[chan][varNames[varName]]
+            hBkgMCGX.SetDirectory(0)
+            hBkgTotalGX=hBkgGX.Clone()
+            hBkgTotalGX.Add(hBkgMCGX)
+
+            hResponseGX = {s:resp for s,resp in responseMakers.items()}
+            hRespGXTot = hResponseGX.pop(mynominalName)
+        
+            hRespGX = hRespGXTot.getResponse('nominal')
+            hRespGX.SetDirectory(0)
+            for resp in hResponseGX.values(): #ggZZ content
+                respMatGX = resp.getResponse('nominal')
+                respMatGX.Scale(scale)
+                hRespGX.Add(respMatGX)
+                respMatGX.SetDirectory(0)
+                del respMatGX
+
+            
+            hSigGX=rebin(hSigGX,varName)
+            hBkgTotalGX=rebin(hBkgTotalGX,varName)
+
+            #print "trueHist: ",hTrueLumiShift,", ",hTrueLumiShift.Integral()
+            #print "TotBkgHistLumi after rebinning: ",hBkgTotalLumi,", ",hBkgTotalLumi.Integral()
+
+            hUnfolded['ggZZxsec_'+sys] = getUnfolded(hSigGX,hBkgTotalGX,hTruth[''],hRespGX,hData, nIter,True)
+
+            del hSigGX
+            del hBkgMCGX
+            del hBkgGX
+            del hRespGX
+
         # luminosity
         lumiUnc = 0.023
         lumiScale = {'Up':1.+lumiUnc,'Down':1.-lumiUnc}
@@ -668,6 +712,50 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
             del hBkgMCPU
             del hBkgPU
             del hRespPU
+
+#Add systematics for JES and JER
+        hResponseJET = {s:resp for s,resp in responseMakers.items()}
+        hRespJETTot = hResponseJET.pop(mynominalName)
+        
+        hSigJET = hSigSystDic[chan][varNames[varName]+"_jetsysts"] #TH2
+        hSigJET.SetDirectory(0)
+            
+        hBkgJET = hbkgDic[chan][varNames[varName]+"_Fakes"]
+        hBkgJET.SetDirectory(0)
+            
+        hBkgMCJET = hbkgMCSystDic[chan][varNames[varName]+"_jetsysts"] #TH2
+        hBkgMCJET.SetDirectory(0)
+
+        for i,sys in enumerate(["jes_up","jes_dn","jer_up","jer_dn"]):
+            hRespJET = hRespJETTot.getResponse(sys)
+            hRespJET.SetDirectory(0)
+            for resp in hResponseJET.values():
+                respMatJET = resp.getResponse(sys)
+                hRespJET.Add(respMatJET)
+                respMatJET.SetDirectory(0)
+                del respMatJET
+            
+                    
+            hSigJETsub = hSigJET.ProjectionX("JET_%s"%i,i+1,i+1,"e") #histogram bin count starts with 1
+            hSigJETsub.SetDirectory(0)
+            
+            hBkgMCJETsub = hBkgMCJET.ProjectionX("JETBkg_%s"%i,i+1,i+1,"e")
+            hBkgJETTotal=hBkgJET.Clone()
+            hBkgJETTotal.Add(hBkgMCJETsub)
+            
+            hSigJETsub=rebin(hSigJETsub,varName)
+            hBkgJETTotal=rebin(hBkgJETTotal,varName)
+           
+            
+            hUnfolded[sys] = getUnfolded(hSigJETsub,
+                                                     hBkgJETTotal,
+                                                     hTruth[''],
+                                                     hRespJET,
+                                                     hData, nIter)
+            del hSigJETsub
+            del hBkgMCJETsub
+            del hRespJET
+        del hBkgJET
 
 #Add systematics for scales and PDF 
         #pdb.set_trace()
@@ -1046,13 +1134,18 @@ def _generateUncertainties(hDict,varName,norm): #hDict is hUnfolded dict
             #he.Add(avghist,-1)
             he.Add(hDict[''],-1)
 
-        sysName = sys.replace('_Up','').replace('_Down','')
+        sysName = sys.replace('_Up','').replace('_Down','') #used for systematics other than the added scale/pdf and jet systs
+        sysName2 = sys.replace('_up','').replace('_dn','')#should only work for "jes_up","jes_dn","jer_up","jer_dn"
         #if sys=="generator":
         print "Unc after nominal subtraction: ",he.Integral()
         if '_Up' in sys:
             hErr['Up'][sysName] = he
         elif '_Down' in sys:
             hErr['Down'][sysName] = he
+        elif '_up' in sys:  #should only work for "jes_up","jes_dn","jer_up","jer_dn"
+            hErr['Up'][sysName2] = he
+        elif '_dn' in sys:
+            hErr['Down'][sysName2] = he
         elif 'PS_' in sys: 
             if not ('111' in sys or '110' in sys or sys.replace('PS_','') in scaleindlist):
                 hErr['Up'][sys] = he
@@ -1129,6 +1222,7 @@ def _sumUncertainties(errDict,varName):
 
 def _sumUncertainties_info(errDict,varName,hUnf,chan=''): #same as above but used to printout info
     
+    systSum = {}
     ferrinfo=open("ErrorInfo%s.log"%chan,'w')
     ferrinfo.write("Var: %s \n"%varName)
     tmparea= hUnf.Integral(1,hUnf.GetNbinsX())
@@ -1140,6 +1234,18 @@ def _sumUncertainties_info(errDict,varName,hUnf,chan=''): #same as above but use
     hUncUp=ROOT.TH1D("hUncUp","Total Up Uncert.",len(histbins)-1,histbins)
     hUncDn=ROOT.TH1D("hUncDn","Total Dn Uncert.",len(histbins)-1,histbins)
     sysList = errDict['Up'].keys()
+
+    extraSystSumList = ['pdf','stat','total']
+    for key in extraSystSumList:
+        systSum[key] = {}
+        systSum[key]['Up'] = systSum[key]['Down'] = 0.
+    
+    for key in sysList:
+        if not 'PS' in key:
+            systSum[key] ={}
+            systSum[key]['Up'] = 0.
+            systSum[key]['Down'] = 0.
+
     #pdb.set_trace()
     print "sysList: ",sysList
     #print "hUncUp: ",hUncUp,"",hUncUp.Integral()
@@ -1167,8 +1273,16 @@ def _sumUncertainties_info(errDict,varName,hUnf,chan=''): #same as above but use
                 ferrinfo.write("histUp: %s \n"%(h1.GetBinContent(i)))
                 ferrinfo.write("histDn: %s \n"%(h2.GetBinContent(i)))
                 #ferrinfo.write("Chosen max/min %s/%s \n"%(max(h1.GetBinContent(i),h2.GetBinContent(i)),min(h1.GetBinContent(i),h2.GetBinContent(i))))
-                totUncUp += max(h1.GetBinContent(i),h2.GetBinContent(i))**2
-                totUncDn += min(h1.GetBinContent(i),h2.GetBinContent(i))**2
+                if h1.GetBinContent(i)*h2.GetBinContent(i)<0: #opposite sign then determine up/down envelop by +up/-down
+                    totUncUp += max(h1.GetBinContent(i),h2.GetBinContent(i))**2
+                    totUncDn += min(h1.GetBinContent(i),h2.GetBinContent(i))**2
+                    systSum[sysList[j]]['Up'] +=abs(max(h1.GetBinContent(i),h2.GetBinContent(i)))
+                    systSum[sysList[j]]['Down'] += abs(min(h1.GetBinContent(i),h2.GetBinContent(i)))
+                else: #same sign then follow original up/down order
+                    totUncUp +=(h1.GetBinContent(i))**2
+                    totUncDn +=(h2.GetBinContent(i))**2
+                    systSum[sysList[j]]['Up'] +=abs(h1.GetBinContent(i))
+                    systSum[sysList[j]]['Down'] += abs(h2.GetBinContent(i))
             else: #already satify in generateUncertainties#if not ('111' in sys or '110' in sys or sys.replace('PS_','') in scaleindlist):
                 PS_sum += h1.GetBinContent(i)**2 
 
@@ -1178,13 +1292,22 @@ def _sumUncertainties_info(errDict,varName,hUnf,chan=''): #same as above but use
         totUncUp = math.sqrt(totUncUp)
         totUncDn = math.sqrt(totUncDn)
         PS_sum = math.sqrt(PS_sum)
+        systSum['pdf']['Up'] += PS_sum
+        systSum['pdf']['Down'] = PS_sum
         ferrinfo.write("Syst: PDF (not alpha_s) Value:%s \n"%PS_sum)
         
         ferrinfo.write("totSysUncUp: %s \n"%totUncUp)
         ferrinfo.write("totSysUncDn: %s \n"%totUncDn)
+
         ferrinfo.write("Stat Unc: %s \n"%(hUnf.GetBinError(i)))
+        systSum['stat']['Up'] += abs(hUnf.GetBinError(i))
+        systSum['stat']['Down'] = abs(hUnf.GetBinError(i)) #abs just in case. Shouldn't need it.
+
         finalup = (totUncUp**2+hUnf.GetBinError(i)**2)**0.5
         finaldn = (totUncDn**2+hUnf.GetBinError(i)**2)**0.5
+        systSum['total']['Up'] += finalup
+        systSum['total']['Down'] += finaldn
+
         normup = finalup/tmparea/hUnf.GetBinWidth(i)
         normdn = finaldn/tmparea/hUnf.GetBinWidth(i)
         ferrinfo.write("Sys+stat Combined up: %s\n"%finalup)
@@ -1197,6 +1320,14 @@ def _sumUncertainties_info(errDict,varName,hUnf,chan=''): #same as above but use
     print("hUncUp: ",hUncUp,"",hUncUp.Integral()) 
     print("hUncDown: ",hUncDn,"",hUncDn.Integral())
 
+    ferrinfo.write("======================\n")
+    ferrinfo.write("Error Summary \n")
+    for key in systSum.keys():
+        tmpup = systSum[key]['Up']
+        tmpdn = systSum[key]['Down']
+        portup = tmpup/systSum['total']['Up']
+        portdn = tmpdn/systSum['total']['Down']
+        ferrinfo.write("%s: Up %s PortionUp %s Down %s PortionDn %s \n"%(key,tmpup,portup,tmpdn,portdn))
     return hUncUp, hUncDn
 
 def _combineChannelUncertainties(*errDicts):
@@ -1285,6 +1416,14 @@ ewkmc,ewkSumW = HistTools.makeCompositeHists(fOut,"AllEWK", ConfigureJobs.getLis
     ConfigureJobs.getListOfEWK(), manager_path), args['lumi'],
     underflow=False, overflow=False)
 
+ewkmc_ggZZup,ewkSumW_ggZZup = HistTools.makeCompositeHists_scaling(fOut,"AllEWKggZZup", ConfigureJobs.getListOfFilesWithXSec(
+    ConfigureJobs.getListOfEWK(), manager_path), args['lumi'],
+    underflow=False, overflow=False,scale_fac=1.+0.18)
+
+ewkmc_ggZZdn,ewkSumW_ggZZdn = HistTools.makeCompositeHists_scaling(fOut,"AllEWKggZZdn", ConfigureJobs.getListOfFilesWithXSec(
+    ConfigureJobs.getListOfEWK(), manager_path), args['lumi'],
+    underflow=False, overflow=False,scale_fac=1.-0.14)
+
 altSigmc,altSigSumW = HistTools.makeCompositeHists(fOut,"AltSig", ConfigureJobs.getListOfFilesWithXSec(
     ConfigureJobs.getListOfaltSig(), manager_path), args['lumi'],
     underflow=False, overflow=False)
@@ -1310,6 +1449,8 @@ zzSumWeights = ewkSumW[mynominalName]
 hDataDic=OutputTools.getHistsInDic(alldata,varList,channels)
 
 hSigDic=OutputTools.getHistsInDic(ewkmc,varList,channels)
+hSigDic_ggZZup=OutputTools.getHistsInDic(ewkmc_ggZZup,varList,channels)
+hSigDic_ggZZdn=OutputTools.getHistsInDic(ewkmc_ggZZdn,varList,channels)
 
 #Alt signals containing zzl4-amcatnlo instead of zz4l-powheg
 hAltSigDic=OutputTools.getHistsInDic(altSigmc,varList,channels)
@@ -1341,6 +1482,7 @@ systList=[]
 for chan in channels:
     for s in runVariables:
         systList.append(varNames[s]+"_lheWeights")
+        systList.append(varNames[s]+"_jetsysts")
     for sys in ["Up","Down"]: 
         for s in runVariables:
             systList.append(varNames[s]+"_CMS_pileup"+sys)
