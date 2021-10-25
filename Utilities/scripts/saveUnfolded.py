@@ -1079,13 +1079,24 @@ def getUnfolded(hSig, hBkg, hTrue, hResponse, hData, nIter,withRespAndCov=False)
         return hOut
 
 def _generateUncertainties(hDict,varName,norm): #hDict is hUnfolded dict
-
-    nominalArea = hDict[''].Integral(0,hDict[''].GetNbinsX()+1) #if called after rebin, the overflow bin is 0 already, and do we include underflow bin?
+    #if called after rebin, the overflow bin is 0 already, and do we include underflow bin?
+    #rebin was not called for histograms in hUnfolded, so use nbins+1 
+    nominalArea = hDict[''].Integral(1,hDict[''].GetNbinsX()+1) #original codes start with 0th bin.
+    if norm:
+        hn = hDict[''].Clone()
+        hn.Scale(1.0/nominalArea)
     hErr = {'Up':{},'Down':{}}
     pdflist={}
     scaleindlist = [str(i) for i in range(1,9)] # 1 to 8. 0,9 has been skipped in preparing hUnfolded
     scalenamelist = ['PS_'+str(i) for i in [1,2,3,4,6,8]]
-    scalehists = [hDict[sys] for sys in scalenamelist]
+    if norm:
+        scalehists = []
+        for sys in scalenamelist:
+            hsc = hDict[sys].Clone()
+            hsc.Scale(1.0/(hsc.Integral(1,hsc.GetNbinsX()+1)))
+            scalehists.append(hsc)
+    else:
+        scalehists = [hDict[sys] for sys in scalenamelist]
 
     if varName == "eta":
         histbins=array.array('d',[0.,1.0,2.0,3.0,4.0,5.0,6.0])
@@ -1097,12 +1108,15 @@ def _generateUncertainties(hDict,varName,norm): #hDict is hUnfolded dict
 
     avghist = None
     firstadd = True
+
+    #calculate avg hist for pdf variations
     for sys, h in hDict.iteritems():
         if not sys:
             continue
         he = h.Clone()
-        if norm:
-            he.Scale(nominalArea/(he.Integral(0,he.GetNbinsX()+1)))
+        if norm: #divide by nominal area for pdf variations (not QCD scale or alpha_s)
+            he.Scale(1.0/nominalArea) #/(he.Integral(1,he.GetNbinsX()+1)))
+            #he.Scale(nominalArea/(he.Integral(0,he.GetNbinsX()+1)))
 
         if 'PS' in sys and not ('111' in sys or '110' in sys or sys.replace('PS_','') in scaleindlist):
             if firstadd:
@@ -1113,13 +1127,19 @@ def _generateUncertainties(hDict,varName,norm): #hDict is hUnfolded dict
     
     avghist.Scale(0.01) #divided by 100
 
+    #main systematics calculation
     for sys, h in hDict.iteritems():
         if not sys:
             continue
         he = h.Clone()
 
-        if norm:
-            he.Scale(nominalArea/(he.Integral(0,he.GetNbinsX()+1)))
+        if norm: #divide by nominal area for pdf variations (not QCD scale or alpha_s)
+            if 'PS' in sys:
+                if not ('111' in sys or '110' in sys or sys.replace('PS_','') in scaleindlist):
+                    he.Scale(1.0/nominalArea)   
+            else:
+                he.Scale(1.0/(he.Integral(1,he.GetNbinsX()+1)))
+            #he.Scale(nominalArea/(he.Integral(0,he.GetNbinsX()+1)))
 
         #if sys.replace('PS_','') in scaleindlist:
         #    pdb.set_trace()
@@ -1130,10 +1150,17 @@ def _generateUncertainties(hDict,varName,norm): #hDict is hUnfolded dict
         #Subtract the nominal histogram from the SysUp or Down and pdf/scale histograms other than alpha_s variations
 
         if not 'PS' in sys:
-            he.Add(hDict[''],-1)
+            if not norm:
+                he.Add(hDict[''],-1)
+            else:
+                he.Add(hn,-1)
+
         elif not ('111' in sys or '110' in sys or sys.replace('PS_','') in scaleindlist): #last two correspond to alpha_s variation
-            #he.Add(avghist,-1)
-            he.Add(hDict[''],-1)
+            if not norm:
+                #he.Add(avghist,-1)
+                he.Add(hDict[''],-1)
+            else:
+                he.Add(hn,-1)
 
         sysName = sys.replace('_Up','').replace('_Down','') #used for systematics other than the added scale/pdf and jet systs
         sysName2 = sys.replace('_up','').replace('_dn','')#should only work for "jes_up","jes_dn","jer_up","jer_dn"
@@ -1161,6 +1188,8 @@ def _generateUncertainties(hDict,varName,norm): #hDict is hUnfolded dict
     h_alphas = h_alphas_up.Clone()
     h_alphas.Add(h_alphas_down,-1)
     h_alphas.Scale(0.5)
+    if norm:
+        h_alphas.Scale(1.0/nominalArea)
     hErr['Up']['alpha_s'] = h_alphas
     hErr['Down']['alpha_s'] = h_alphas.Clone()
 
@@ -1171,8 +1200,12 @@ def _generateUncertainties(hDict,varName,norm): #hDict is hUnfolded dict
         hUncScaleUp.SetBinContent(i,maxi)
         hUncScaleDn.SetBinContent(i,mini)
 
-    hUncScaleUp.Add(hDict[''],-1)
-    hUncScaleDn.Add(hDict[''],-1)
+    if norm:
+        hUncScaleUp.Add(hn,-1)
+        hUncScaleDn.Add(hn,-1)
+    else:
+        hUncScaleUp.Add(hDict[''],-1)
+        hUncScaleDn.Add(hDict[''],-1)
     hErr['Up']['QCD_scales'] = hUncScaleUp
     hErr['Down']['QCD_scales'] = hUncScaleDn
     return hErr
@@ -1309,12 +1342,12 @@ def _sumUncertainties_info(errDict,varName,hUnf,chan=''): #same as above but use
         systSum['total']['Up'] += finalup**2
         systSum['total']['Down'] += finaldn**2
 
-        normup = finalup/tmparea/hUnf.GetBinWidth(i)
-        normdn = finaldn/tmparea/hUnf.GetBinWidth(i)
+        #normup = finalup/tmparea/hUnf.GetBinWidth(i)
+        #normdn = finaldn/tmparea/hUnf.GetBinWidth(i)
         ferrinfo.write("Sys+stat Combined up: %s\n"%finalup)
         ferrinfo.write("Sys+stat Combined dn: %s\n"%finaldn)
-        ferrinfo.write("norm Combined up: %s\n"%(format(normup,".2e")))
-        ferrinfo.write("norm Combined dn: %s\n"%(format(normdn,".2e")))
+        #ferrinfo.write("norm Combined up: %s\n"%(format(normup,".2e")))
+        #ferrinfo.write("norm Combined dn: %s\n"%(format(normdn,".2e")))
         
         hUncUp.SetBinContent(i,totUncUp)
         hUncDn.SetBinContent(i,totUncDn)
