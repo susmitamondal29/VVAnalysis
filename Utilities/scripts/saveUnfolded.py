@@ -608,7 +608,7 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
             #print "trueHist: ",hTrueLumiShift,", ",hTrueLumiShift.Integral()
             #print "TotBkgHistLumi after rebinning: ",hBkgTotalLumi,", ",hBkgTotalLumi.Integral()
 
-            hUnfolded['ggZZxsec_'+sys] = getUnfolded(hSigGX,hBkgTotalGX,hTruth[''],hRespGX,hData, nIter,True)
+            hUnfolded['ggZZxsec_'+sys] = getUnfolded(hSigGX,hBkgTotalGX,hTruth[''],hRespGX,hData, nIter)
 
             del hSigGX
             del hBkgMCGX
@@ -929,6 +929,7 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
     hUnfolded['generator']  = getUnfolded(hAltSigNominal,hBkgTotal,hTrueAlt[''],hAltResponse,hData, nIter) 
 
     # make everything local (we'll cache copies)
+    
     for h in hUnfolded.values()+hTruth.values()+hTrueAlt.values():
         ROOT.SetOwnership(h,False)
         print("histos: ",h)
@@ -1276,13 +1277,13 @@ def _sumUncertainties_info(errDict,varName,hUnf,chan=''): #same as above but use
                 if h1.GetBinContent(i)*h2.GetBinContent(i)<0: #opposite sign then determine up/down envelop by +up/-down
                     totUncUp += max(h1.GetBinContent(i),h2.GetBinContent(i))**2
                     totUncDn += min(h1.GetBinContent(i),h2.GetBinContent(i))**2
-                    systSum[sysList[j]]['Up'] +=abs(max(h1.GetBinContent(i),h2.GetBinContent(i)))
-                    systSum[sysList[j]]['Down'] += abs(min(h1.GetBinContent(i),h2.GetBinContent(i)))
+                    systSum[sysList[j]]['Up'] +=abs(max(h1.GetBinContent(i),h2.GetBinContent(i)))**2
+                    systSum[sysList[j]]['Down'] += abs(min(h1.GetBinContent(i),h2.GetBinContent(i)))**2
                 else: #same sign then follow original up/down order
                     totUncUp +=(h1.GetBinContent(i))**2
                     totUncDn +=(h2.GetBinContent(i))**2
-                    systSum[sysList[j]]['Up'] +=abs(h1.GetBinContent(i))
-                    systSum[sysList[j]]['Down'] += abs(h2.GetBinContent(i))
+                    systSum[sysList[j]]['Up'] +=abs(h1.GetBinContent(i))**2
+                    systSum[sysList[j]]['Down'] += abs(h2.GetBinContent(i))**2
             else: #already satify in generateUncertainties#if not ('111' in sys or '110' in sys or sys.replace('PS_','') in scaleindlist):
                 PS_sum += h1.GetBinContent(i)**2 
 
@@ -1292,21 +1293,21 @@ def _sumUncertainties_info(errDict,varName,hUnf,chan=''): #same as above but use
         totUncUp = math.sqrt(totUncUp)
         totUncDn = math.sqrt(totUncDn)
         PS_sum = math.sqrt(PS_sum)
-        systSum['pdf']['Up'] += PS_sum
-        systSum['pdf']['Down'] = PS_sum
+        systSum['pdf']['Up'] += PS_sum**2
+        systSum['pdf']['Down'] += PS_sum**2
         ferrinfo.write("Syst: PDF (not alpha_s) Value:%s \n"%PS_sum)
         
         ferrinfo.write("totSysUncUp: %s \n"%totUncUp)
         ferrinfo.write("totSysUncDn: %s \n"%totUncDn)
 
         ferrinfo.write("Stat Unc: %s \n"%(hUnf.GetBinError(i)))
-        systSum['stat']['Up'] += abs(hUnf.GetBinError(i))
-        systSum['stat']['Down'] = abs(hUnf.GetBinError(i)) #abs just in case. Shouldn't need it.
+        systSum['stat']['Up'] += abs(hUnf.GetBinError(i))**2
+        systSum['stat']['Down'] += abs(hUnf.GetBinError(i))**2 #abs just in case. Shouldn't need it.
 
         finalup = (totUncUp**2+hUnf.GetBinError(i)**2)**0.5
         finaldn = (totUncDn**2+hUnf.GetBinError(i)**2)**0.5
-        systSum['total']['Up'] += finalup
-        systSum['total']['Down'] += finaldn
+        systSum['total']['Up'] += finalup**2
+        systSum['total']['Down'] += finaldn**2
 
         normup = finalup/tmparea/hUnf.GetBinWidth(i)
         normdn = finaldn/tmparea/hUnf.GetBinWidth(i)
@@ -1322,12 +1323,22 @@ def _sumUncertainties_info(errDict,varName,hUnf,chan=''): #same as above but use
 
     ferrinfo.write("======================\n")
     ferrinfo.write("Error Summary \n")
+    sumportup = 0.
+    sumportdn = 0.
     for key in systSum.keys():
         tmpup = systSum[key]['Up']
         tmpdn = systSum[key]['Down']
         portup = tmpup/systSum['total']['Up']
         portdn = tmpdn/systSum['total']['Down']
-        ferrinfo.write("%s: Up %s PortionUp %s Down %s PortionDn %s \n"%(key,tmpup,portup,tmpdn,portdn))
+        if not key=='total':
+            sumportup += portup
+            sumportdn += portdn
+        tup = round(tmpup,3)
+        tdn = round(tmpdn,3)
+        pup = round(portup,4)
+        pdn = round(portdn,4)
+        ferrinfo.write("%s: PortionUp %s PortionDn %s \n"%(key,pup,pdn))
+    ferrinfo.write("Sum portion up and down: %s %s \n"%(sumportup, sumportdn))
     return hUncUp, hUncDn
 
 def _combineChannelUncertainties(*errDicts):
@@ -1394,7 +1405,8 @@ if args['test']:
         fUse = ROOT.TFile("SystGenFiles/For_unfolding_Hists17May2021_ZZ4l2017_Moriond_fullSyst.root","update")
         #fUse = ROOT.TFile("SystGenFiles/Hists07Jun2020-ZZ4l2017_Moriond.root","update")
     elif analysis=="ZZ4l2018": 
-        fUse = ROOT.TFile("SystGenFiles/Syst_qqZZNewMCadded_Hists30Aug2021-ZZ4l2018_MVA.root","update")
+        fUse = ROOT.TFile("SystGenFiles/Syst_qqZZNewMCadded_Hists18Oct2021-ZZ4l2018_MVA.root","update")
+        #fUse = ROOT.TFile("SystGenFiles/Syst_qqZZNewMCadded_Hists30Aug2021-ZZ4l2018_MVA.root","update") #Most recent before jet syst and pdf/scale syst
         #fUse = ROOT.TFile("SystGenFiles/Syst_qqZZNewMCadded_Hists14Jul2021-ZZ4l2018_MVA.root","update") #Recent results after adding new MC qqZZ first Round
         #fUse = ROOT.TFile("SystGenFiles/For_unfolding_Hists17May2021_ZZ4l2018_MVA_fullSyst.root","update") #Recent results before adding new MC qqZZ
         #fUse = ROOT.TFile("SystGenFiles/Hists08Jun2020-ZZ4l2018_MVA.root","update")
