@@ -109,30 +109,34 @@ void ZZSelector::SetBranchesUWVV()
   fChain->SetBranchAddress("Eta", &Eta, &b_Eta);
   
   fChain->SetBranchAddress("jetPt", &jetPt, &b_jetPt);
+  if (isMC_){
   fChain->SetBranchAddress("jetPt_jesUp", &jetPt_jesUp, &b_jetPt_jesUp);
   fChain->SetBranchAddress("jetPt_jesDown", &jetPt_jesDown, &b_jetPt_jesDown);
   fChain->SetBranchAddress("jetPt_jerUp", &jetPt_jerUp, &b_jetPt_jerUp);
-  fChain->SetBranchAddress("jetPt_jerDown", &jetPt_jerDown, &b_jetPt_jerDown);
+  fChain->SetBranchAddress("jetPt_jerDown", &jetPt_jerDown, &b_jetPt_jerDown);}
 
   fChain->SetBranchAddress("jetPhi", &jetPhi, &b_jetPhi);
 
   fChain->SetBranchAddress("jetEta", &jetEta, &b_jetEta);
+  if (isMC_){
   fChain->SetBranchAddress("jetEta_jesUp", &jetEta_jesUp, &b_jetEta_jesUp);
   fChain->SetBranchAddress("jetEta_jesDown", &jetEta_jesDown, &b_jetEta_jesDown);
   fChain->SetBranchAddress("jetEta_jerUp", &jetEta_jerUp, &b_jetEta_jerUp);
-  fChain->SetBranchAddress("jetEta_jerDown", &jetEta_jerDown, &b_jetEta_jerDown);
+  fChain->SetBranchAddress("jetEta_jerDown", &jetEta_jerDown, &b_jetEta_jerDown);}
 
   fChain->SetBranchAddress("mjj", &mjj, &b_mjj);
+  if (isMC_){
   fChain->SetBranchAddress("mjj_jesUp", &mjj_jesUp, &b_mjj_jesUp);
   fChain->SetBranchAddress("mjj_jesDown", &mjj_jesDown, &b_mjj_jesDown);
   fChain->SetBranchAddress("mjj_jerUp", &mjj_jerUp, &b_mjj_jerUp);
-  fChain->SetBranchAddress("mjj_jerDown", &mjj_jerDown, &b_mjj_jerDown);
+  fChain->SetBranchAddress("mjj_jerDown", &mjj_jerDown, &b_mjj_jerDown);}
 
   fChain->SetBranchAddress("nJets", &nJets, &b_nJets);
+  if (isMC_){
   fChain->SetBranchAddress("nJets_jesUp", &nJets_jesUp, &b_nJets_jesUp);
   fChain->SetBranchAddress("nJets_jesDown", &nJets_jesDown, &b_nJets_jesDown);
   fChain->SetBranchAddress("nJets_jerUp", &nJets_jerUp, &b_nJets_jerUp);
-  fChain->SetBranchAddress("nJets_jerDown", &nJets_jerDown, &b_nJets_jerDown);
+  fChain->SetBranchAddress("nJets_jerDown", &nJets_jerDown, &b_nJets_jerDown);}
   
 }
 
@@ -176,28 +180,32 @@ void ZZSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::str
   b_jetEta->GetEntry(entry);
   
   b_mjj->GetEntry(entry);
+  if (isMC_){
   b_mjj_jesUp->GetEntry(entry);
   b_mjj_jesDown->GetEntry(entry);
   b_mjj_jerUp->GetEntry(entry);
-  b_mjj_jerDown->GetEntry(entry);
+  b_mjj_jerDown->GetEntry(entry);}
   
   b_jetPt->GetEntry(entry);
+  if (isMC_){
   b_jetPt_jesUp->GetEntry(entry);
   b_jetPt_jesDown->GetEntry(entry);
   b_jetPt_jerUp->GetEntry(entry);
-  b_jetPt_jerDown->GetEntry(entry);
+  b_jetPt_jerDown->GetEntry(entry);}
 
   b_jetEta->GetEntry(entry);
+  if (isMC_){
   b_jetEta_jesUp->GetEntry(entry);
   b_jetEta_jesDown->GetEntry(entry);
   b_jetEta_jerUp->GetEntry(entry);
-  b_jetEta_jerDown->GetEntry(entry);
+  b_jetEta_jerDown->GetEntry(entry);}
 
   b_nJets->GetEntry(entry);
+  if (isMC_){
   b_nJets_jesUp->GetEntry(entry);
   b_nJets_jesDown->GetEntry(entry);
   b_nJets_jerUp->GetEntry(entry);
-  b_nJets_jerDown->GetEntry(entry);
+  b_nJets_jerDown->GetEntry(entry);}
 
   //std::cout<<"channel in LoadBranches function: "<<channel_<<std::endl;
   if (channel_ == eemm || channel_ == mmee)
@@ -926,6 +934,8 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
   if ((variation.first == Central || (doaTGC_ && isaTGC_)) && isMC_)
   {
     //Do jet systematics JES and JER
+    if (isMC_){
+
     for (size_t i = 0; i < vjetEta.size(); i++) 
     {
       SafeHistFill(jethistMap1D_, getHistName("nJets", variation.second), vnJets[i], i, weight);
@@ -972,10 +982,10 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
         SafeHistFill(jethistMap1D_, getHistName("Mass4j", variation.second), Mass, i,  weight);
       }
 
+     }//loop over syst indices
 
 
-
-    }
+     }//if (isMC_) for jet systs
 
 
     //std::cout<<"does it go into lheWeights"<<std::endl;
