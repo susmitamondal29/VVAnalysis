@@ -1254,12 +1254,14 @@ def _sumUncertainties(errDict,varName):
 
     return hUncUp, hUncDn
 
-def _sumUncertainties_info(errDict,varName,hUnf,chan=''): #same as above but used to printout info
+def _sumUncertainties_info(norm,errDict,varName,hUnf,chan=''): #same as above but used to printout info
     
     systSum = {}
     ferrinfo=open("ErrorInfo%s.log"%chan,'w')
     ferrinfo.write("Var: %s \n"%varName)
-    tmparea= hUnf.Integral(1,hUnf.GetNbinsX())
+    tmparea= hUnf.Integral(1,hUnf.GetNbinsX()) #currently used to normalize stat systematics for printout purpose
+    if not norm:
+        tmparea = 1.0
     if varName == "eta":
         histbins=array.array('d',[0.,1.0,2.0,3.0,4.0,5.0,6.0])
     else:
@@ -1334,11 +1336,11 @@ def _sumUncertainties_info(errDict,varName,hUnf,chan=''): #same as above but use
         ferrinfo.write("totSysUncDn: %s \n"%totUncDn)
 
         ferrinfo.write("Stat Unc: %s \n"%(hUnf.GetBinError(i)))
-        systSum['stat']['Up'] += abs(hUnf.GetBinError(i))**2
-        systSum['stat']['Down'] += abs(hUnf.GetBinError(i))**2 #abs just in case. Shouldn't need it.
+        systSum['stat']['Up'] += abs(hUnf.GetBinError(i)/tmparea)**2
+        systSum['stat']['Down'] += abs(hUnf.GetBinError(i)/tmparea)**2 #abs just in case. Shouldn't need it.
 
-        finalup = (totUncUp**2+hUnf.GetBinError(i)**2)**0.5
-        finaldn = (totUncDn**2+hUnf.GetBinError(i)**2)**0.5
+        finalup = (totUncUp**2+(hUnf.GetBinError(i)/tmparea)**2)**0.5
+        finaldn = (totUncDn**2+(hUnf.GetBinError(i)/tmparea)**2)**0.5
         systSum['total']['Up'] += finalup**2
         systSum['total']['Down'] += finaldn**2
 
@@ -1581,7 +1583,7 @@ for varName in runVariables:
         if not args['noSyst']: 
             hErr[chan]= _generateUncertainties(hUnfolded[chan],varName,norm)
             print "hErr[",chan,"]: ",hErr[chan]
-            (hUncUp, hUncDn) = _sumUncertainties_info(hErr[chan],varName,hUnfolded[chan][''],chan)
+            (hUncUp, hUncDn) = _sumUncertainties_info(norm,hErr[chan],varName,hUnfolded[chan][''],chan)
         #hErrTrue[chan] = _generateUncertainties(hTrue[chan],norm)
         #(hTrueUncUp, hTrueUncDn) = _sumUncertainties(hErrTrue[chan],varName)
             hDataSave = hDataDict[chan].Clone()
@@ -1630,7 +1632,7 @@ for varName in runVariables:
         print "hErr.values(): ",hErr.values()
         if not args['noSyst']:
             hErrTot = _combineChannelUncertainties(*hErr.values())
-            hTotUncUp, hTotUncDn = _sumUncertainties_info(hErrTot,varName,hTot.Clone())
+            hTotUncUp, hTotUncDn = _sumUncertainties_info(norm,hErrTot,varName,hTot.Clone())
         #Saving Total histograms
         hTotalData = hTotData.Clone()
         TotDatName = "tot_"+varName+"_data"
