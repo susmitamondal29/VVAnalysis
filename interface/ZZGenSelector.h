@@ -10,6 +10,10 @@ public :
     
     float GendPhiZZ; //DeltaPhi between Z1 and Z2 
     float GendRZZ; //DeltaR between Z1 and Z2
+    std::vector<float>* scaleWeights = NULL;
+    std::vector<float>* pdfWeights = NULL;
+    std::vector<float> lheWeights;
+    unsigned int weight_info_;
     Float_t GenMass;
     Float_t GenPt;
     Float_t GenEta;
@@ -69,6 +73,9 @@ public :
     TBranch* b_Genl3Phi;
     TBranch* b_Genl4Phi; 
 
+    TBranch* b_pdfWeights;
+    TBranch* b_scaleWeights;
+
     // Readers to access the data (delete the ones you do not need).
     ZZGenSelector(TTree * /*tree*/ =0) { }
     virtual ~ZZGenSelector() { }
@@ -88,6 +95,7 @@ protected:
     bool ZSelection();
     void FillHistograms(Long64_t entry, std::pair<Systematic, std::string> variation) override;
     bool e1e2IsZ1();
+    unsigned int GetLheWeightInfo();
 };
 
 #endif

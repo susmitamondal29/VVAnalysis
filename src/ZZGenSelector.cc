@@ -28,6 +28,32 @@ void ZZGenSelector::Init(TTree *tree)
 	"GendEtajj",
     };
 
+    weighthists1D_ = {
+      "Genyield",
+      "GenMass",
+      "GenZMass",
+      "GenZZPt",
+      "GenZZEta",
+      "GendPhiZ1Z2",
+      "GendRZ1Z2",
+      "GenZPt",
+      "GenLepPt",
+      "GenLepEta",
+      "GennJets",
+      "GenjetPt[1]",
+      "GenjetPt[0]",
+      "GenjetEta[0]",
+      "GenjetEta[1]",
+      "GenabsjetEta[0]",
+      "GenabsjetEta[1]",
+      "Genmjj",
+      "GendEtajj",
+      "GenMass0j",
+      "GenMass1j",
+      "GenMass2j",
+      "GenMass3j",
+      "GenMass4j"};
+
     //hists2D_ = {"GenZ1Mass_GenZ2Mass"};
     SelectorBase::Init(tree);
 }
@@ -48,6 +74,24 @@ void ZZGenSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::
     b_GenjetPt->GetEntry(entry);
     b_GenjetEta->GetEntry(entry);
     b_Genmjj->GetEntry(entry);
+
+    if (isMC_ && weight_info_ > 0)
+      {
+        b_scaleWeights->GetEntry(entry);
+        lheWeights = *scaleWeights;
+        if (weight_info_ == 2)
+        {
+          b_pdfWeights->GetEntry(entry);
+          // Only keep NNPDF weights
+          lheWeights.insert(lheWeights.end(), pdfWeights->begin(),
+                            pdfWeights->begin() + std::min(static_cast<size_t>(103), pdfWeights->size()));
+        }
+        else if (weight_info_ == 3)
+        {
+          b_pdfWeights->GetEntry(entry);
+          lheWeights.insert(lheWeights.end(), pdfWeights->begin(), pdfWeights->end());
+        }
+      }
 
     //std::cout<<"Is the ZZGenSelectorBase fine until here"<<std::endl;
     if (channel_ == eeee || channel_ == eemm || channel_ == mmee || channel_ == mmmm) {
@@ -107,10 +151,41 @@ void ZZGenSelector::SetBranchesNanoAOD() {
     throw std::domain_error("NanoAOD ntuples not supported for ZZGenSelector!");
 }
 
+unsigned int ZZGenSelector::GetLheWeightInfo()
+{
+  std::vector<std::string> noLheWeights = {
+      "ggZZ2e2mu", "ggZZ4e", "ggZZ4m", "ggZZ4t", "ggZZ2e2tau", "ggZZ2mu2tau", "zz4l-sherpa", "ZZJJTo2e2mu-EWK-phantom", "ZZJJTo4e-EWK-phantom", "ZZJJTo4mu-EWK-phantom"};
+  std::vector<std::string> scaleAndPdfWeights = {
+      "wz3lnu-powheg", "wz3lnu-mg5amcnlo",
+      "ZZZ", "WZZ", "WWZ",
+      "zz4l-powheg", "zz4l-amcatnlo",
+      "ZZJJTo4L-EWK"};
+  std::vector<std::string> allLheWeights = {
+      //"wzjj-aqgcft", "wzjj-aqgcfm", "wzjj-aqgcfs",
+      //"wz-atgc_pt0-200", "wz-atgc_pt200-300",
+      //"wz-atgc_pt300"
+  };
+
+  if ((std::find(noLheWeights.begin(), noLheWeights.end(), name_) != noLheWeights.end()) )
+    return 0;
+  if (std::find(scaleAndPdfWeights.begin(), scaleAndPdfWeights.end(), name_) != scaleAndPdfWeights.end())
+    return 2;
+  if (std::find(allLheWeights.begin(), allLheWeights.end(), name_) != allLheWeights.end())
+    return 3;
+  return 1;
+}
+
 void ZZGenSelector::SetBranchesUWVV() {
     if (isMC_){
         fChain->SetBranchAddress("genWeight", &genWeight, &b_genWeight);
+
+    weight_info_ = GetLheWeightInfo();
+    if (weight_info_ > 0){
+      fChain->SetBranchAddress("scaleWeights", &scaleWeights, &b_scaleWeights);}
+    if ((weight_info_ == 2 || weight_info_ == 3)){
+      fChain->SetBranchAddress("pdfWeights", &pdfWeights, &b_pdfWeights);}
     }
+    
     if (channel_ == eeee) {
         //std::cout<<"enum channel_: "<<channel_<<std::endl;
         fChain->SetBranchAddress("e1_e2_Mass", &GenZ1mass, &b_GenZ1mass);
@@ -271,6 +346,62 @@ void ZZGenSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::st
 
     if (!ZZSelection())
         return;
+
+    for (size_t i = 0; i < lheWeights.size(); i++) //expect 0 to 111 currently
+    {
+      SafeHistFill(weighthistMap1D_, getHistName("Genyield", variation.second), 1, i, lheWeights[i] / lheWeights[0] * Genweight);
+      SafeHistFill(weighthistMap1D_, getHistName("GenMass", variation.second), GenMass, i, lheWeights[i] / lheWeights[0] * Genweight);
+      SafeHistFill(weighthistMap1D_, getHistName("GenZZPt", variation.second), GenPt, i, lheWeights[i] / lheWeights[0] * Genweight);
+      SafeHistFill(weighthistMap1D_, getHistName("GenZPt", variation.second), GenZ1pt, i, lheWeights[i] / lheWeights[0] * Genweight);
+      SafeHistFill(weighthistMap1D_, getHistName("GenZPt", variation.second), GenZ2pt, i, lheWeights[i] / lheWeights[0] * Genweight);
+      SafeHistFill(weighthistMap1D_, getHistName("GenLepPt", variation.second), Genl1Pt, i, lheWeights[i] / lheWeights[0] * Genweight);
+      SafeHistFill(weighthistMap1D_, getHistName("GenLepPt", variation.second), Genl2Pt, i, lheWeights[i] / lheWeights[0] * Genweight);
+      SafeHistFill(weighthistMap1D_, getHistName("GenLepPt", variation.second), Genl3Pt, i, lheWeights[i] / lheWeights[0] * Genweight);
+      SafeHistFill(weighthistMap1D_, getHistName("GenLepPt", variation.second), Genl4Pt, i, lheWeights[i] / lheWeights[0] * Genweight);
+      SafeHistFill(weighthistMap1D_, getHistName("GendPhiZ1Z2", variation.second), GendPhiZZ, i, lheWeights[i] / lheWeights[0] * Genweight);
+      SafeHistFill(weighthistMap1D_, getHistName("GendRZ1Z2", variation.second), GendRZZ, i, lheWeights[i] / lheWeights[0] * Genweight);
+
+      SafeHistFill(weighthistMap1D_, getHistName("GennJets", variation.second), GenjetPt->size(), i, lheWeights[i] / lheWeights[0] * Genweight);
+
+      if (GenjetPt->size() > 0 && GenjetPt->size() == GenjetEta->size())
+      {
+        SafeHistFill(weighthistMap1D_, getHistName("GenjetPt[0]", variation.second), GenjetPt->at(0), i, lheWeights[i] / lheWeights[0] * Genweight);
+
+        SafeHistFill(weighthistMap1D_, getHistName("GenjetEta[0]", variation.second), GenjetEta->at(0), i, lheWeights[i] / lheWeights[0] * Genweight);
+        SafeHistFill(weighthistMap1D_, getHistName("GenabsjetEta[0]", variation.second), std::abs(GenjetEta->at(0)), i, lheWeights[i] / lheWeights[0] * Genweight);
+      }
+      if (GenjetPt->size() > 1 && GenjetPt->size() == GenjetEta->size())
+      {
+        SafeHistFill(weighthistMap1D_, getHistName("GenjetPt[1]", variation.second), GenjetPt->at(1), i, lheWeights[i] / lheWeights[0] * Genweight);
+
+        SafeHistFill(weighthistMap1D_, getHistName("GenjetEta[1]", variation.second), GenjetEta->at(1), i, lheWeights[i] / lheWeights[0] * Genweight); //}
+        SafeHistFill(weighthistMap1D_, getHistName("GenabsjetEta[1]", variation.second), std::abs(GenjetEta->at(1)), i, lheWeights[i] / lheWeights[0] * Genweight);
+
+        SafeHistFill(weighthistMap1D_, getHistName("GendEtajj", variation.second), std::abs(GenjetEta->at(1)-GenjetEta->at(0)), i, lheWeights[i] / lheWeights[0] * Genweight);
+        SafeHistFill(weighthistMap1D_, getHistName("Genmjj", variation.second), Genmjj, i, lheWeights[i] / lheWeights[0] * Genweight);
+      }
+
+      if (GenjetPt->size() == 0 && GenjetPt->size() == GenjetEta->size())
+      {
+        SafeHistFill(weighthistMap1D_, getHistName("GenMass0j", variation.second), GenMass, i, lheWeights[i] / lheWeights[0] * Genweight);
+      }
+      else if (GenjetPt->size() == 1 && GenjetPt->size() == GenjetEta->size())
+      {
+        SafeHistFill(weighthistMap1D_, getHistName("GenMass1j", variation.second), GenMass, i, lheWeights[i] / lheWeights[0] * Genweight);
+      }
+      else if (GenjetPt->size() == 2 && GenjetPt->size() == GenjetEta->size())
+      {
+        SafeHistFill(weighthistMap1D_, getHistName("GenMass2j", variation.second), GenMass, i, lheWeights[i] / lheWeights[0] * Genweight);
+      }
+      else if (GenjetPt->size() == 3 && GenjetPt->size() == GenjetEta->size())
+      {
+        SafeHistFill(weighthistMap1D_, getHistName("GenMass3j", variation.second), GenMass, i, lheWeights[i] / lheWeights[0] * Genweight);
+      }
+      else if (GenjetPt->size() >= 4 && GenjetPt->size() == GenjetEta->size())
+      {
+        SafeHistFill(weighthistMap1D_, getHistName("GenMass4j", variation.second), GenMass, i, lheWeights[i] / lheWeights[0] * Genweight);
+      }
+    }
 
     SafeHistFill(histMap1D_, getHistName("Genyield", variation.second), 1, Genweight);
     SafeHistFill(histMap1D_, getHistName("GenMass", variation.second), GenMass,Genweight);
