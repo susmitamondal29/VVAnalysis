@@ -418,7 +418,7 @@ def generateResponseClass(varName, channel,sigSamples,sigSamplesPath,sumW,hPUWt,
 _printCounter = 0
 #Load the RooUnfold library into ROOT
 ROOT.gSystem.Load("RooUnfold/libRooUnfold")
-def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSigSystDic,hTrueDic,hAltTrueDic,hDataDic,hbkgDic,hbkgMCDic,hbkgMCSystDic,nIter,plotDir=''):
+def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSigSystDic,hTrueDic,hTrueSystDic,hAltTrueDic,hDataDic,hbkgDic,hbkgMCDic,hbkgMCSystDic,nIter,plotDir=''):
     global _printCounter
     #get responseMakers from the function above- this is the whole game.
     #responseMakers = generateResponseClass(varName, chan,sigSamples,sumW,hSF)
@@ -578,8 +578,10 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
             #print "scale: ",scale
             if "Up" in sys:
                 hSigGX = hSigDic_ggZZup[chan][varNames[varName]]
+                hTrueGX= hSigDic_ggZZup[chan]["Gen"+varNames[varName]]
             else:
                 hSigGX = hSigDic_ggZZdn[chan][varNames[varName]]
+                hTrueGX= hSigDic_ggZZdn[chan]["Gen"+varNames[varName]]
             hSigGX.SetDirectory(0)
 
             hBkgGX = hbkgDic[chan][varNames[varName]+"_Fakes"]
@@ -608,10 +610,11 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
             #print "trueHist: ",hTrueLumiShift,", ",hTrueLumiShift.Integral()
             #print "TotBkgHistLumi after rebinning: ",hBkgTotalLumi,", ",hBkgTotalLumi.Integral()
 
-            hUnfolded['ggZZxsec_'+sys] = getUnfolded(hSigGX,hBkgTotalGX,hTruth[''],hRespGX,hData, nIter)
+            hUnfolded['ggZZxsec_'+sys] = getUnfolded(hSigGX,hBkgTotalGX,hTrueGX,hRespGX,hData, nIter)
 
             del hSigGX
             del hBkgMCGX
+            del hTrueGX
             del hBkgGX
             del hRespGX
 
@@ -780,6 +783,8 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
         scale_pdf_syslist = ['scale%s'%i for i in range(1,nscales)] + ['pdf%s'%i for i in range(10,109)] + ['alphas_up','alphas_dn']
         hSigPSt = hSigSystDic[chan][varNames[varName]+"_lheWeights"]
         hSigPSt.SetDirectory(0)
+        hTrueLHEt = hTrueSystDic[chan]["Gen"+varNames[varName]+"_lheWeights"] #TH2
+        hTrueLHEt.SetDirectory(0)
         #print 'pu_'+sys 
         #print "sigHist: ", hSigPS,", ",hSigPS.Integral()
         hBkgPSt = hbkgDic[chan][varNames[varName]+"_Fakes"]
@@ -804,7 +809,8 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
             hSigPS.SetDirectory(0)
             #print 'pu_'+sys 
             #print "sigHist: ", hSigPS,", ",hSigPS.Integral()
-        
+            hTrueLHE = hTrueLHEt.ProjectionX("PS%s"%i,i+1,i+1,"e")
+            hTrueLHE.SetDirectory(0)
             #print "NonPromptHist: ",hBkgPS,", ",hBkgPS.Integral()
             hBkgMCPS = hBkgMCPSt.ProjectionX("PSBkg%s"%i,i+1,i+1,"e")
             hBkgMCPS.SetDirectory(0)
@@ -818,11 +824,12 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
             
             hUnfolded['PS_'+str(i)] = getUnfolded(hSigPS,
                                                      hBkgPSTotal,
-                                                     hTruth[''],
+                                                     hTrueLHE,
                                                      PSlist[i],
                                                      hData, nIter)
             del hSigPS # This just deletes the variable not the histogram? What is the purpose?
             del hBkgMCPS
+            del hTrueLHE
             #del hBkgPS
             #del hRespPS 
             #don't delete hBkgTotal in the original codes?
@@ -1260,6 +1267,7 @@ def _sumUncertainties_info(norm,errDict,varName,hUnf,chan=''): #same as above bu
     ferrinfo=open("ErrorInfo%s.log"%chan,'w')
     ferrinfo.write("Var: %s \n"%varName)
     tmparea= hUnf.Integral(1,hUnf.GetNbinsX()) #currently used to normalize stat systematics for printout purpose
+    tmparea2 = tmparea # This is used to calculate the portion of error
     if not norm:
         tmparea = 1.0
     if varName == "eta":
@@ -1312,13 +1320,13 @@ def _sumUncertainties_info(norm,errDict,varName,hUnf,chan=''): #same as above bu
                 if h1.GetBinContent(i)*h2.GetBinContent(i)<0: #opposite sign then determine up/down envelop by +up/-down
                     totUncUp += max(h1.GetBinContent(i),h2.GetBinContent(i))**2
                     totUncDn += min(h1.GetBinContent(i),h2.GetBinContent(i))**2
-                    systSum[sysList[j]]['Up'] +=abs(max(h1.GetBinContent(i),h2.GetBinContent(i)))**2
-                    systSum[sysList[j]]['Down'] += abs(min(h1.GetBinContent(i),h2.GetBinContent(i)))**2
+                    systSum[sysList[j]]['Up'] +=abs(max(h1.GetBinContent(i),h2.GetBinContent(i)))
+                    systSum[sysList[j]]['Down'] += abs(min(h1.GetBinContent(i),h2.GetBinContent(i)))
                 else: #same sign then follow original up/down order
                     totUncUp +=(h1.GetBinContent(i))**2
                     totUncDn +=(h2.GetBinContent(i))**2
-                    systSum[sysList[j]]['Up'] +=abs(h1.GetBinContent(i))**2
-                    systSum[sysList[j]]['Down'] += abs(h2.GetBinContent(i))**2
+                    systSum[sysList[j]]['Up'] +=abs(h1.GetBinContent(i))
+                    systSum[sysList[j]]['Down'] += abs(h2.GetBinContent(i))
             else: #already satify in generateUncertainties#if not ('111' in sys or '110' in sys or sys.replace('PS_','') in scaleindlist):
                 PS_sum += h1.GetBinContent(i)**2 
 
@@ -1328,21 +1336,21 @@ def _sumUncertainties_info(norm,errDict,varName,hUnf,chan=''): #same as above bu
         totUncUp = math.sqrt(totUncUp)
         totUncDn = math.sqrt(totUncDn)
         PS_sum = math.sqrt(PS_sum)
-        systSum['pdf']['Up'] += PS_sum**2
-        systSum['pdf']['Down'] += PS_sum**2
+        systSum['pdf']['Up'] += PS_sum
+        systSum['pdf']['Down'] += PS_sum
         ferrinfo.write("Syst: PDF (not alpha_s) Value:%s \n"%PS_sum)
         
         ferrinfo.write("totSysUncUp: %s \n"%totUncUp)
         ferrinfo.write("totSysUncDn: %s \n"%totUncDn)
 
         ferrinfo.write("Stat Unc: %s \n"%(hUnf.GetBinError(i)))
-        systSum['stat']['Up'] += abs(hUnf.GetBinError(i)/tmparea)**2
-        systSum['stat']['Down'] += abs(hUnf.GetBinError(i)/tmparea)**2 #abs just in case. Shouldn't need it.
+        systSum['stat']['Up'] += abs(hUnf.GetBinError(i)/tmparea)
+        systSum['stat']['Down'] += abs(hUnf.GetBinError(i)/tmparea) #abs just in case. Shouldn't need it.
 
         finalup = (totUncUp**2+(hUnf.GetBinError(i)/tmparea)**2)**0.5
         finaldn = (totUncDn**2+(hUnf.GetBinError(i)/tmparea)**2)**0.5
-        systSum['total']['Up'] += finalup**2
-        systSum['total']['Down'] += finaldn**2
+        systSum['total']['Up'] += finalup
+        systSum['total']['Down'] += finaldn
 
         #normup = finalup/tmparea/hUnf.GetBinWidth(i)
         #normdn = finaldn/tmparea/hUnf.GetBinWidth(i)
@@ -1363,8 +1371,10 @@ def _sumUncertainties_info(norm,errDict,varName,hUnf,chan=''): #same as above bu
     for key in systSum.keys():
         tmpup = systSum[key]['Up']
         tmpdn = systSum[key]['Down']
-        portup = tmpup/systSum['total']['Up']
-        portdn = tmpdn/systSum['total']['Down']
+        portup = tmpup/tmparea2
+        portdn = tmpdn/tmparea2
+        #portup = tmpup/systSum['total']['Up']
+        #portdn = tmpdn/systSum['total']['Down']
         if not key=='total':
             sumportup += portup
             sumportdn += portdn
@@ -1526,9 +1536,11 @@ print "runVariables: ",runVariables
 
 ##Systematic histos
 systList=[]
+gensystList=[]
 for chan in channels:
     for s in runVariables:
         systList.append(varNames[s]+"_lheWeights")
+        gensystList.append("Gen"+varNames[s]+"_lheWeights")
         systList.append(varNames[s]+"_jetsysts")
     for sys in ["Up","Down"]: 
         for s in runVariables:
@@ -1539,6 +1551,7 @@ for chan in channels:
 print systList
 if not args['noSyst']:  #systList has repeated variables, but shouldn't matter as it will just reassigin same value in the dictionary
     hSigSystDic=OutputTools.getHistsInDic(ewkmc,systList,channels)
+    hTrueSystDic=OutputTools.getHistsInDic(ewkmc,gensystList,channels)
     hbkgMCSystDic=OutputTools.getHistsInDic(allVVVmc,systList,channels)
 else:
     hSigSystDic = None #Since they are still put into function arguments
@@ -1576,7 +1589,7 @@ for varName in runVariables:
         print "hUnfolded in main: ", hUnfolded
         print "hTrue in main: ", hTrue
         print "hTrue in main: ", hTrueAlt
-        hUnfolded[chan], hTrue[chan],hTrueAlt[chan],hDataDict[chan] = unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSigSystDic,hTrueDic,hAltTrueDic,hDataDic,hbkgDic,hbkgMCDic,hbkgMCSystDic,nIterations,OutputDir)
+        hUnfolded[chan], hTrue[chan],hTrueAlt[chan],hDataDict[chan] = unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSigSystDic,hTrueDic,hTrueSystDic,hAltTrueDic,hDataDic,hbkgDic,hbkgMCDic,hbkgMCSystDic,nIterations,OutputDir)
         print("returning unfolded? ",hUnfolded[chan])
         #print("returning truth? ",hTrue[chan])
 
