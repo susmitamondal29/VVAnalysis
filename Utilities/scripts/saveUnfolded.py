@@ -418,7 +418,7 @@ def generateResponseClass(varName, channel,sigSamples,sigSamplesPath,sumW,hPUWt,
 _printCounter = 0
 #Load the RooUnfold library into ROOT
 ROOT.gSystem.Load("RooUnfold/libRooUnfold")
-def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSigSystDic,hTrueDic,hTrueSystDic,hAltTrueDic,hDataDic,hbkgDic,hbkgMCDic,hbkgMCSystDic,nIter,plotDir=''):
+def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSigSystDic,hTrueDic,hTrueSystDic_qqZZonly,hAltTrueDic,hDataDic,hbkgDic,hbkgMCDic,hbkgMCSystDic,nIter,plotDir=''):
     global _printCounter
     #get responseMakers from the function above- this is the whole game.
     #responseMakers = generateResponseClass(varName, chan,sigSamples,sumW,hSF)
@@ -789,10 +789,15 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
             del respMatPS
         
         scale_pdf_syslist = ['scale%s'%i for i in range(1,nscales)] + ['pdf%s'%i for i in range(10,109)] + ['alphas_up','alphas_dn']
-        hSigPSt = hSigSystDic[chan][varNames[varName]+"_lheWeights"]
+        hSigPSt = hSigSystDic_qqZZonly[chan][varNames[varName]+"_lheWeights"]
         hSigPSt.SetDirectory(0)
-        hTrueLHEt = hTrueSystDic[chan]["Gen"+varNames[varName]+"_lheWeights"] #TH2
+        hSig_ggZZonly = hSigDic_ggZZonly[chan][varNames[varName]]
+        hSig_ggZZonly.SetDirectory(0)
+
+        hTrueLHEt = hTrueSystDic_qqZZonly[chan]["Gen"+varNames[varName]+"_lheWeights"] #TH2
         hTrueLHEt.SetDirectory(0)
+        hTrue_ggZZonly = hTrueDic_ggZZonly[chan]["Gen"+varNames[varName]]
+        hTrue_ggZZonly.SetDirectory(0)
         #print 'pu_'+sys 
         #print "sigHist: ", hSigPS,", ",hSigPS.Integral()
         hBkgPSt = hbkgDic[chan][varNames[varName]+"_Fakes"]
@@ -815,10 +820,12 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
             binnum = i + 1 # 1st bin corresponds to 0
             hSigPS = hSigPSt.ProjectionX("PS%s"%i,i+1,i+1,"e") #expect e option to instruct computing the error
             hSigPS.SetDirectory(0)
+            hSigPS.Add(hSig_ggZZonly)
             #print 'pu_'+sys 
             #print "sigHist: ", hSigPS,", ",hSigPS.Integral()
             hTrueLHE = hTrueLHEt.ProjectionX("PS%s"%i,i+1,i+1,"e")
             hTrueLHE.SetDirectory(0)
+            hTrueLHE.Add(hTrue_ggZZonly)
             #print "NonPromptHist: ",hBkgPS,", ",hBkgPS.Integral()
             hBkgMCPS = hBkgMCPSt.ProjectionX("PSBkg%s"%i,i+1,i+1,"e")
             hBkgMCPS.SetDirectory(0)
@@ -1482,6 +1489,17 @@ ewkmc,ewkSumW = HistTools.makeCompositeHists(fOut,"AllEWK", ConfigureJobs.getLis
     ConfigureJobs.getListOfEWK(), manager_path), args['lumi'],
     underflow=False, overflow=False)
 
+pdb.set_trace()
+
+ewkmc_qqZZonly,ewkSumW_qqZZonly = HistTools.makeCompositeHists(fOut,"AllEWKqqZZonly", ConfigureJobs.getListOfFilesWithXSec(
+    ConfigureJobs.getListOfEWK()[:1], manager_path), args['lumi'],
+    underflow=False, overflow=False)
+
+ewkmc_ggZZonly,ewkSumW_ggZZonly = HistTools.makeCompositeHists(fOut,"AllEWKggZZonly", ConfigureJobs.getListOfFilesWithXSec(
+    ConfigureJobs.getListOfEWK()[1:], manager_path), args['lumi'],
+    underflow=False, overflow=False)
+
+
 ewkmc_ggZZup,ewkSumW_ggZZup = HistTools.makeCompositeHists_scaling(fOut,"AllEWKggZZup", ConfigureJobs.getListOfFilesWithXSec(
     ConfigureJobs.getListOfEWK(), manager_path), args['lumi'],
     underflow=False, overflow=False,scale_fac=1.+0.18)
@@ -1515,6 +1533,7 @@ zzSumWeights = ewkSumW[mynominalName]
 hDataDic=OutputTools.getHistsInDic(alldata,varList,channels)
 
 hSigDic=OutputTools.getHistsInDic(ewkmc,varList,channels)
+hSigDic_ggZZonly=OutputTools.getHistsInDic(ewkmc_ggZZonly,varList,channels)
 hSigDic_ggZZup=OutputTools.getHistsInDic(ewkmc_ggZZup,varList,channels)
 hSigDic_ggZZdn=OutputTools.getHistsInDic(ewkmc_ggZZdn,varList,channels)
 
@@ -1525,6 +1544,7 @@ hAltSigDic=OutputTools.getHistsInDic(altSigmc,varList,channels)
 #hTrueDic=OutputTools.getHistsInDic(allzzPowheg,["Gen"+s for s in varList],channels)
 #pdb.set_trace()
 hTrueDic=OutputTools.getHistsInDic(ewkmc,["Gen"+s for s in varList],channels)
+hTrueDic_ggZZonly=OutputTools.getHistsInDic(ewkmc_ggZZonly,["Gen"+s for s in varList],channels)
 hTrueDic_ggZZup=OutputTools.getHistsInDic(ewkmc_ggZZup,["Gen"+s for s in varList],channels)
 hTrueDic_ggZZdn=OutputTools.getHistsInDic(ewkmc_ggZZdn,["Gen"+s for s in varList],channels)
 
@@ -1562,7 +1582,8 @@ for chan in channels:
 print systList
 if not args['noSyst']:  #systList has repeated variables, but shouldn't matter as it will just reassigin same value in the dictionary
     hSigSystDic=OutputTools.getHistsInDic(ewkmc,systList,channels)
-    hTrueSystDic=OutputTools.getHistsInDic(ewkmc,gensystList,channels)
+    hSigSystDic_qqZZonly=OutputTools.getHistsInDic(ewkmc_qqZZonly,systList,channels)
+    hTrueSystDic_qqZZonly=OutputTools.getHistsInDic(ewkmc_qqZZonly,gensystList,channels)
     hbkgMCSystDic=OutputTools.getHistsInDic(allVVVmc,systList,channels)
 else:
     hSigSystDic = None #Since they are still put into function arguments
@@ -1600,7 +1621,7 @@ for varName in runVariables:
         print "hUnfolded in main: ", hUnfolded
         print "hTrue in main: ", hTrue
         print "hTrue in main: ", hTrueAlt
-        hUnfolded[chan], hTrue[chan],hTrueAlt[chan],hDataDict[chan] = unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSigSystDic,hTrueDic,hTrueSystDic,hAltTrueDic,hDataDic,hbkgDic,hbkgMCDic,hbkgMCSystDic,nIterations,OutputDir)
+        hUnfolded[chan], hTrue[chan],hTrueAlt[chan],hDataDict[chan] = unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSigSystDic,hTrueDic,hTrueSystDic_qqZZonly,hAltTrueDic,hDataDic,hbkgDic,hbkgMCDic,hbkgMCSystDic,nIterations,OutputDir)
         print("returning unfolded? ",hUnfolded[chan])
         #print("returning truth? ",hTrue[chan])
 
