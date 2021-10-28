@@ -572,17 +572,24 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
         del cCov
     if not args['noSyst']: 
         #ggZZ xsec
+        global hTrueDic_ggZZup
+        global hTrueDic_ggZZdn
+        global hSigDic_ggZZup
+        global hSigDic_ggZZdn
+
         xsecScale = {'Up':1.+0.18,'Down':1.-0.14}
         for sys, scale in xsecScale.iteritems():
             #print "lumi uncert.",sys
             #print "scale: ",scale
+            
             if "Up" in sys:
                 hSigGX = hSigDic_ggZZup[chan][varNames[varName]]
-                hTrueGX= hSigDic_ggZZup[chan]["Gen"+varNames[varName]]
+                hTrueGX= hTrueDic_ggZZup[chan]["Gen"+varNames[varName]]
             else:
                 hSigGX = hSigDic_ggZZdn[chan][varNames[varName]]
-                hTrueGX= hSigDic_ggZZdn[chan]["Gen"+varNames[varName]]
+                hTrueGX= hTrueDic_ggZZdn[chan]["Gen"+varNames[varName]]
             hSigGX.SetDirectory(0)
+            hTrueGX.SetDirectory(0)
 
             hBkgGX = hbkgDic[chan][varNames[varName]+"_Fakes"]
             hBkgGX.SetDirectory(0)
@@ -605,11 +612,12 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
 
             
             hSigGX=rebin(hSigGX,varName)
+            hTrueGX=rebin(hTrueGX,varName)
             hBkgTotalGX=rebin(hBkgTotalGX,varName)
 
             #print "trueHist: ",hTrueLumiShift,", ",hTrueLumiShift.Integral()
             #print "TotBkgHistLumi after rebinning: ",hBkgTotalLumi,", ",hBkgTotalLumi.Integral()
-
+            #pdb.set_trace()
             hUnfolded['ggZZxsec_'+sys] = getUnfolded(hSigGX,hBkgTotalGX,hTrueGX,hRespGX,hData, nIter)
 
             del hSigGX
@@ -820,6 +828,7 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
             #print "TotBkgPSHist: ",hBkgPSTotal,", ",hBkgPSTotal.Integral()
             hSigPS=rebin(hSigPS,varName)
             hBkgPSTotal=rebin(hBkgPSTotal,varName)
+            hTrueLHE = rebin(hTrueLHE,varName)
             #print "TotBkgPSHist after Rebinning: ",hBkgPSTotal,", ",hBkgPSTotal.Integral()
             
             hUnfolded['PS_'+str(i)] = getUnfolded(hSigPS,
@@ -1264,7 +1273,7 @@ def _sumUncertainties(errDict,varName):
 def _sumUncertainties_info(norm,errDict,varName,hUnf,chan=''): #same as above but used to printout info
     
     systSum = {}
-    ferrinfo=open("ErrorInfo%s.log"%chan,'w')
+    ferrinfo=open("ErrorInfo_%s%s.log"%(varName,chan),'w')
     ferrinfo.write("Var: %s \n"%varName)
     tmparea= hUnf.Integral(1,hUnf.GetNbinsX()) #currently used to normalize stat systematics for printout purpose
     tmparea2 = tmparea # This is used to calculate the portion of error
@@ -1516,6 +1525,8 @@ hAltSigDic=OutputTools.getHistsInDic(altSigmc,varList,channels)
 #hTrueDic=OutputTools.getHistsInDic(allzzPowheg,["Gen"+s for s in varList],channels)
 #pdb.set_trace()
 hTrueDic=OutputTools.getHistsInDic(ewkmc,["Gen"+s for s in varList],channels)
+hTrueDic_ggZZup=OutputTools.getHistsInDic(ewkmc_ggZZup,["Gen"+s for s in varList],channels)
+hTrueDic_ggZZdn=OutputTools.getHistsInDic(ewkmc_ggZZdn,["Gen"+s for s in varList],channels)
 
 #Alt signals containing zzl4-amcatnlo instead of zz4l-powheg
 hAltTrueDic=OutputTools.getHistsInDic(altSigmc,["Gen"+s for s in varList],channels)
