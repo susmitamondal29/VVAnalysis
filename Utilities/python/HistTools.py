@@ -351,7 +351,7 @@ def makeCompositeHists_scaling(hist_file, name, members, lumi, hists=[], underfl
                 if sumweights:
                     hist.Scale(members[directory.split("__")[0]]*1000*lumi/sumweights)
                     if scale_sample in directory:
-                        print("ggZZ scaling indeed happens")
+                        #print("ggZZ scaling indeed happens")
                         hist.Scale(scale_fac)
                     #Save sumweights in SumW dictionary
                     SumW.update({directory:sumweights})

@@ -582,7 +582,7 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
             #print "lumi uncert.",sys
             #print "scale: ",scale
             
-            if "Up" in sys:
+            if "Up" in sys: #no need to clone, only used once
                 hSigGX = hSigDic_ggZZup[chan][varNames[varName]]
                 hTrueGX= hTrueDic_ggZZup[chan]["Gen"+varNames[varName]]
             else:
@@ -591,20 +591,20 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
             hSigGX.SetDirectory(0)
             hTrueGX.SetDirectory(0)
 
-            hBkgGX = hbkgDic[chan][varNames[varName]+"_Fakes"]
+            hBkgGX = hbkgDic[chan][varNames[varName]+"_Fakes"] 
             hBkgGX.SetDirectory(0)
-            hBkgMCGX = hbkgMCDic[chan][varNames[varName]]
+            hBkgMCGX = hbkgMCDic[chan][varNames[varName]].Clone()
             hBkgMCGX.SetDirectory(0)
-            hBkgTotalGX=hBkgGX.Clone()
+            hBkgTotalGX=hBkgGX.Clone() #clone in case
             hBkgTotalGX.Add(hBkgMCGX)
 
             hResponseGX = {s:resp for s,resp in responseMakers.items()}
             hRespGXTot = hResponseGX.pop(mynominalName)
         
-            hRespGX = hRespGXTot.getResponse('nominal')
+            hRespGX = hRespGXTot.getResponse('nominal').Clone()
             hRespGX.SetDirectory(0)
             for resp in hResponseGX.values(): #ggZZ content
-                respMatGX = resp.getResponse('nominal')
+                respMatGX = resp.getResponse('nominal').Clone()
                 respMatGX.Scale(scale)
                 hRespGX.Add(respMatGX)
                 respMatGX.SetDirectory(0)
@@ -637,7 +637,7 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
 
             hBkgLumi = hbkgDic[chan][varNames[varName]+"_Fakes"]
             hBkgLumi.SetDirectory(0)
-            hBkgMCLumi = hbkgMCDic[chan][varNames[varName]]
+            hBkgMCLumi = hbkgMCDic[chan][varNames[varName]].Clone()
             hBkgMCLumi.SetDirectory(0)
             hBkgMCLumi.Scale(scale)
             hBkgTotalLumi=hBkgLumi.Clone()
@@ -708,7 +708,7 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
             hBkgMCPU.SetDirectory(0)
             #print "VVVHist: ",hBkgMCPU,", ",hBkgMCPU.Integral()
             hBkgPUTotal=hBkgPU.Clone()
-            hBkgPUTotal.Add(hBkgMCPU)
+            hBkgPUTotal.Add(hBkgMCPU) #don't think hBkgMCPU needs to be cloned
             #print "TotBkgPUHist: ",hBkgPUTotal,", ",hBkgPUTotal.Integral()
             hSigPU=rebin(hSigPU,varName)
             hBkgPUTotal=rebin(hBkgPUTotal,varName)
@@ -782,7 +782,7 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
             histPS.SetDirectory(0)
             PSlist.append(histPS)
         for resp in hResponsePS.values():
-            respMatPS = resp.getResponse('nominal')
+            respMatPS = resp.getResponse('nominal').Clone()
             for i, item in enumerate(PSlist):
                 PSlist[i].Add(respMatPS)
             respMatPS.SetDirectory(0)
@@ -926,7 +926,7 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
     #This will pop the amcnlo response matrix from the hResponseAltNominal Dictionary
     hResponseAltNominalTotal = hResponseAltNominal.pop(myaltname)
 
-    hAltResponse = hResponseAltNominalTotal.getResponse('nominal')
+    hAltResponse = hResponseAltNominalTotal.getResponse('nominal').Clone()
     hAltResponse.SetDirectory(0)
 
     #Looping over the values of the dictionary (it doesn't have powheg anymore)
