@@ -444,7 +444,7 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
     #print "hRespNominalTotal: ",hResponseNominalTotal
     #This gets us the response matrix as a TH2D for "zz4l-powheg"
     print "This hResponse is full of leaks here"
-    hResponse = hResponseNominalTotal.getResponse('nominal')
+    hResponse = hResponseNominalTotal.getResponse('nominal').Clone()
     hResponse.SetDirectory(0)
     #ROOT.SetOwnership(hResponse,False)
     #print("where are all the leaks") 
@@ -455,7 +455,7 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
     for response in hResponseNominal.values():
         print "Is the leak here"
         print "response: ",response
-        respMat = response.getResponse('nominal')
+        respMat = response.getResponse('nominal').Clone()
         #ROOT.SetOwnership(respMat,False)
         hResponse.Add(respMat)
         respMat.SetDirectory(0)
@@ -600,7 +600,7 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
 
             hResponseGX = {s:resp for s,resp in responseMakers.items()}
             hRespGXTot = hResponseGX.pop(mynominalName)
-        
+            
             hRespGX = hRespGXTot.getResponse('nominal').Clone()
             hRespGX.SetDirectory(0)
             for resp in hResponseGX.values(): #ggZZ content
@@ -1488,8 +1488,6 @@ alldata,dataSumW = HistTools.makeCompositeHists(fOut,"AllData",
 ewkmc,ewkSumW = HistTools.makeCompositeHists(fOut,"AllEWK", ConfigureJobs.getListOfFilesWithXSec(
     ConfigureJobs.getListOfEWK(), manager_path), args['lumi'],
     underflow=False, overflow=False)
-
-pdb.set_trace()
 
 ewkmc_qqZZonly,ewkSumW_qqZZonly = HistTools.makeCompositeHists(fOut,"AllEWKqqZZonly", ConfigureJobs.getListOfFilesWithXSec(
     ConfigureJobs.getListOfEWK()[:1], manager_path), args['lumi'],
