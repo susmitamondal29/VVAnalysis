@@ -1105,8 +1105,8 @@ def _generateUncertainties(hDict,varName,norm): #hDict is hUnfolded dict
     #if called after rebin, the overflow bin is 0 already, and do we include underflow bin?
     #rebin was not called for histograms in hUnfolded, so use nbins+1 
     nominalArea = hDict[''].Integral(1,hDict[''].GetNbinsX()+1) #original codes start with 0th bin.
+    hn = hDict[''].Clone()
     if norm:
-        hn = hDict[''].Clone()
         hn.Scale(1.0/nominalArea)
     hErr = {'Up':{},'Down':{}}
     pdflist={}
@@ -1119,7 +1119,7 @@ def _generateUncertainties(hDict,varName,norm): #hDict is hUnfolded dict
             hsc.Scale(1.0/(hsc.Integral(1,hsc.GetNbinsX()+1)))
             scalehists.append(hsc)
     else:
-        scalehists = [hDict[sys] for sys in scalenamelist]
+        scalehists = [hDict[sys].Clone() for sys in scalenamelist]
 
     if varName == "eta":
         histbins=array.array('d',[0.,1.0,2.0,3.0,4.0,5.0,6.0])
@@ -1132,7 +1132,7 @@ def _generateUncertainties(hDict,varName,norm): #hDict is hUnfolded dict
     avghist = None
     firstadd = True
 
-    #calculate avg hist for pdf variations
+    #calculate avg hist for pdf variations MC replica case, not needed currently
     for sys, h in hDict.iteritems():
         if not sys:
             continue
@@ -1159,7 +1159,7 @@ def _generateUncertainties(hDict,varName,norm): #hDict is hUnfolded dict
         if norm: #divide by nominal area for pdf variations (not QCD scale or alpha_s)
             if 'PS' in sys:
                 if not ('111' in sys or '110' in sys or sys.replace('PS_','') in scaleindlist):
-                    he.Scale(1.0/nominalArea)   
+                    he.Scale(1.0/(he.Integral(1,he.GetNbinsX()+1)))   
             else:
                 he.Scale(1.0/(he.Integral(1,he.GetNbinsX()+1)))
             #he.Scale(nominalArea/(he.Integral(0,he.GetNbinsX()+1)))
@@ -1208,27 +1208,29 @@ def _generateUncertainties(hDict,varName,norm): #hDict is hUnfolded dict
     #pdb.set_trace()
     h_alphas_up = hDict['PS_111'].Clone()
     h_alphas_down = hDict['PS_110'].Clone()
+    if norm:
+        h_alphas_up.Scale(1.0/(h_alphas_up.Integral(1,h_alphas_up.GetNbinsX()+1)))
+        h_alphas_down.Scale(1.0/(h_alphas_down.Integral(1,h_alphas_down.GetNbinsX()+1)))
     h_alphas = h_alphas_up.Clone()
     h_alphas.Add(h_alphas_down,-1)
     h_alphas.Scale(0.5)
-    if norm:
-        h_alphas.Scale(1.0/nominalArea)
+    
     hErr['Up']['alpha_s'] = h_alphas
     hErr['Down']['alpha_s'] = h_alphas.Clone()
 
     for i in range(1,hUncScaleUp.GetNbinsX()+1):
-        tmpcontent = [h.GetBinContent(i) for h in scalehists]
+        tmpcontent = [h.GetBinContent(i)-hn.GetBinContent(i) for h in scalehists]
         maxi=max(tmpcontent)
         mini=min(tmpcontent)
         hUncScaleUp.SetBinContent(i,maxi)
         hUncScaleDn.SetBinContent(i,mini)
 
-    if norm:
-        hUncScaleUp.Add(hn,-1)
-        hUncScaleDn.Add(hn,-1)
-    else:
-        hUncScaleUp.Add(hDict[''],-1)
-        hUncScaleDn.Add(hDict[''],-1)
+    #if norm:
+    #    hUncScaleUp.Add(hn,-1)
+    #    hUncScaleDn.Add(hn,-1)
+    #else:
+    #    hUncScaleUp.Add(hDict[''],-1)
+    #    hUncScaleDn.Add(hDict[''],-1)
     hErr['Up']['QCD_scales'] = hUncScaleUp
     hErr['Down']['QCD_scales'] = hUncScaleDn
     return hErr
@@ -1282,10 +1284,11 @@ def _sumUncertainties_info(norm,errDict,varName,hUnf,chan=''): #same as above bu
     systSum = {}
     ferrinfo=open("ErrorInfo_%s%s.log"%(varName,chan),'w')
     ferrinfo.write("Var: %s \n"%varName)
-    tmparea= hUnf.Integral(1,hUnf.GetNbinsX()) #currently used to normalize stat systematics for printout purpose
+    tmparea= hUnf.Integral(1,hUnf.GetNbinsX()) #used to multiply the unc to cancel the division in plotUnfolded script to reduce code modification
     tmparea2 = tmparea # This is used to calculate the portion of error
     if not norm:
         tmparea = 1.0
+        tmparea2 = 1.0
     if varName == "eta":
         histbins=array.array('d',[0.,1.0,2.0,3.0,4.0,5.0,6.0])
     else:
@@ -1333,7 +1336,7 @@ def _sumUncertainties_info(norm,errDict,varName,hUnf,chan=''): #same as above bu
                 ferrinfo.write("histUp: %s \n"%(h1.GetBinContent(i)))
                 ferrinfo.write("histDn: %s \n"%(h2.GetBinContent(i)))
                 #ferrinfo.write("Chosen max/min %s/%s \n"%(max(h1.GetBinContent(i),h2.GetBinContent(i)),min(h1.GetBinContent(i),h2.GetBinContent(i))))
-                if h1.GetBinContent(i)*h2.GetBinContent(i)<0: #opposite sign then determine up/down envelop by +up/-down
+                if h1.GetBinContent(i)*h2.GetBinContent(i)<=0: #opposite sign then determine up/down envelop by +up/-down
                     totUncUp += max(h1.GetBinContent(i),h2.GetBinContent(i))**2
                     totUncDn += min(h1.GetBinContent(i),h2.GetBinContent(i))**2
                     systSum[sysList[j]]['Up'] +=abs(max(h1.GetBinContent(i),h2.GetBinContent(i)))
@@ -1360,11 +1363,11 @@ def _sumUncertainties_info(norm,errDict,varName,hUnf,chan=''): #same as above bu
         ferrinfo.write("totSysUncDn: %s \n"%totUncDn)
 
         ferrinfo.write("Stat Unc: %s \n"%(hUnf.GetBinError(i)))
-        systSum['stat']['Up'] += abs(hUnf.GetBinError(i)/tmparea)
-        systSum['stat']['Down'] += abs(hUnf.GetBinError(i)/tmparea) #abs just in case. Shouldn't need it.
+        systSum['stat']['Up'] += abs(hUnf.GetBinError(i))
+        systSum['stat']['Down'] += abs(hUnf.GetBinError(i)) #abs just in case. Shouldn't need it.
 
-        finalup = (totUncUp**2+(hUnf.GetBinError(i)/tmparea)**2)**0.5
-        finaldn = (totUncDn**2+(hUnf.GetBinError(i)/tmparea)**2)**0.5
+        finalup = (totUncUp**2+(hUnf.GetBinError(i))**2)**0.5
+        finaldn = (totUncDn**2+(hUnf.GetBinError(i))**2)**0.5
         systSum['total']['Up'] += finalup
         systSum['total']['Down'] += finaldn
 
@@ -1375,8 +1378,8 @@ def _sumUncertainties_info(norm,errDict,varName,hUnf,chan=''): #same as above bu
         #ferrinfo.write("norm Combined up: %s\n"%(format(normup,".2e")))
         #ferrinfo.write("norm Combined dn: %s\n"%(format(normdn,".2e")))
         
-        hUncUp.SetBinContent(i,totUncUp)
-        hUncDn.SetBinContent(i,totUncDn)
+        hUncUp.SetBinContent(i,totUncUp*tmparea)
+        hUncDn.SetBinContent(i,totUncDn*tmparea)
     print("hUncUp: ",hUncUp,"",hUncUp.Integral()) 
     print("hUncDown: ",hUncDn,"",hUncDn.Integral())
 
