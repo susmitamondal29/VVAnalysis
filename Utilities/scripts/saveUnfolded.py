@@ -626,6 +626,43 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
             del hBkgGX
             del hRespGX
 
+# fake rate
+        fakeUnc = 0.4
+        fakeScale = {'Up':1.+fakeUnc,'Down':1.-fakeUnc}
+        for sys, scale in fakeScale.iteritems():
+            #print "fake uncert.",sys
+            #print "scale: ",scale
+            hSigFake = hSigNominal.Clone()
+            hSigFake.SetDirectory(0)
+
+            hBkgFake = hbkgDic[chan][varNames[varName]+"_Fakes"].Clone()
+            hBkgFake.Scale(scale)
+            hBkgFake.SetDirectory(0)
+            hBkgMCFake = hbkgMCDic[chan][varNames[varName]].Clone()
+            hBkgMCFake.SetDirectory(0)
+            hBkgTotalFake=hBkgFake.Clone()
+            hBkgTotalFake.Add(hBkgMCFake)
+
+            hTrueFakeShift = hTruth[''].Clone()
+            hTrueFakeShift.SetDirectory(0)
+            hResponseFake = hResponse.Clone()
+            hResponseFake.SetDirectory(0)
+            #print "SigFakeHist: ",hSigFake,", ",hSigFake.Integral()
+            #print "VVVHist: ",hBkgMCFake,", ",hBkgMCFake.Integral()
+            #Add the two backgrounds
+
+            hBkgTotalFake=rebin(hBkgTotalFake,varName)
+
+            #print "trueHist: ",hTrueFakeShift,", ",hTrueFakeShift.Integral()
+            #print "TotBkgHistFake after rebinning: ",hBkgTotalFake,", ",hBkgTotalFake.Integral()
+
+            hUnfolded['fake_'+sys],hCovFake,hRespFake = getUnfolded(hSigFake,hBkgTotalFake,hTrueFakeShift,hResponseFake,hData, nIter,True)
+
+            del hSigFake
+            del hBkgMCFake
+            del hBkgFake
+            del hTrueFakeShift
+
         # luminosity
         lumiUnc = 0.023
         lumiScale = {'Up':1.+lumiUnc,'Down':1.-lumiUnc}
@@ -1128,10 +1165,11 @@ def _generateUncertainties(hDict,varName,norm): #hDict is hUnfolded dict
     
     hUncScaleUp=ROOT.TH1D("hUncScaleUp","QCD scale uncertainty up.",len(histbins)-1,histbins)
     hUncScaleDn=ROOT.TH1D("hUncScaleDn","QCD scale uncertainty down.",len(histbins)-1,histbins)
+    hUncPDFsum=ROOT.TH1D("hUncPDFsum","PDF combined uncertainty",len(histbins)-1,histbins)
 
     avghist = None
     firstadd = True
-
+    
     #calculate avg hist for pdf variations MC replica case, not needed currently
     for sys, h in hDict.iteritems():
         if not sys:
@@ -1150,7 +1188,7 @@ def _generateUncertainties(hDict,varName,norm): #hDict is hUnfolded dict
     
     avghist.Scale(0.01) #divided by 100
 
-    #main systematics calculation
+#main systematics calculation
     for sys, h in hDict.iteritems():
         if not sys:
             continue
@@ -1159,7 +1197,7 @@ def _generateUncertainties(hDict,varName,norm): #hDict is hUnfolded dict
         if norm: #divide by nominal area for pdf variations (not QCD scale or alpha_s)
             if 'PS' in sys:
                 if not ('111' in sys or '110' in sys or sys.replace('PS_','') in scaleindlist):
-                    he.Scale(1.0/(he.Integral(1,he.GetNbinsX()+1)))   
+                    he.Scale(1.0/(he.Integral(1,he.GetNbinsX()+1)))
             else:
                 he.Scale(1.0/(he.Integral(1,he.GetNbinsX()+1)))
             #he.Scale(nominalArea/(he.Integral(0,he.GetNbinsX()+1)))
@@ -1284,11 +1322,21 @@ def _sumUncertainties_info(norm,errDict,varName,hUnf,chan=''): #same as above bu
     systSum = {}
     ferrinfo=open("ErrorInfo_%s%s.log"%(varName,chan),'w')
     ferrinfo.write("Var: %s \n"%varName)
-    tmparea= hUnf.Integral(1,hUnf.GetNbinsX()) #used to multiply the unc to cancel the division in plotUnfolded script to reduce code modification
-    tmparea2 = tmparea # This is used to calculate the portion of error
+    tmparea0= hUnf.Integral(1,hUnf.GetNbinsX()) #used for shorthand
+    tmparea = tmparea0 #used to multiply the unc to cancel the division in plotUnfolded script to reduce code modification
+    tmparea2 = tmparea0 # This is used to calculate the portion of error
+    tmparea3 = tmparea0 # used to normalize stat unc for printout only
+    totalbw = 0.
+    for i in range(1,hUnf.GetNbinsX()+1):
+        totalbw += hUnf.GetBinWidth(i)
+
     if not norm:
         tmparea = 1.0
+        tmparea3 = 1.0
+    if norm:
         tmparea2 = 1.0
+
+
     if varName == "eta":
         histbins=array.array('d',[0.,1.0,2.0,3.0,4.0,5.0,6.0])
     else:
@@ -1326,7 +1374,11 @@ def _sumUncertainties_info(norm,errDict,varName,hUnf,chan=''): #same as above bu
     LumiDn = errDict['Down']['generator']
     print "GeneratorUp: ",LumiUp.Integral()
     print "GeneratorDn: ",LumiDn.Integral()
+    
     for i in range(1,hUncUp.GetNbinsX()+1):
+        if norm:# divided by normalized height in that bin to get the portion of shape change, then weighted by bin width for averaging
+            extraNfac = 1.0/(hUnf.GetBinContent(i)/tmparea0)*hUnf.GetBinWidth(i)/totalbw
+            extraNfac = 1.0 #currently don't use average weighted by bin width
         ferrinfo.write("Bin %s\n"%i)
         totUncUp=totUncDn=0. #should be reset each time but not done in original codes?
         PS_sum = 0.
@@ -1339,13 +1391,13 @@ def _sumUncertainties_info(norm,errDict,varName,hUnf,chan=''): #same as above bu
                 if h1.GetBinContent(i)*h2.GetBinContent(i)<=0: #opposite sign then determine up/down envelop by +up/-down
                     totUncUp += max(h1.GetBinContent(i),h2.GetBinContent(i))**2
                     totUncDn += min(h1.GetBinContent(i),h2.GetBinContent(i))**2
-                    systSum[sysList[j]]['Up'] +=abs(max(h1.GetBinContent(i),h2.GetBinContent(i)))
-                    systSum[sysList[j]]['Down'] += abs(min(h1.GetBinContent(i),h2.GetBinContent(i)))
+                    systSum[sysList[j]]['Up'] +=abs(max(h1.GetBinContent(i),h2.GetBinContent(i)))*extraNfac
+                    systSum[sysList[j]]['Down'] += abs(min(h1.GetBinContent(i),h2.GetBinContent(i)))*extraNfac
                 else: #same sign then follow original up/down order
                     totUncUp +=(h1.GetBinContent(i))**2
                     totUncDn +=(h2.GetBinContent(i))**2
-                    systSum[sysList[j]]['Up'] +=abs(h1.GetBinContent(i))
-                    systSum[sysList[j]]['Down'] += abs(h2.GetBinContent(i))
+                    systSum[sysList[j]]['Up'] +=abs(h1.GetBinContent(i))*extraNfac
+                    systSum[sysList[j]]['Down'] += abs(h2.GetBinContent(i))*extraNfac
             else: #already satify in generateUncertainties#if not ('111' in sys or '110' in sys or sys.replace('PS_','') in scaleindlist):
                 PS_sum += h1.GetBinContent(i)**2 
 
@@ -1355,21 +1407,21 @@ def _sumUncertainties_info(norm,errDict,varName,hUnf,chan=''): #same as above bu
         totUncUp = math.sqrt(totUncUp)
         totUncDn = math.sqrt(totUncDn)
         PS_sum = math.sqrt(PS_sum)
-        systSum['pdf']['Up'] += PS_sum
-        systSum['pdf']['Down'] += PS_sum
+        systSum['pdf']['Up'] += PS_sum*extraNfac
+        systSum['pdf']['Down'] += PS_sum*extraNfac
         ferrinfo.write("Syst: PDF (not alpha_s) Value:%s \n"%PS_sum)
         
         ferrinfo.write("totSysUncUp: %s \n"%totUncUp)
         ferrinfo.write("totSysUncDn: %s \n"%totUncDn)
 
-        ferrinfo.write("Stat Unc: %s \n"%(hUnf.GetBinError(i)))
-        systSum['stat']['Up'] += abs(hUnf.GetBinError(i))
-        systSum['stat']['Down'] += abs(hUnf.GetBinError(i)) #abs just in case. Shouldn't need it.
+        ferrinfo.write("Normalized Stat Unc: %s \n"%(hUnf.GetBinError(i)/tmparea3))
+        systSum['stat']['Up'] += abs(hUnf.GetBinError(i))/tmparea3   #divide by area to show the portion in the normalized case for stat error 
+        systSum['stat']['Down'] += abs(hUnf.GetBinError(i))/tmparea3 #abs just in case. Shouldn't need it.
 
-        finalup = (totUncUp**2+(hUnf.GetBinError(i))**2)**0.5
-        finaldn = (totUncDn**2+(hUnf.GetBinError(i))**2)**0.5
-        systSum['total']['Up'] += finalup
-        systSum['total']['Down'] += finaldn
+        finalup = (totUncUp**2+(hUnf.GetBinError(i)/tmparea3)**2)**0.5
+        finaldn = (totUncDn**2+(hUnf.GetBinError(i)/tmparea3)**2)**0.5
+        systSum['total']['Up'] += finalup*extraNfac
+        systSum['total']['Down'] += finaldn*extraNfac
 
         #normup = finalup/tmparea/hUnf.GetBinWidth(i)
         #normdn = finaldn/tmparea/hUnf.GetBinWidth(i)
@@ -1404,6 +1456,33 @@ def _sumUncertainties_info(norm,errDict,varName,hUnf,chan=''): #same as above bu
         ferrinfo.write("%s: PortionUp %s PortionDn %s \n"%(key,pup,pdn))
     ferrinfo.write("Sum portion up and down: %s %s \n"%(sumportup, sumportdn))
     return hUncUp, hUncDn
+
+def sumUnfoldDict(*hUnfoldeds):
+    #pdb.set_trace()
+    hUnfoldedtot = {}
+    uncList = []
+    for dic in hUnfoldeds: #one dict per channel
+        uncList += dic.keys()
+    keys = set(uncList)
+    
+    for key in keys:
+        if varName == "eta":
+            histbins=array.array('d',[0.,1.0,2.0,3.0,4.0,5.0,6.0])
+        else:
+            histbins=array.array('d',_binning[varName])
+            #print "histTot histbins: ",histbins
+        histTot=ROOT.TH1D("histTotUnfolded","Tot hist",len(histbins)-1,histbins)
+        ROOT.SetOwnership(histTot,False)
+        hUnfoldedtot[key] = histTot.Clone() 
+    
+        for dic in hUnfoldeds:
+            try:
+                hUnfoldedtot[key].Add(dic[key])
+            except KeyError:
+                hUnfoldedtot[key].Add(dic['']) #For eEff and mEff, add nominal if the variation doesn't exist in that channel
+    
+    return hUnfoldedtot
+
 
 def _combineChannelUncertainties(*errDicts):
     hUncTot = {}
@@ -1663,6 +1742,13 @@ for varName in runVariables:
             savehists.append(UncDn)
     print "savehists: ",savehists
     if args['makeTotals']:
+        if not args['noSyst']:
+            
+            hUnfoldedtotDic = sumUnfoldDict(*hUnfolded.values())
+            hErr_tot= _generateUncertainties(hUnfoldedtotDic,varName,norm)
+            hErrTot = hErr_tot#_combineChannelUncertainties(*hErr.values())
+            hTotUncUp, hTotUncDn = _sumUncertainties_info(norm,hErrTot,varName,hUnfoldedtotDic[''].Clone()) #hTot.Clone())
+
         if "eeee" in channels:
             hTotData = hDataDict["eeee"]
             hTot = hUnfolded["eeee"]['']
@@ -1676,9 +1762,6 @@ for varName in runVariables:
             hTrueTot.Add(hTrue[c][''])
             hTrueAltTot.Add(hTrueAlt[c][''])
         print "hErr.values(): ",hErr.values()
-        if not args['noSyst']:
-            hErrTot = _combineChannelUncertainties(*hErr.values())
-            hTotUncUp, hTotUncDn = _sumUncertainties_info(norm,hErrTot,varName,hTot.Clone())
         #Saving Total histograms
         hTotalData = hTotData.Clone()
         TotDatName = "tot_"+varName+"_data"
