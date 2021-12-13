@@ -1138,6 +1138,7 @@ def getUnfolded(hSig, hBkg, hTrue, hResponse, hData, nIter,withRespAndCov=False)
     else:
         return hOut
 
+
 def _generateUncertainties(hDict,varName,norm): #hDict is hUnfolded dict
     #if called after rebin, the overflow bin is 0 already, and do we include underflow bin?
     #rebin was not called for histograms in hUnfolded, so use nbins+1 
@@ -1165,7 +1166,7 @@ def _generateUncertainties(hDict,varName,norm): #hDict is hUnfolded dict
     
     hUncScaleUp=ROOT.TH1D("hUncScaleUp","QCD scale uncertainty up.",len(histbins)-1,histbins)
     hUncScaleDn=ROOT.TH1D("hUncScaleDn","QCD scale uncertainty down.",len(histbins)-1,histbins)
-    hUncPDFsum=ROOT.TH1D("hUncPDFsum","PDF combined uncertainty",len(histbins)-1,histbins)
+
 
     avghist = None
     firstadd = True
@@ -1670,7 +1671,7 @@ else:
     hbkgMCSystDic = None
 
 OutputDirs={}
-
+diagnostic_count=0
 SFhistos,PUhistos = generateAnalysisInputs()
 #So even when selector runs, run the unfolding procedure only on the variables provided.
 
