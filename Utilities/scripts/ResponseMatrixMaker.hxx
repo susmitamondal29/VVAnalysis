@@ -70,6 +70,7 @@ class ResponseMatrixMakerBase
   bool hasSystematic(const Str& s) const {return responses.find(s) != responses.end();}
 
   void setConstantScale(float c) {scale = c;}
+  void setYear(int y) {year = y;}
   float getConstantScale() const {return scale;}
 
   // Can be set to calculate central values only
@@ -138,6 +139,7 @@ class ResponseMatrixMakerBase
   float truePU;
   unsigned long long evt;
   float genWeight;
+  float L1prefiringWeight;
   Vec<float> scaleWeights;
   Vec<float> pdfAndAlphaSWeights;
   UMap<Str, TH1D> puWeightHists;
@@ -148,6 +150,7 @@ class ResponseMatrixMakerBase
   const size_t iAlphaSUp;
   const size_t iAlphaSDn;
   float scale;
+  int year;
   bool skipSyst;
 };
 

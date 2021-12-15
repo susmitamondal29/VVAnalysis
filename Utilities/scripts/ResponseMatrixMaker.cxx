@@ -346,6 +346,11 @@ void ResponseMatrixMakerBase<T>::setup()
   for(size_t row = 0; row < size_t(std::abs(recoTree->GetEntries())); ++row)
     {
       recoTree->GetEntry(row);
+      std::cout<<"genWeight Before: "<<genWeight<<std::endl;
+
+      if (year==2016 ||year==2017){genWeight*=L1prefiringWeight;}
+
+      std::cout<<"genWeight After: "<<genWeight<<std::endl;
 
       // elements needed for event weights
       float puWt = (doPUWt ? ::getContentFromHist(puWeightHists.at(""), truePU) : 1.);
@@ -573,6 +578,7 @@ void ResponseMatrixMakerBase<T>::setup()
       for(size_t row = 0; row < size_t(std::abs(t->GetEntries())); ++row)
         {
           t->GetEntry(row);
+          if (year==2016 ||year==2017){genWeight*=L1prefiringWeight;}
 
           float puWt = (doPUWt ? ::getContentFromHist(puWeightHists.at(""), truePU) : 1.);
           //float puWt = 1.0;
@@ -676,6 +682,7 @@ void ResponseMatrixMakerBase<T>::setCommonBranches(TChain& t, const Vec<Str>& ob
   t.SetBranchAddress("nTruePU", &truePU);
   t.SetBranchAddress("evt", &evt);
   t.SetBranchAddress("genWeight", &genWeight);
+  if (year ==2016 || year==2017){t.SetBranchAddress("L1prefiringWeight", &L1prefiringWeight);}
 }
 
 

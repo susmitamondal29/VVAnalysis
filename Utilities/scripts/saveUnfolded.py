@@ -363,6 +363,8 @@ def generateResponseClass(varName, channel,sigSamples,sigSamplesPath,sumW,hPUWt,
         resp.registerPUWeights(hPUWt['Up'], 'Up')
         resp.registerPUWeights(hPUWt['Down'], 'Down')
         resp.setConstantScale(sigConstWeights[sample])
+        year = int(analysis[4:])
+        resp.setYear(year)
         if hSF:
             resp.registerElectronSelectionSFHist(hSF['eSel'])
             resp.registerElectronSelectionGapSFHist(hSF['eSelGap'])
