@@ -346,11 +346,11 @@ void ResponseMatrixMakerBase<T>::setup()
   for(size_t row = 0; row < size_t(std::abs(recoTree->GetEntries())); ++row)
     {
       recoTree->GetEntry(row);
-      std::cout<<"genWeight Before: "<<genWeight<<std::endl;
+      //std::cout<<"genWeight Before: "<<genWeight<<std::endl;
 
       if (year==2016 ||year==2017){genWeight*=L1prefiringWeight;}
 
-      std::cout<<"genWeight After: "<<genWeight<<std::endl;
+      //std::cout<<"genWeight After: "<<genWeight<<std::endl;
 
       // elements needed for event weights
       float puWt = (doPUWt ? ::getContentFromHist(puWeightHists.at(""), truePU) : 1.);
@@ -496,10 +496,12 @@ void ResponseMatrixMakerBase<T>::setup()
                     this->fillResponse(scaleResponses.at(ind), val, trueVal,
                                        nominalWeightScaleNorm * scaleWeights.at(scaleIndicesWeCareAbout.at(ind))); */
 
-                  float nominalWeightPDFNorm = nominalWeight / pdfAndAlphaSWeights.at(0);
+                  float nominalWeightPDFNorm = nominalWeight / pdfAndAlphaSWeights.at(0); //nominal PDF not included for 2016
                   for(size_t ind = 0; ind <= nPDFVariations+2; ++ind)
                     this->fillResponse(scaleResponses.at(ind+9), val, trueVal,
-                                       nominalWeightPDFNorm * pdfAndAlphaSWeights.at(ind));
+                                        nominalWeightScaleNorm* pdfAndAlphaSWeights.at(ind));
+                                       //nominalWeightPDFNorm * pdfAndAlphaSWeights.at(ind));
+                                       //use nominalWeightScaleNorm here since the 9th index is not nominal PDF for 2016, but 0th always scale nominal
 
                   // the last two items in the PDF weight vector are alpha_S variations
                  //In our ntuplizer uwvv codes, scaleWeight corresponds to lhe weights index 0 to 8, and pdf weights 9 to 9999 (used until 111). 

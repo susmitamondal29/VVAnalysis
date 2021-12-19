@@ -814,7 +814,7 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
         # PDF and scale uncertainty
         nscales = 9 # six scale variation indices 1,2,3,4,6,8
         npdf = 103
-        #indices run from 0 to 111 for nominal, scale, pdf+alpha_s
+        #indices run from 0 to 111 for nominal, scale, pdf+alpha_s for 2017,18. In 2016 no nominal PDF and last relevant index is 110.
         PSlist = []
         hRespPS = hRespPSTot.getScaleResponses() #vec<TH2D>
         for histPS in hRespPS:
@@ -827,7 +827,7 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
             respMatPS.SetDirectory(0)
             del respMatPS
         
-        scale_pdf_syslist = ['scale%s'%i for i in range(1,nscales)] + ['pdf%s'%i for i in range(10,109)] + ['alphas_up','alphas_dn']
+        #scale_pdf_syslist = ['scale%s'%i for i in range(1,nscales)] + ['pdf%s'%i for i in range(10,109)] + ['alphas_up','alphas_dn']
         hSigPSt = hSigSystDic_qqZZonly[chan][varNames[varName]+"_lheWeights"]
         hSigPSt.SetDirectory(0)
         hSig_ggZZonly = hSigDic_ggZZonly[chan][varNames[varName]]
@@ -842,8 +842,11 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
         hBkgPSt = hbkgDic[chan][varNames[varName]+"_Fakes"]
         hBkgPSt.SetDirectory(0)
         #print "NonPromptHist: ",hBkgPS,", ",hBkgPS.Integral()
-        hBkgMCPSt = hbkgMCSystDic[chan][varNames[varName]+"_lheWeights"]
+        hBkgMCPSt = hbkgMCDic[chan][varNames[varName]].Clone() #hbkgMCSystDic[chan][varNames[varName]+"_lheWeights"]
         hBkgMCPSt.SetDirectory(0)
+        hBkgPSTotal=hBkgPSt.Clone()
+        hBkgPSTotal.Add(hBkgMCPSt)
+        hBkgPSTotal=rebin(hBkgPSTotal,varName)
         #print "VVVHist: ",hBkgMCPS,", ",hBkgMCPS.Integral()
         #hBkgPSTotalt=hBkgPSt.Clone()
         #hBkgPSTotalt.Add(hBkgMCPSt)
@@ -852,8 +855,8 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
         #hBkgPSTotalt=rebin(hBkgPSTotalt,varName)
             
         for i in range(0,112): #pick all indices other than nominal
-            if i == 0 or i == 9:
-                continue
+            if i == 0: #or i == 9: 
+                continue #only skip nominal 0 since 9 is not nominal PDF for 2016
             #print "hSigSystDic: ",hSigSystDic
 
             binnum = i + 1 # 1st bin corresponds to 0
@@ -866,14 +869,18 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
             hTrueLHE.SetDirectory(0)
             hTrueLHE.Add(hTrue_ggZZonly)
             #print "NonPromptHist: ",hBkgPS,", ",hBkgPS.Integral()
-            hBkgMCPS = hBkgMCPSt.ProjectionX("PSBkg%s"%i,i+1,i+1,"e")
-            hBkgMCPS.SetDirectory(0)
+            
+            #hBkgMCPS = hBkgMCPSt.ProjectionX("PSBkg%s"%i,i+1,i+1,"e")
+            #hBkgMCPS.SetDirectory(0)
+            
             #print "VVVHist: ",hBkgMCPS,", ",hBkgMCPS.Integral()
-            hBkgPSTotal=hBkgPSt.Clone()
-            hBkgPSTotal.Add(hBkgMCPS)
+            
+            #hBkgPSTotal=hBkgPSt.Clone()
+            #hBkgPSTotal.Add(hBkgMCPS)
+            
             #print "TotBkgPSHist: ",hBkgPSTotal,", ",hBkgPSTotal.Integral()
             hSigPS=rebin(hSigPS,varName)
-            hBkgPSTotal=rebin(hBkgPSTotal,varName)
+            
             hTrueLHE = rebin(hTrueLHE,varName)
             #print "TotBkgPSHist after Rebinning: ",hBkgPSTotal,", ",hBkgPSTotal.Integral()
             
@@ -883,7 +890,7 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
                                                      PSlist[i],
                                                      hData, nIter)
             del hSigPS # This just deletes the variable not the histogram? What is the purpose?
-            del hBkgMCPS
+            #del hBkgMCPS
             del hTrueLHE
             #del hBkgPS
             #del hRespPS 
@@ -1149,8 +1156,26 @@ def _generateUncertainties(hDict,varName,norm): #hDict is hUnfolded dict
     if norm:
         hn.Scale(1.0/nominalArea)
     hErr = {'Up':{},'Down':{}}
+
+    #Note on indexing: 0 to 8 always for scale, the 9th index is pdf nominal for 2018, but the pdf nominal is not included in 2016  
+    #so in 2016 the 9th index is the first pdf variation, and the other pdf indices shift by 1
+
+    year = analysis[4:]
+    if year=='2018' or year=='2017':
+        ind_as1 = 110
+        ind_as2 = 111
+        ind_pdf1 = 10
+    if year=='2016':
+        ind_as1 = 109
+        ind_as2 = 110
+        ind_pdf1 = 9
+    
+    pdf_strs = ['PS_'+ str(x) for x in range(ind_pdf1,ind_as1)]
+        
+
+
     pdflist={}
-    scaleindlist = [str(i) for i in range(1,9)] # 1 to 8. 0,9 has been skipped in preparing hUnfolded
+    scaleindlist = [str(i) for i in range(1,9)] # 1 to 8 always correspond to scales
     scalenamelist = ['PS_'+str(i) for i in [1,2,3,4,6,8]]
     if norm:
         scalehists = []
@@ -1182,7 +1207,7 @@ def _generateUncertainties(hDict,varName,norm): #hDict is hUnfolded dict
             he.Scale(1.0/nominalArea) #/(he.Integral(1,he.GetNbinsX()+1)))
             #he.Scale(nominalArea/(he.Integral(0,he.GetNbinsX()+1)))
 
-        if 'PS' in sys and not ('111' in sys or '110' in sys or sys.replace('PS_','') in scaleindlist):
+        if sys in pdf_strs:  #not ('111' in sys or '110' in sys or sys.replace('PS_','') in scaleindlist):
             if firstadd:
                 avghist = he.Clone()
                 firstadd = False
@@ -1199,7 +1224,7 @@ def _generateUncertainties(hDict,varName,norm): #hDict is hUnfolded dict
 
         if norm: #divide by nominal area for pdf variations (not QCD scale or alpha_s)
             if 'PS' in sys:
-                if not ('111' in sys or '110' in sys or sys.replace('PS_','') in scaleindlist):
+                if sys in pdf_strs:#not ('111' in sys or '110' in sys or sys.replace('PS_','') in scaleindlist):
                     he.Scale(1.0/(he.Integral(1,he.GetNbinsX()+1)))
             else:
                 he.Scale(1.0/(he.Integral(1,he.GetNbinsX()+1)))
@@ -1219,7 +1244,7 @@ def _generateUncertainties(hDict,varName,norm): #hDict is hUnfolded dict
             else:
                 he.Add(hn,-1)
 
-        elif not ('111' in sys or '110' in sys or sys.replace('PS_','') in scaleindlist): #last two correspond to alpha_s variation
+        elif sys in pdf_strs:#not ('111' in sys or '110' in sys or sys.replace('PS_','') in scaleindlist): #last two correspond to alpha_s variation
             if not norm:
                 #he.Add(avghist,-1)
                 he.Add(hDict[''],-1)
@@ -1239,16 +1264,16 @@ def _generateUncertainties(hDict,varName,norm): #hDict is hUnfolded dict
         elif '_dn' in sys:
             hErr['Down'][sysName2] = he
         elif 'PS_' in sys: 
-            if not ('111' in sys or '110' in sys or sys.replace('PS_','') in scaleindlist):
+            if sys in pdf_strs: #not ('111' in sys or '110' in sys or sys.replace('PS_','') in scaleindlist):
                 hErr['Up'][sys] = he
                 hErr['Down'][sys] = he.Clone() #these pdf variations get into the square sum 
         else:
             hErr['Up'][sysName] = he
             he2 = he.Clone()
             hErr['Down'][sysName] = he2
-    #pdb.set_trace()
-    h_alphas_up = hDict['PS_111'].Clone()
-    h_alphas_down = hDict['PS_110'].Clone()
+    pdb.set_trace()
+    h_alphas_up = hDict['PS_'+str(ind_as2)].Clone()
+    h_alphas_down = hDict['PS_'+str(ind_as1)].Clone()
     if norm:
         h_alphas_up.Scale(1.0/(h_alphas_up.Integral(1,h_alphas_up.GetNbinsX()+1)))
         h_alphas_down.Scale(1.0/(h_alphas_down.Integral(1,h_alphas_down.GetNbinsX()+1)))
@@ -1386,7 +1411,7 @@ def _sumUncertainties_info(norm,errDict,varName,hUnf,chan=''): #same as above bu
         totUncUp=totUncDn=0. #should be reset each time but not done in original codes?
         PS_sum = 0.
         for j,(h1, h2) in enumerate(zip(UncUpHistos,UncDnHistos)):
-            if not 'PS' in sysList[j]: #only 10 to 109 in the list
+            if not 'PS' in sysList[j]: #only 10 to 109 in the list for 17, 18 and 9 to 108 for 2016
                 ferrinfo.write("Syst: %s \n"%sysList[j])
                 ferrinfo.write("histUp: %s \n"%(h1.GetBinContent(i)))
                 ferrinfo.write("histDn: %s \n"%(h2.GetBinContent(i)))
