@@ -691,7 +691,100 @@ void ResponseMatrixMakerBase<T>::setCommonBranches(TChain& t, const Vec<Str>& ob
   t.SetBranchAddress("nTruePU", &truePU);
   t.SetBranchAddress("evt", &evt);
   t.SetBranchAddress("genWeight", &genWeight);
-  if (year ==2016 || year==2017){t.SetBranchAddress("L1prefiringWeight", &L1prefiringWeight);}
+  
+    if (year ==2016 || year==2017){
+    t.SetBranchAddress("L1prefiringWeight", &L1prefiringWeight);}
+
+    if(channel.find("eeee") != Str::npos){    
+    t.SetBranchAddress("e1SIP3D", &l1SIP3D);
+    t.SetBranchAddress("e2SIP3D", &l2SIP3D);
+    t.SetBranchAddress("e3SIP3D", &l3SIP3D);
+    t.SetBranchAddress("e4SIP3D", &l4SIP3D);
+    
+    t.SetBranchAddress("e1ZZTightIDNoVtx", &l1IsTight);
+    t.SetBranchAddress("e1ZZIso", &l1IsIso);
+    
+    t.SetBranchAddress("e2ZZTightIDNoVtx", &l2IsTight);
+    t.SetBranchAddress("e2ZZIso", &l2IsIso);
+    
+    t.SetBranchAddress("e3ZZTightIDNoVtx", &l3IsTight);
+    t.SetBranchAddress("e3ZZIso", &l3IsIso);
+    
+    t.SetBranchAddress("e4ZZTightIDNoVtx", &l4IsTight);
+    t.SetBranchAddress("e4ZZIso", &l4IsIso);
+
+    t.SetBranchAddress("e1PdgId", &l1PdgId);
+    t.SetBranchAddress("e2PdgId", &l2PdgId);
+    t.SetBranchAddress("e3PdgId", &l3PdgId);
+    t.SetBranchAddress("e4PdgId", &l4PdgId);
+    }
+    
+
+    if(channel.find("eemm") != Str::npos){    
+    t.SetBranchAddress("e1SIP3D", &l1SIP3D);
+    t.SetBranchAddress("e2SIP3D", &l2SIP3D);
+    t.SetBranchAddress("m1SIP3D", &l3SIP3D);
+    t.SetBranchAddress("m2SIP3D", &l4SIP3D);
+    
+    t.SetBranchAddress("e1ZZTightIDNoVtx", &l1IsTight);
+    t.SetBranchAddress("e1ZZIso", &l1IsIso);
+    
+    t.SetBranchAddress("e2ZZTightIDNoVtx", &l2IsTight);
+    t.SetBranchAddress("e2ZZIso", &l2IsIso);
+
+    t.SetBranchAddress("m1ZZIso", &l3IsIso);
+    if (year == 2016 || year == 2017)
+    {
+      t.SetBranchAddress("m1PASTightIDNoVtx", &l3IsTight);
+      t.SetBranchAddress("m2PASTightIDNoVtx", &l4IsTight);
+    }
+    else
+    {
+      t.SetBranchAddress("m1ZZTightIDNoVtx", &l3IsTight);
+      t.SetBranchAddress("m2ZZTightIDNoVtx", &l4IsTight);
+    }
+    t.SetBranchAddress("m2ZZIso", &l4IsIso);
+
+    t.SetBranchAddress("e1PdgId", &l1PdgId);
+    t.SetBranchAddress("e2PdgId", &l2PdgId);
+    t.SetBranchAddress("m1PdgId", &l3PdgId);
+    t.SetBranchAddress("m2PdgId", &l4PdgId);
+    }
+    
+
+    if(channel.find("mmmm") != Str::npos){    
+    t.SetBranchAddress("m1SIP3D", &l1SIP3D);
+    t.SetBranchAddress("m2SIP3D", &l2SIP3D);
+    t.SetBranchAddress("m3SIP3D", &l3SIP3D);
+    t.SetBranchAddress("m4SIP3D", &l4SIP3D);
+    
+     if (year == 2016 || year == 2017)
+    {
+      t.SetBranchAddress("m1PASTightIDNoVtx", &l1IsTight);
+      t.SetBranchAddress("m2PASTightIDNoVtx", &l2IsTight);
+      t.SetBranchAddress("m3PASTightIDNoVtx", &l3IsTight);
+      t.SetBranchAddress("m4PASTightIDNoVtx", &l4IsTight);
+    }
+    else
+    {
+      t.SetBranchAddress("m1ZZTightIDNoVtx", &l1IsTight);
+      t.SetBranchAddress("m2ZZTightIDNoVtx", &l2IsTight);
+      t.SetBranchAddress("m3ZZTightIDNoVtx", &l3IsTight);
+      t.SetBranchAddress("m4ZZTightIDNoVtx", &l4IsTight);
+    }
+    t.SetBranchAddress("m1ZZIso", &l1IsIso);
+    t.SetBranchAddress("m2ZZIso", &l2IsIso);
+    t.SetBranchAddress("m3ZZIso", &l3IsIso);
+    t.SetBranchAddress("m4ZZIso", &l4IsIso);
+
+    t.SetBranchAddress("m1PdgId", &l1PdgId);
+    t.SetBranchAddress("m2PdgId", &l2PdgId);
+    t.SetBranchAddress("m3PdgId", &l3PdgId);
+    t.SetBranchAddress("m4PdgId", &l4PdgId);
+    }
+  
+
+
 }
 
 
@@ -1030,7 +1123,18 @@ DijetBranchResponseMatrixMaker<T>::selectEvent(const Str& syst) const
 {
   float mZ1=*(JetBranchResponseMatrixMakerBase<T>::my_mZ1);
   float mZ2=*(JetBranchResponseMatrixMakerBase<T>::my_mZ2);
-  bool  mass_sel = mZ1 > 60. && mZ1 < 120. && mZ2 > 60. && mZ2 < 120.;
+  bool  mass_sel = false;
+  bool  mass_selBase = mZ1 > 60. && mZ1 < 120. && mZ2 > 60. && mZ2 < 120.;
+  bool  tight_sel = (this->tightZ1Leptons() && this->tightZ2Leptons());
+  
+  if (this->year ==2016 || this->year==2017){
+    bool sip_sel= this->l1SIP3D < 4.0 && this->l2SIP3D < 4.0 && this->l3SIP3D < 4.0 && this->l4SIP3D < 4.0;
+    mass_sel = mass_selBase && tight_sel && sip_sel;
+  }
+  if (this->year ==2018) {
+    mass_sel = mass_selBase && tight_sel;
+
+  }
   //std::cout<<"Confirm mZ1,mZ2:  "<<mZ1<<" "<<mZ2<<std::endl;
   unsigned int tmp_nJets = nJets;
   if(syst.empty()){tmp_nJets = nJets;}
