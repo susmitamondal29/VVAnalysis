@@ -827,10 +827,12 @@ with open('listFile.json') as list_json_file:
     mylist_dict = json.load(list_json_file)
 
 if analysis=="ZZ4l2016":
-    fUse = ROOT.TFile("UnfHistsFinal-18Jun2021-ZZ4l2016.root","read")
+    fUse = ROOT.TFile(mylist_dict['f16'],"read")
+    #fUse = ROOT.TFile("UnfHistsFinal-18Jun2021-ZZ4l2016.root","read")
     #fUse = ROOT.TFile("UnfHistsFinal-18Apr2020-ZZ4l2016.root","read")
 elif analysis=="ZZ4l2017":
-    fUse = ROOT.TFile("UnfHistsFinal-22May2021-ZZ4l2017.root","read")
+    fUse = ROOT.TFile(mylist_dict['f17'],"read")
+    #fUse = ROOT.TFile("UnfHistsFinal-22May2021-ZZ4l2017.root","read")
     #fUse = ROOT.TFile("UnfHistsFinal-18Apr2020-ZZ4l2017.root","read")
 elif analysis=="ZZ4l2018":
     if args['lumi'] < 100. :
@@ -839,7 +841,8 @@ elif analysis=="ZZ4l2018":
         #fUse = ROOT.TFile("UnfHistsFinal-22May2021-ZZ4l2018.root","read")
         #fUse = ROOT.TFile("UnfHistsFinal-18Apr2020-ZZ4l2018.root","read")
     else:
-        fUse = ROOT.TFile("allyear_UnfHist.root","read") 
+        fUse = ROOT.TFile(mylist_dict['fFull'],"read")
+        #fUse = ROOT.TFile("allyear_UnfHist.root","read") 
         #fUse = ROOT.TFile("UnfHistsFinal-18Apr2020-ZZ4lFullRun2.root","read")
 #fUse = ROOT.TFile.Open("UnfHistsFull09Nov2019-ZZ4l2018.root","update")
 for varName in runVariables:
