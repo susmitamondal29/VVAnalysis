@@ -76,6 +76,8 @@ def getComLineArgs():
                         help='plot total unfolded with uncertainities.')
     parser.add_argument('--noSyst', action='store_true',
                         help='No Systematics calculations.')
+    parser.add_argument('--diagnostic', action='store_true',
+                        help='Save diagnostic histograms and exit in _generateUncertainties function')
     parser.add_argument('--plotDir', type=str, nargs='?',
                         default='/afs/cern.ch/user/h/hehe/www/ZZFullRun2/PlottingResults/ZZ4l2017/ZZSelectionsTightLeps/ANPlots/ZZ4l2017/RespMat_Moriond2019IDMuSF',
                         help='Directory to put response and covariance plots in')
@@ -1008,8 +1010,8 @@ def unfold(varName,chan,responseMakers,altResponseMakers,hSigDic,hAltSigDic,hSig
     print "AltTrueHist: ",hAltTrue,", ",hAltTrue.Integral()
     
     hTrueAlt['']=hAltTrue
-    if chan=='mmmm':
-        pdb.set_trace()
+    #if chan=='mmmm':
+    #    pdb.set_trace()
     
     hUnfolded['generator']  = getUnfolded(hAltSigNominal,hBkgTotal,hTrueAlt[''],hAltResponse,hData, nIter) 
     print("Position Indicator:generator")
@@ -1232,6 +1234,48 @@ def _generateUncertainties(hDict,varName,norm): #hDict is hUnfolded dict
                 avghist.Add(he)
     
     avghist.Scale(0.01) #divided by 100
+
+    #Output some diagnostics histogram in _generateUncertainties function
+    global diagnostic_count
+    diagnostic_count +=1
+    if diagnostic_count==4 and args['diagnostic']: #4 corresponds to total case
+        
+        #hUncPDFsum=ROOT.TH1D("hUncPDFsum","PDF Uncertainty",len(histbins)-1,histbins)
+        #tmpPDFSum = range(0,hn.GetNbinsX()+1)
+        #for i in range(0,hn.GetNbinsX()+1):
+        #    tmpPDFSum[i] = 0.
+
+        myoutputFile=ROOT.TFile("diagnostics_%s.root"%varName,"RECREATE")
+        myoutputFile.cd()
+        hnomtmp = hn.Clone("Nominal")
+        hnomtmp.Write()
+        for sys, h in hDict.iteritems():
+            if not sys:
+                continue
+            he = h.Clone(sys)
+
+            if norm: #divide by nominal area for pdf variations (not QCD scale or alpha_s)
+                if 'eEff' in sys or 'mEff' in sys or 'generator' in sys:
+                    he.Scale(1.0/(he.Integral(1,he.GetNbinsX()+1)))
+                    he.Write()
+                    print(he)
+                #if 'PS' in sys:
+                #    if not ('111' in sys or '110' in sys or sys.replace('PS_','') in scaleindlist):
+                #        he.Scale(1.0/(he.Integral(1,he.GetNbinsX()+1)))
+                #        for i in range(1,hn.GetNbinsX()+1):
+                #            tmpPDFSum[i] += (hn.GetBinContent(i)-he.GetBinContent(i))**2
+                #        he.Write()
+                #        print(he)
+
+        #for i in range(1,hn.GetNbinsX()+1):
+        #    hUncPDFsum.SetBinContent(i,math.sqrt(tmpPDFSum[i]))
+
+        #hUncPDFsum.Write()
+        myoutputFile.Close()
+        print("File written")
+        del sys
+        import sys
+        sys.exit()
 
 #main systematics calculation
     for sys, h in hDict.iteritems():
