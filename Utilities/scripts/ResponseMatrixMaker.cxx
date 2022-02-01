@@ -1027,6 +1027,7 @@ DijetBranchResponseMatrixMaker<T>::getTrueValues(TChain& trueTree,
 	//std::cout<<trueEvt<<" "<<trueVal<<std::endl; }
       else if(this->getVar()=="Mass2j" && trueNJets == 2){(*out)[trueEvt] = trueVal;}
       else if(this->getVar()=="Mass3j" && trueNJets == 3){(*out)[trueEvt] = trueVal;}
+      else if(this->getVar()=="Mass34j" && trueNJets >= 3){(*out)[trueEvt] = trueVal;}
       else if(this->getVar()=="Mass4j" && trueNJets >= 4){(*out)[trueEvt] = trueVal;}
       else if(this->getVar()=="nJets"){(*out)[trueEvt] = trueNJets;}
       else if(this->getVar()=="mjj" && trueNJets >= 2){(*out)[trueEvt] = trueMjj;}
@@ -1157,6 +1158,7 @@ DijetBranchResponseMatrixMaker<T>::selectEvent(const Str& syst) const
     if (this->getVar() == "Mass1j") {return tmp_nJets == 1 && mass_sel;}
     if (this->getVar() == "Mass2j") {return tmp_nJets == 2 && mass_sel;}
     if (this->getVar() == "Mass3j") {return tmp_nJets == 3 && mass_sel;}
+    if (this->getVar() == "Mass34j") {return tmp_nJets >= 3 && mass_sel;}
     if (this->getVar() == "Mass4j") {return tmp_nJets >= 4 && mass_sel;}
     if (this->getVar() == "nJets") {return mass_sel;}
     if (this->getVar() == "mjj") {return tmp_nJets >= 2 && mass_sel;}

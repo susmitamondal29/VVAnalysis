@@ -22,8 +22,20 @@
         ], 
         "prettyVars": "m_{4\\ell}(3 jets)", 
         "responseClassNames": "testJet"
+    },
+    "Mass34j": {
+        "units": "[GeV]", 
+        "_binning": [
+            100.0, 
+            200.0, 
+            400.0, 
+            600.0, 
+            1000.0
+        ], 
+        "prettyVars": "m_{4\\ell}(>=3 jets)", 
+        "responseClassNames": "testJet"
     }, 
-    "dEtajj": {
+     "dEtajj": {
         "units": "", 
         "_binning": [
             0.0, 
