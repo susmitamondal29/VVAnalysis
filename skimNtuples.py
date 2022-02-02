@@ -7,6 +7,7 @@ import sys
 from collections import OrderedDict
 from Utilities.python import ApplySelection
 from Utilities.python.prettytable import PrettyTable
+import pdb
 
 def getComLineArgs():
     parser = argparse.ArgumentParser()
@@ -36,6 +37,7 @@ def writeNtupleToFile(output_file, tree, state, cut_string, deduplicate):
     if not state_dir:
         state_dir = output_file.mkdir(state)
     state_dir.cd()
+    #pdb.set_trace()
     save_tree = tree.CopyTree(cut_string if not deduplicate else "")
     save_tree.Write()
     # Remove AutoSaved trees
@@ -127,6 +129,7 @@ def writeGenTreeToFile(output_file, state,GenTree):
     if not Genstate_dir:
         Genstate_dir = output_file.mkdir(Genstate)
     Genstate_dir.cd()
+    #pdb.set_trace()
     save_gt = GenTree.CopyTree("")
     save_gt.Write()
     # Remove AutoSaved trees

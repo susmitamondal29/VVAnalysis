@@ -10,6 +10,7 @@ from Utilities.python import UserInput
 from Utilities.python import ConfigureJobs
 import math
 import logging
+import pdb
 
 def getComLineArgs():
     parser = UserInput.getDefaultParser()
@@ -83,19 +84,20 @@ def farmoutNtupleSkim(sample_name, path, selection, analysis, version, scaleFacs
     job_name = ConfigureJobs.getJobName(sample_name, analysis, selection, version) 
     farmout_dict['base_dir'] = os.path.dirname(os.path.realpath(sys.argv[0]))
     first_selection = selection.split(",")[0].strip()
+    #pdb.set_trace()
     if first_selection=="4lCRBase":
-        submission_dir = ('/data/uhussain/%s' if "uhussain" in path else "/nfs_scratch/uhussain/%s") \
+        submission_dir = ("/nfs_scratch/hehe/%s") \
             % '{:%Y-%m-%d}_%sAnalysisJobs'.format(datetime.date.today()) %analysis
     elif first_selection=="ZplusLBase":
-        #submission_dir = ('/data/uhussain/%s' if "uhussain" in path else "/nfs_scratch/uhussain/%s") \
+        #submission_dir = ("/nfs_scratch/hehe/%s") \
         #    % '{:%Y-%m-%d}_%sAnalysisJobs'.format(datetime.date.today()) %analysis
-        submission_dir = ('/data/uhussain/%s' if "uhussain" in path else "/nfs_scratch/uhussain/%s") \
+        submission_dir = ("/nfs_scratch/hehe/%s") \
             % '2019-09-12_%sAnalysisJobs' %analysis
 
     else:
-        submission_dir = ('/data/uhussain/%s' if "uhussain" in path else "/nfs_scratch/uhussain/%s") \
+        submission_dir = ("/nfs_scratch/hehe/%s") \
             % '{:%Y-%m-%d}_%sAnalysisJobs'.format(datetime.date.today()) %analysis
-        #submission_dir = ('/data/uhussain/%s' if "uhussain" in path else "/nfs_scratch/uhussain/%s") \
+        #submission_dir = ("/nfs_scratch/hehe/%s") \
         #    % '2019-09-12_%sAnalysisJobs' %analysis
     try:
         os.mkdir(submission_dir)
@@ -149,8 +151,13 @@ def createRunJob(base_dir, job_dir, selection, analysis, trigger_name, addScaleF
 def main():
     #for selection in selection_map.iteritems():
     args = getComLineArgs()
-    path = "/cms/uhussain" if "hep.wisc.edu" in os.environ['HOSTNAME'] else \
-            "/afs/cern.ch/user/u/uhussain/work"
+    path = "/afs/hep.wisc.edu/home/hhe62/vvanalysis_skim/CMSSW_10_3_1/src/Data_manager" if "hep.wisc.edu" in os.environ['HOSTNAME'] else \
+            "/afs/cern.ch/user/h/hehe/work"
+    print(os.environ['HOSTNAME'])
+    print(path)
+   # pdb.set_trace()
+    print(ConfigureJobs.getListOfFiles(args['filenames'], path))
+    
     for file_name in ConfigureJobs.getListOfFiles(args['filenames'], path):
         try:
             farmoutNtupleSkim(file_name, path, args['selection'], 

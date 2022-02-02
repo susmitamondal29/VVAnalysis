@@ -87,24 +87,24 @@ def getListOfFiles(filelist, manager_path):
             if (zz4l in name):
                 if "ZZ4l2016" in name:
                     if "Tight" in name:
-                        dataset_file = "/afs/cern.ch/user/u/uhussain/work/" + \
+                        dataset_file = manager_path+"/" + \
                             "ZZ4lRun2DatasetManager/FileInfo/ZZ4l2016/%s.json" % "LooseNtuples"
                     else:                        
-                        dataset_file = "/afs/cern.ch/user/u/uhussain/work/" + \
+                        dataset_file = manager_path+"/" + \
                             "ZZ4lRun2DatasetManager/FileInfo/ZZ4l2016/%s.json" % "ntuples"
                 elif "ZZ4l2017" in name:
                     if "Tight" in name:
-                        dataset_file = "/afs/cern.ch/user/u/uhussain/work/" + \
+                        dataset_file = manager_path+"/" + \
                             "ZZ4lRun2DatasetManager/FileInfo/ZZ4l2017/%s.json" % "LooseNtuples"
                     else:                        
-                        dataset_file = "/afs/cern.ch/user/u/uhussain/work/" + \
+                        dataset_file = manager_path+"/" + \
                             "ZZ4lRun2DatasetManager/FileInfo/ZZ4l2017/%s.json" % "ntuples"
                 elif "ZZ4l2018" in name:
                     if "Tight" in name:
-                        dataset_file = "/afs/cern.ch/user/u/uhussain/work/" + \
+                        dataset_file = manager_path+"/" + \
                             "ZZ4lRun2DatasetManager/FileInfo/ZZ4l2018/%s.json" % "LooseNtuples"
                     else:                        
-                        dataset_file = "/afs/cern.ch/user/u/uhussain/work/" + \
+                        dataset_file = manager_path+"/" + \
                             "ZZ4lRun2DatasetManager/FileInfo/ZZ4l2018/%s.json" % "ntuples"
             elif(Zl in name):
                 #if "Skim" in name:
@@ -119,9 +119,9 @@ def getListOfFiles(filelist, manager_path):
                 elif "ZplusL2018" in name:
                     dataset_file = "/afs/cern.ch/user/u/uhussain/work/" + \
                         "ZZ4lRun2DatasetManager/FileInfo/ZplusL2018/%s.json" % "ntuples"
-            print dataset_file
+            print(dataset_file)
             allnames = json.load(open(dataset_file)).keys()
-            print allnames
+            print(allnames)
             if "nodata" in name:
                 nodata = [x for x in allnames if "Run" not in x]
                 names += nodata
