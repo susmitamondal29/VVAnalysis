@@ -35,6 +35,7 @@ void ZZSelector::Init(TTree *tree)
       "Mass1j",
       "Mass2j",
       "Mass3j",
+      "Mass34j",
       "Mass4j",
       "ZMass",
       "ZZPt",
@@ -54,7 +55,7 @@ void ZZSelector::Init(TTree *tree)
 
   hists1D_ = {
       "yield", "Z1Mass", "Z2Mass", "ZMass", "ZZPt", "ZZEta", "dPhiZ1Z2", "dRZ1Z2", "ZPt", "LepPt", "LepEta",
-      "Mass", "Mass0j", "Mass1j", "Mass2j", "Mass3j", "Mass4j", "nJets",
+      "Mass", "Mass0j", "Mass1j", "Mass2j", "Mass3j", "Mass34j", "Mass4j", "nJets",
       "jetPt[0]", "jetPt[1]", "jetPt[2]", "jetEta[0]", "jetEta[1]", "absjetEta[0]", "absjetEta[1]", "jetEta[2]",
       "jetPhi[0]", "jetPhi[1]", "jetPhi[2]", "mjj", "dEtajj", "SIP3D", "jetPt[01]", "jetEta[01]",
       "PVDZ", "deltaPVDZ_sameZ", "deltaPVDZ_diffZ"};
@@ -65,6 +66,7 @@ void ZZSelector::Init(TTree *tree)
       "Mass1j",
       "Mass2j",
       "Mass3j",
+      "Mass34j",
       "Mass4j",
       "nJets",
       "jetPt[0]",
@@ -101,6 +103,7 @@ void ZZSelector::Init(TTree *tree)
       "Mass1j",
       "Mass2j",
       "Mass3j",
+      "Mass34j",
       "Mass4j"};
   ZZSelectorBase::Init(tree);
 }
@@ -1001,15 +1004,23 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
         {
           SafeHistFill(jethistMap1D_, getHistName("Mass2j", variation.second), Mass, i, weight);
         }
-        else if (vnJets[i] == 3)
+        else
         {
-          SafeHistFill(jethistMap1D_, getHistName("Mass3j", variation.second), Mass, i, weight);
-        }
-        else if (vnJets[i] >= 4)
-        {
-          SafeHistFill(jethistMap1D_, getHistName("Mass4j", variation.second), Mass, i, weight);
-        }
+          if (vnJets[i] == 3)
+          {
+            SafeHistFill(jethistMap1D_, getHistName("Mass3j", variation.second), Mass, i, weight);
+          }
 
+          if (vnJets[i] >= 3)
+          {
+            SafeHistFill(jethistMap1D_, getHistName("Mass34j", variation.second), Mass, i, weight);
+          }
+
+          if (vnJets[i] >= 4)
+          {
+            SafeHistFill(jethistMap1D_, getHistName("Mass4j", variation.second), Mass, i, weight);
+          }
+        }
       } //loop over syst indices
 
     } //if (isMC_) for jet systs
@@ -1062,13 +1073,23 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
       {
         SafeHistFill(weighthistMap1D_, getHistName("Mass2j", variation.second), Mass, i, lheWeights[i] / lheWeights[0] * weight);
       }
-      else if (jetPt->size() == 3 && jetPt->size() == jetEta->size())
+      else
       {
-        SafeHistFill(weighthistMap1D_, getHistName("Mass3j", variation.second), Mass, i, lheWeights[i] / lheWeights[0] * weight);
-      }
-      else if (jetPt->size() >= 4 && jetPt->size() == jetEta->size())
-      {
-        SafeHistFill(weighthistMap1D_, getHistName("Mass4j", variation.second), Mass, i, lheWeights[i] / lheWeights[0] * weight);
+
+        if (jetPt->size() == 3 && jetPt->size() == jetEta->size())
+        {
+          SafeHistFill(weighthistMap1D_, getHistName("Mass3j", variation.second), Mass, i, lheWeights[i] / lheWeights[0] * weight);
+        }
+
+        if (jetPt->size() >= 3 && jetPt->size() == jetEta->size())
+        {
+          SafeHistFill(weighthistMap1D_, getHistName("Mass34j", variation.second), Mass, i, lheWeights[i] / lheWeights[0] * weight);
+        }
+
+        if (jetPt->size() >= 4 && jetPt->size() == jetEta->size())
+        {
+          SafeHistFill(weighthistMap1D_, getHistName("Mass4j", variation.second), Mass, i, lheWeights[i] / lheWeights[0] * weight);
+        }
       }
     }
   }
@@ -1139,15 +1160,24 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
   {
     SafeHistFill(histMap1D_, getHistName("Mass2j", variation.second), Mass, weight);
   }
-  else if (jetPt->size() == 3 && jetPt->size() == jetEta->size())
+  else
   {
-    SafeHistFill(histMap1D_, getHistName("Mass3j", variation.second), Mass, weight);
-  }
-  else if (jetPt->size() >= 4 && jetPt->size() == jetEta->size())
-  {
-    SafeHistFill(histMap1D_, getHistName("Mass4j", variation.second), Mass, weight);
-  }
+    if (jetPt->size() == 3 && jetPt->size() == jetEta->size())
+    {
+      SafeHistFill(histMap1D_, getHistName("Mass3j", variation.second), Mass, weight);
+    }
 
+    if (jetPt->size() >= 3 && jetPt->size() == jetEta->size())
+    {
+      SafeHistFill(histMap1D_, getHistName("Mass34j", variation.second), Mass, weight);
+    }
+
+    if (jetPt->size() >= 4 && jetPt->size() == jetEta->size())
+    {
+      SafeHistFill(histMap1D_, getHistName("Mass4j", variation.second), Mass, weight);
+    }
+  }
+  
   if (jetPt->size() > 0 && jetPt->size() == jetEta->size())
   {
     SafeHistFill(histMap1D_, getHistName("jetPt[0]", variation.second), jetPt->at(0), weight);
