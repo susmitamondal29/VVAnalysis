@@ -1,5 +1,5 @@
 #variables="pt mass zpt leppt dphiz1z2 drz1z2"
-variables="nJets mjj dEtajj jetPt[0] jetPt[1] absjetEta[0] absjetEta[1] MassAllj Mass0j Mass1j Mass2j Mass3j Mass4j"
+variables="Mass34j" #"nJets mjj dEtajj jetPt[0] jetPt[1] absjetEta[0] absjetEta[1] MassAllj Mass0j Mass1j Mass2j Mass3j Mass4j"
 #variables="dphiz1z2"
 for var in $variables;do
   echo $var
