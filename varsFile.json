@@ -2,8 +2,8 @@
     "Mass4j": {
         "ratio_min": 0.4, 
         "top_xy": [
-            0.4, 
-            0.1
+            0.6, 
+            0.87
         ], 
         "bottom_size": 0.08, 
         "_binning": [
@@ -17,8 +17,8 @@
         "ratio_max": 1.8, 
         "prettyVars": "m_{4\\ell}(>=4 jets)", 
         "bottom_xy": [
-            0.4, 
-            0.4
+            0.6, 
+            0.91
         ], 
         "units": "[GeV]", 
         "responseClassNames": "testJet", 
@@ -27,8 +27,8 @@
     "Mass3j": {
         "ratio_min": 0.4, 
         "top_xy": [
-            0.4, 
-            0.1
+            0.2, 
+            0.87
         ], 
         "bottom_size": 0.08, 
         "_binning": [
@@ -42,8 +42,8 @@
         "ratio_max": 1.8, 
         "prettyVars": "m_{4\\ell}(3 jets)", 
         "bottom_xy": [
-            0.4, 
-            0.4
+            0.2, 
+            0.91
         ], 
         "units": "[GeV]", 
         "responseClassNames": "testJet", 
@@ -52,8 +52,8 @@
     "dEtajj": {
         "ratio_min": 0.4, 
         "top_xy": [
-            0.4, 
-            0.1
+            0.2, 
+            0.87
         ], 
         "bottom_size": 0.08, 
         "_binning": [
@@ -67,8 +67,8 @@
         "ratio_max": 1.8, 
         "prettyVars": "#Delta#eta(j_{1}, j_{2})", 
         "bottom_xy": [
-            0.4, 
-            0.4
+            0.2, 
+            0.91
         ], 
         "units": "", 
         "responseClassNames": "testJet", 
@@ -77,8 +77,8 @@
     "nJets": {
         "ratio_min": 0.4, 
         "top_xy": [
-            0.4, 
-            0.1
+            0.2, 
+            0.87
         ], 
         "bottom_size": 0.08, 
         "_binning": [
@@ -92,8 +92,8 @@
         "ratio_max": 1.8, 
         "prettyVars": "N_{jets}", 
         "bottom_xy": [
-            0.4, 
-            0.4
+            0.2, 
+            0.91
         ], 
         "units": "", 
         "responseClassNames": "testJet", 
@@ -102,8 +102,8 @@
     "absjetEta[1]": {
         "ratio_min": 0.4, 
         "top_xy": [
-            0.4, 
-            0.1
+            0.2, 
+            0.87
         ], 
         "bottom_size": 0.08, 
         "_binning": [
@@ -116,8 +116,8 @@
         "ratio_max": 1.8, 
         "prettyVars": "|#eta_{j2}|", 
         "bottom_xy": [
-            0.4, 
-            0.4
+            0.2, 
+            0.91
         ], 
         "units": "", 
         "responseClassNames": "testJet", 
@@ -126,8 +126,8 @@
     "Mass2j": {
         "ratio_min": 0.4, 
         "top_xy": [
-            0.4, 
-            0.1
+            0.2, 
+            0.87
         ], 
         "bottom_size": 0.08, 
         "_binning": [
@@ -141,8 +141,8 @@
         "ratio_max": 1.8, 
         "prettyVars": "m_{4\\ell}(2 jets)", 
         "bottom_xy": [
-            0.4, 
-            0.4
+            0.2, 
+            0.91
         ], 
         "units": "[GeV]", 
         "responseClassNames": "testJet", 
@@ -151,8 +151,8 @@
     "absjetEta[0]": {
         "ratio_min": 0.4, 
         "top_xy": [
-            0.4, 
-            0.1
+            0.2, 
+            0.87
         ], 
         "bottom_size": 0.08, 
         "_binning": [
@@ -166,8 +166,8 @@
         "ratio_max": 1.8, 
         "prettyVars": "|#eta_{j1}|", 
         "bottom_xy": [
-            0.4, 
-            0.4
+            0.2, 
+            0.91
         ], 
         "units": "", 
         "responseClassNames": "testJet", 
@@ -176,8 +176,8 @@
     "Mass0j": {
         "ratio_min": 0.4, 
         "top_xy": [
-            0.4, 
-            0.1
+            0.2, 
+            0.87
         ], 
         "bottom_size": 0.08, 
         "_binning": [
@@ -196,8 +196,8 @@
         "ratio_max": 1.8, 
         "prettyVars": "m_{4\\ell}(0 jets)", 
         "bottom_xy": [
-            0.4, 
-            0.4
+            0.2, 
+            0.91
         ], 
         "units": "[GeV]", 
         "responseClassNames": "testJet", 
@@ -206,8 +206,8 @@
     "mjj": {
         "ratio_min": 0.4, 
         "top_xy": [
-            0.4, 
-            0.1
+            0.2, 
+            0.87
         ], 
         "bottom_size": 0.08, 
         "_binning": [
@@ -221,8 +221,8 @@
         "ratio_max": 1.8, 
         "prettyVars": "Di-jet Mass", 
         "bottom_xy": [
-            0.4, 
-            0.4
+            0.2, 
+            0.91
         ], 
         "units": "[GeV]", 
         "responseClassNames": "testJet", 
@@ -231,8 +231,8 @@
     "Mass1j": {
         "ratio_min": 0.4, 
         "top_xy": [
-            0.4, 
-            0.1
+            0.2, 
+            0.87
         ], 
         "bottom_size": 0.08, 
         "_binning": [
@@ -251,8 +251,8 @@
         "ratio_max": 1.8, 
         "prettyVars": "m_{4\\ell}(1 jets)", 
         "bottom_xy": [
-            0.4, 
-            0.4
+            0.2, 
+            0.91
         ], 
         "units": "[GeV]", 
         "responseClassNames": "testJet", 
@@ -261,8 +261,8 @@
     "MassAllj": {
         "ratio_min": 0.4, 
         "top_xy": [
-            0.4, 
-            0.1
+            0.2, 
+            0.87
         ], 
         "bottom_size": 0.08, 
         "_binning": [
@@ -276,8 +276,8 @@
         "ratio_max": 1.8, 
         "prettyVars": "m_{4\\ell}(All jets)", 
         "bottom_xy": [
-            0.4, 
-            0.4
+            0.2, 
+            0.91
         ], 
         "units": "[GeV]", 
         "responseClassNames": "testJet", 
@@ -286,8 +286,8 @@
     "jetPt[1]": {
         "ratio_min": 0.4, 
         "top_xy": [
-            0.4, 
-            0.1
+            0.6, 
+            0.87
         ], 
         "bottom_size": 0.08, 
         "_binning": [
@@ -301,8 +301,8 @@
         "ratio_max": 2.99, 
         "prettyVars": "p_{T}^{j2}", 
         "bottom_xy": [
-            0.4, 
-            0.4
+            0.6, 
+            0.91
         ], 
         "units": "[GeV]", 
         "responseClassNames": "testJet", 
@@ -311,8 +311,8 @@
     "Mass34j": {
         "ratio_min": 0.4, 
         "top_xy": [
-            0.4, 
-            0.1
+            0.2, 
+            0.87
         ], 
         "bottom_size": 0.08, 
         "_binning": [
@@ -326,8 +326,8 @@
         "ratio_max": 1.8, 
         "prettyVars": "m_{4\\ell}(>=3 jets)", 
         "bottom_xy": [
-            0.4, 
-            0.4
+            0.2, 
+            0.91
         ], 
         "units": "[GeV]", 
         "responseClassNames": "testJet", 
@@ -336,8 +336,8 @@
     "jetPt[0]": {
         "ratio_min": 0.4, 
         "top_xy": [
-            0.4, 
-            0.1
+            0.2, 
+            0.87
         ], 
         "bottom_size": 0.08, 
         "_binning": [
@@ -352,8 +352,8 @@
         "ratio_max": 2.99, 
         "prettyVars": "p_{T}^{j1}", 
         "bottom_xy": [
-            0.4, 
-            0.4
+            0.2, 
+            0.91
         ], 
         "units": "[GeV]", 
         "responseClassNames": "testJet", 

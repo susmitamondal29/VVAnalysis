@@ -79,9 +79,9 @@ for i,var in enumerate(["jetPt[0]","jetPt[1]","absjetEta[0]","absjetEta[1]"]):
 
 #change axis range and MC symbol location
 for key in dict.keys():
-    dict[key]['top_xy']=(0.4,0.1)
+    dict[key]['top_xy']=(0.2,0.87)
     dict[key]['top_size']=0.1
-    dict[key]['bottom_xy']=(0.4,0.4) #top and bottom different pad settings
+    dict[key]['bottom_xy']=(0.2,0.91) #top and bottom different pad settings
     dict[key]['bottom_size']=0.08
     dict[key]['ymax_fac']=1.
     dict[key]['ratio_max'] =1.8
@@ -94,6 +94,11 @@ dict['jetPt[0]']['ratio_min'] = 0.4
 dict['jetPt[1]']['ymax_fac'] = 1.
 dict['jetPt[1]']['ratio_max'] = 2.99
 dict['jetPt[1]']['ratio_min'] = 0.4
+dict['jetPt[1]']['top_xy'] = (0.6,0.87)
+dict['jetPt[1]']['bottom_xy'] = (0.6,0.91)
+
+dict['Mass4j']['top_xy'] = (0.6,0.87)
+dict['Mass4j']['bottom_xy'] = (0.6,0.91)
 
 
 with open(outputname,'w') as output_file:

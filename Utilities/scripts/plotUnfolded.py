@@ -301,7 +301,7 @@ def createRatio(h1, h2):
     Ratio.GetYaxis().SetTitleFont(42)
     Ratio.GetYaxis().SetTitleOffset(0.25)
     Ratio.GetYaxis().SetNdivisions(100)
-    Ratio.GetYaxis().SetTickLength(0.05)
+    Ratio.GetYaxis().SetTickLength(0.0) #0.05
 
     Ratio.GetXaxis().SetLabelSize(0)
     Ratio.GetXaxis().SetTitleSize(0)
@@ -442,7 +442,10 @@ def getAxisTextBox(x,y,axisLabel,size,rotated):
     texS.Draw()
     return texS
 
+ratioBand_count =0
 def RatioErrorBand(Ratio,hUncUp,hUncDn,hTrueNoErrs,varName):
+        global ratioBand_count 
+        ratioBand_count+=1
         ratioGraph=ROOT.TGraphAsymmErrors(Ratio)
         ROOT.SetOwnership(ratioGraph,False)
         tmpData = Ratio.Clone("tmp")
@@ -468,6 +471,10 @@ def RatioErrorBand(Ratio,hUncUp,hUncDn,hTrueNoErrs,varName):
         ratioGraph.SetFillStyle(3001)
         ratioGraph.GetXaxis().SetLabelSize(0)
         ratioGraph.GetXaxis().SetTitleSize(0)
+        if ratioBand_count ==1:
+            ratioGraph.GetYaxis().SetTickLength(0.03)
+        else:
+            ratioGraph.GetYaxis().SetTickLength(0.045)
         #ratioGraph.GetYaxis().SetLabelSize(0)
         #ratioGraph.GetYaxis().SetTitleSize(0)
         ratioGraph.GetXaxis().SetLimits(Ratio.GetXaxis().GetXmin(),Ratio.GetXaxis().GetXmax())
@@ -772,19 +779,21 @@ def generatePlots(hUnfolded,hUncUp,hUncDn,hTruth,hTruthAlt,varName,norm,normFb,l
         line.SetLineColor(ROOT.kBlack)
         line.Draw("same")
 
-        Altyaxis = ROOT.TGaxis(hUnf.GetXaxis().GetXmin(),ratioErrorBand.GetMinimum(),hUnf.GetXaxis().GetXmin(),ratioErrorBand.GetMaximum(),ratioErrorBand.GetMinimum(),ratioErrorBand.GetMaximum())
+        Altyaxis = ROOT.TGaxis(hUnf.GetXaxis().GetXmin(),ratioErrorBand.GetMinimum(),hUnf.GetXaxis().GetXmin(),ratioErrorBand.GetMaximum(),ratioErrorBand.GetMinimum(),ratioErrorBand.GetMaximum(),3,"C")
         Altyaxis.SetNdivisions(003)
         axText2=getAxisTextBox(0.06,0.0,"Data/Theo.",0.2,True)
         MCTextNom=getAxisTextBox(top_xy[0],top_xy[1],ratioName_nom,top_fontsize,False)
         
 
         #Altyaxis.SetTitle("#scale[1.2]{Data/%s}"%ratioName_nom)
+        Altyaxis.SetTickLength(0.)
         Altyaxis.SetLabelFont(42)
-        Altyaxis.SetLabelOffset(0.01)
+        Altyaxis.SetLabelOffset(0.025) #0.01
         Altyaxis.SetLabelSize(0.189)
         Altyaxis.SetTitleFont(42)
         Altyaxis.SetTitleSize(0.16) #0.16
-        Altyaxis.SetTitleOffset(0.29)
+        Altyaxis.SetTitleOffset(0.29) #0.29
+        #Altyaxis.ChangeLabel(2,-1,0.189,-1,-1,-1,"2")
         Altyaxis.Draw("SAME")
         
         #ThirdPad
@@ -838,13 +847,14 @@ def generatePlots(hUnfolded,hUncUp,hUncDn,hTruth,hTruthAlt,varName,norm,normFb,l
             xaxis.SetNoExponent(True)
         xaxis.Draw("SAME")
 
-        yaxis = ROOT.TGaxis(hUnf.GetXaxis().GetXmin(),ratioErrorBand.GetMinimum(),hUnf.GetXaxis().GetXmin(),ratioErrorBand.GetMaximum(),ratioErrorBand.GetMinimum(),ratioErrorBand.GetMaximum())
+        yaxis = ROOT.TGaxis(hUnf.GetXaxis().GetXmin(),ratioErrorBand.GetMinimum(),hUnf.GetXaxis().GetXmin(),ratioErrorBand.GetMaximum(),ratioErrorBand.GetMinimum(),ratioErrorBand.GetMaximum(),3,"C")
         yaxis.SetNdivisions(003)
+        yaxis.SetTickLength(0.)
         #axText3=getAxisTextBox(0.06,0.0,"Data/%s"%ratioName_alt,0.23,True)
         #yaxis.SetTitle("#scale[1.2]{Data/%s}"%ratioName_alt)
         #yaxis.SetTitle("Data/Theo.")
         yaxis.SetLabelFont(42)
-        yaxis.SetLabelOffset(0.01)
+        yaxis.SetLabelOffset(0.025) #0.01
         yaxis.SetLabelSize(0.1485)
         yaxis.SetTitleFont(42)
         yaxis.SetTitleSize(0.12)
