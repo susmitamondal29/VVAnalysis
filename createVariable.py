@@ -12,6 +12,7 @@ for var in varlist0:
         varlist.append(var+"%sj"%j)
 
 varlist.append("MassAllj") #for comparison check with original Mass variable
+varlist.append("Mass34j") #>=3j
 
 print(varlist)
 
@@ -22,8 +23,13 @@ for var in varlist:
         nj = "All"
     if var == "Mass4j":
         nj = ">=4"
+    if var == "Mass34j":
+        nj = ">=3"
     dict[var]["units"] = '[GeV]'
-    dict[var]["_binning"] = [100.] + [200.+50.*i for i in range(5)] + [500.,600.,800.,1000.]
+    if nj in ['0','1']:
+        dict[var]["_binning"] = [100.] + [200.+50.*i for i in range(5)] + [500.,600.,800.,1000.]
+    else:
+        dict[var]["_binning"] = [100.,200.,400.,600.,1000.] 
     dict[var]["prettyVars"] = 'm_{4\\ell}' + "(%s jets)"%nj
     dict[var]["responseClassNames"] = 'testJet'
 #====================================================================================    
@@ -70,6 +76,25 @@ for i,var in enumerate(["jetPt[0]","jetPt[1]","absjetEta[0]","absjetEta[1]"]):
         dict[var]["prettyVars"] = '|#eta_{j2}|'
     
     dict[var]["responseClassNames"] = 'testJet'    
+
+#change axis range and MC symbol location
+for key in dict.keys():
+    dict[key]['top_xy']=(0.4,0.1)
+    dict[key]['top_size']=0.1
+    dict[key]['bottom_xy']=(0.4,0.4) #top and bottom different pad settings
+    dict[key]['bottom_size']=0.08
+    dict[key]['ymax_fac']=1.
+    dict[key]['ratio_max'] =1.8
+    dict[key]['ratio_min'] = 0.4
+
+#Adjust settings for individual variables
+dict['jetPt[0]']['ratio_max'] = 2.99
+dict['jetPt[0]']['ratio_min'] = 0.4
+
+dict['jetPt[1]']['ymax_fac'] = 1.
+dict['jetPt[1]']['ratio_max'] = 2.99
+dict['jetPt[1]']['ratio_min'] = 0.4
+
 
 with open(outputname,'w') as output_file:
   json.dump(dict,output_file,indent=4)

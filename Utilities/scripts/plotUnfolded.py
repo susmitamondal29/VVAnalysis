@@ -281,7 +281,12 @@ def createRatio(h1, h2):
         Ratio.SetBinContent(i,ratiocontent)
         Ratio.SetBinError(i,error)
 
-    Ratio.GetYaxis().SetRangeUser(0.4,1.8)
+    with open('varsFile.json') as var_json_file:
+            myvar_dict = json.load(var_json_file)
+
+    global my_varName
+    Ratio.GetYaxis().SetRangeUser(myvar_dict[my_varName]['ratio_min'],myvar_dict[my_varName]['ratio_max'])
+    #Ratio.GetYaxis().SetRangeUser(0.4,1.8)
     Ratio.SetStats(0)
     Ratio.GetYaxis().CenterTitle()
     Ratio.SetMarkerStyle(20)
@@ -422,6 +427,20 @@ def getSigTextBox(x,y,sigLabel,size): #check whether actually used
     texS.SetTextFont(42)
     texS.SetTextSize(size)
     texS.Draw()
+    #return texS 
+    #doesn't work without this last line. Uncomment it if want to use this function
+
+def getAxisTextBox(x,y,axisLabel,size,rotated):
+    texS = ROOT.TLatex(x,y,axisLabel)
+    texS.SetNDC()
+    #rotate for y-axis                                                                                                                                                                                             
+    if rotated:
+        texS.SetTextAngle(90)
+    texS.SetTextFont(42)
+    #texS.SetTextColor(ROOT.kBlack)                                                                                                                                                                                
+    texS.SetTextSize(size)
+    texS.Draw()
+    return texS
 
 def RatioErrorBand(Ratio,hUncUp,hUncDn,hTrueNoErrs,varName):
         ratioGraph=ROOT.TGraphAsymmErrors(Ratio)
@@ -452,12 +471,15 @@ def RatioErrorBand(Ratio,hUncUp,hUncDn,hTrueNoErrs,varName):
         #ratioGraph.GetYaxis().SetLabelSize(0)
         #ratioGraph.GetYaxis().SetTitleSize(0)
         ratioGraph.GetXaxis().SetLimits(Ratio.GetXaxis().GetXmin(),Ratio.GetXaxis().GetXmax())
+        with open('varsFile.json') as var_json_file:
+            myvar_dict = json.load(var_json_file)
+        
         if varName=="drz1z2":
-            ratioGraph.SetMaximum(1.8)
-            ratioGraph.SetMinimum(0.4)
+            ratioGraph.SetMaximum(myvar_dict[my_varName]['ratio_max'])
+            ratioGraph.SetMinimum(myvar_dict[my_varName]['ratio_min'])
         else:
-            ratioGraph.SetMaximum(1.8)
-            ratioGraph.SetMinimum(0.4)
+            ratioGraph.SetMaximum(myvar_dict[my_varName]['ratio_max'])
+            ratioGraph.SetMinimum(myvar_dict[my_varName]['ratio_min'])
         return ratioGraph
 
 def MainErrorBand(hMain,hUncUp,hUncDn,varName,norm,normFb):
@@ -493,7 +515,7 @@ def MainErrorBand(hMain,hUncUp,hUncDn,varName,norm,normFb):
         MainGraph.GetYaxis().SetTitle(drawyTitle)
         #MainGraph.GetYaxis().CenterTitle()
         MainGraph.GetYaxis().SetTitleSize(1.3*hMain.GetYaxis().GetTitleSize())
-        MainGraph.GetYaxis().SetLabelSize(1.3*hMain.GetYaxis().GetLabelSize())
+        MainGraph.GetYaxis().SetLabelSize(1.1*hMain.GetYaxis().GetLabelSize()) #1.3
         if varName=="drz1z2":
             MainGraph.GetYaxis().SetTitleOffset(1.0)
         else:
@@ -518,6 +540,16 @@ def MainErrorBand(hMain,hUncUp,hUncDn,varName,norm,normFb):
         return MainGraph
 
 def generatePlots(hUnfolded,hUncUp,hUncDn,hTruth,hTruthAlt,varName,norm,normFb,lumi,unfoldDir):
+
+    with open('varsFile.json') as var_json_file:
+        myvar_dict = json.load(var_json_file)
+    
+    top_xy = myvar_dict[varName]['top_xy'] #for MC labels positioning
+    bottom_xy = myvar_dict[varName]['bottom_xy']
+    top_fontsize=myvar_dict[varName]['top_size']
+    bottom_fontsize=myvar_dict[varName]['bottom_size']
+    ymax_fac=myvar_dict[varName]['ymax_fac']
+
     UnfHists=[]
     TrueHists=[]
     # for normalization if needed
@@ -552,6 +584,7 @@ def generatePlots(hUnfolded,hUncUp,hUncDn,hTruth,hTruthAlt,varName,norm,normFb,l
         #hTrue.SetLineColor(ROOT.TColor.GetColor('#000099')) 
         hTrue.SetFillColor(ROOT.TColor.GetColor("#add8e6"))
         hTrue.SetLineColor(ROOT.TColor.GetColor('#377eb8'))
+        hTrue.SetMarkerColor(ROOT.TColor.GetColor('#377eb8'))
         hTrue.SetLineStyle(1)
         hTrue.SetFillStyle(0)
         #AltSignal
@@ -559,8 +592,10 @@ def generatePlots(hUnfolded,hUncUp,hUncDn,hTruth,hTruthAlt,varName,norm,normFb,l
         hTrueAlt.SetLineStyle(10)#dashes
         hTrueAlt.SetFillStyle(0)#hollow
         hTrueAlt.SetLineColor(ROOT.kRed)
+        hTrueAlt.SetMarkerColor(ROOT.kRed)
         print "Total Unf Data Integral",hUnf.Integral()
         Truthmaximum = hTrue.GetMaximum()
+        Truthmaximum2 = hTrueAlt.GetMaximum()
         hTrue.SetLineWidth(4*hTrue.GetLineWidth())
         hTrueAlt.SetLineWidth(4*hTrueAlt.GetLineWidth())
 
@@ -606,20 +641,21 @@ def generatePlots(hUnfolded,hUncUp,hUncDn,hTruth,hTruthAlt,varName,norm,normFb,l
             #normalizeBins(hTrueUncDn)
             normalizeBins(hTrueAlt)
 
-        hTrue.Draw("HIST")
-        hTrueAlt.Draw("HIST")
+        #Don't know why draw twice. Commented the following two lines.
+        #hTrue.Draw("HIST")
+        #hTrueAlt.Draw("HIST")
         #pdb.set_trace()
         
-        if(Unfmaximum > Truthmaximum):
-            hTrue.SetMaximum(Unfmaximum*args["scaleymax"])
-        else:
-            hTrue.SetMaximum(Truthmaximum*args["scaleymax"])
+        #if(Unfmaximum > Truthmaximum):
+        #    hTrue.SetMaximum(Unfmaximum*args["scaleymax"]*ymax_fac)
+        #else:
+        #    hTrue.SetMaximum(Truthmaximum*args["scaleymax"]*ymax_fac)
 
         hTrue.GetXaxis().SetTitle("")
 
         UnfErrBand = MainErrorBand(hUnf,hUncUp,hUncDn,varName,norm,normFb)
         if varName=="mass":
-            UnfErrBand.SetMaximum(0.01*args['scaleymax'])
+            UnfErrBand.SetMaximum(0.01*args['scaleymax']*ymax_fac)
         UnfErrBand.Draw("a2")
         hTrue.GetXaxis().SetLabelSize(0)
         hTrue.GetXaxis().SetTitleSize(0)
@@ -627,8 +663,8 @@ def generatePlots(hUnfolded,hUncUp,hUncDn,hTruth,hTruthAlt,varName,norm,normFb,l
         #hTrue.GetYaxis().SetTitleOffset(1.0)
         hTrueAlt.GetXaxis().SetLabelSize(0)
         hTrueAlt.GetXaxis().SetTitleSize(0)
-        hTrueAlt.Draw("PE1SAME") #drawing second time, for updating?
-        hTrue.Draw("PE1SAME")
+        hTrueAlt.Draw("E1 SAME") #drawing second time, for updating?
+        hTrue.Draw("E1 SAME") #("PE1SAME")
 
 #        hTrueAlt.Draw("HISTSAME") #drawing second time, for updating?
 #        hTrue.Draw("HISTSAME")
@@ -641,6 +677,14 @@ def generatePlots(hUnfolded,hUncUp,hUncDn,hTruth,hTruthAlt,varName,norm,normFb,l
         hUnf.GetXaxis().SetLabelSize(0)
         hUnf.GetXaxis().SetTitleSize(0)
         hUnf.Draw("PE1SAME")
+
+        axismaximum = max([hUnf.GetMaximum(),hTrue.GetMaximum(),hTrueAlt.GetMaximum(),UnfErrBand.GetMaximum()])
+        
+        hTrue.SetMaximum(axismaximum*args["scaleymax"]*ymax_fac)
+        hTrueAlt.SetMaximum(axismaximum*args["scaleymax"]*ymax_fac)
+        hUnf.SetMaximum(axismaximum*args["scaleymax"]*ymax_fac)
+        UnfErrBand.SetMaximum(axismaximum*args["scaleymax"]*ymax_fac)
+        
       
         #ROOT.dotrootImport('uhussain/CMSPlotDecorations')
         #scale_label = "Normalized to Unity" if args['lumi'] < 0 else \
@@ -699,6 +743,12 @@ def generatePlots(hUnfolded,hUncUp,hUncDn,hTruth,hTruthAlt,varName,norm,normFb,l
         #leg.Draw()
 
         #SecondPad
+        #nominal sample
+        with open('listFile.json') as list_json_file:
+            mylist_dict = json.load(list_json_file)
+        ratioName_nom =mylist_dict["sigLabel"]
+        ratioName_alt =mylist_dict["sigLabelAlt"]
+
         pad2 = createPad2(c)
 
         hTrueNoErrs = hTrue.Clone() # need central value only to keep ratio uncertainties consistent
@@ -713,6 +763,8 @@ def generatePlots(hUnfolded,hUncUp,hUncDn,hTruth,hTruthAlt,varName,norm,normFb,l
         ratioErrorBand = RatioErrorBand(Ratio,hUncUp,hUncDn,hTrueNoErrs,varName)
         ratioErrorBand.GetYaxis().SetLabelSize(0)
         ratioErrorBand.GetYaxis().SetTitleSize(0)
+        Ratio.GetYaxis().SetLabelSize(0)
+        Ratio.GetYaxis().SetTitleSize(0)
         ratioErrorBand.Draw("a2")
         
         sigTex = getSigTextBox(0.15,0.8,sigLabel,0.14) #used?
@@ -722,17 +774,22 @@ def generatePlots(hUnfolded,hUncUp,hUncDn,hTruth,hTruthAlt,varName,norm,normFb,l
 
         Altyaxis = ROOT.TGaxis(hUnf.GetXaxis().GetXmin(),ratioErrorBand.GetMinimum(),hUnf.GetXaxis().GetXmin(),ratioErrorBand.GetMaximum(),ratioErrorBand.GetMinimum(),ratioErrorBand.GetMaximum())
         Altyaxis.SetNdivisions(003)
-        Altyaxis.SetTitle("#scale[1.2]{Data/Theo.}")
+        axText2=getAxisTextBox(0.06,0.0,"Data/Theo.",0.2,True)
+        MCTextNom=getAxisTextBox(top_xy[0],top_xy[1],ratioName_nom,top_fontsize,False)
+        
+
+        #Altyaxis.SetTitle("#scale[1.2]{Data/%s}"%ratioName_nom)
         Altyaxis.SetLabelFont(42)
         Altyaxis.SetLabelOffset(0.01)
         Altyaxis.SetLabelSize(0.189)
         Altyaxis.SetTitleFont(42)
-        Altyaxis.SetTitleSize(0.16)
+        Altyaxis.SetTitleSize(0.16) #0.16
         Altyaxis.SetTitleOffset(0.29)
         Altyaxis.Draw("SAME")
         
         #ThirdPad
         pad3 = createPad3(c)
+        
 
 
         hTrueAltNoErrs = hTrueAlt.Clone() # need central value only to keep ratio uncertainties consistent
@@ -754,6 +811,7 @@ def generatePlots(hUnfolded,hUncUp,hUncDn,hTruth,hTruthAlt,varName,norm,normFb,l
         Altline.SetLineColor(ROOT.kRed)
         Altline.Draw("same")
         
+        MCTextAlt=getAxisTextBox(bottom_xy[0],bottom_xy[1],ratioName_alt,bottom_fontsize,False)
         AltTex = getSigTextBox(0.15,0.85,sigLabelAlt,0.11)
         #redraw axis
         xaxis = ROOT.TGaxis(hUnf.GetXaxis().GetXmin(),ratioErrorBand.GetMinimum(),hUnf.GetXaxis().GetXmax(),ratioErrorBand.GetMinimum(),hUnf.GetXaxis().GetXmin(),hUnf.GetXaxis().GetXmax(),510)
@@ -782,7 +840,8 @@ def generatePlots(hUnfolded,hUncUp,hUncDn,hTruth,hTruthAlt,varName,norm,normFb,l
 
         yaxis = ROOT.TGaxis(hUnf.GetXaxis().GetXmin(),ratioErrorBand.GetMinimum(),hUnf.GetXaxis().GetXmin(),ratioErrorBand.GetMaximum(),ratioErrorBand.GetMinimum(),ratioErrorBand.GetMaximum())
         yaxis.SetNdivisions(003)
-        yaxis.SetTitle("#scale[1.2]{Data/Theo.}")
+        #axText3=getAxisTextBox(0.06,0.0,"Data/%s"%ratioName_alt,0.23,True)
+        #yaxis.SetTitle("#scale[1.2]{Data/%s}"%ratioName_alt)
         #yaxis.SetTitle("Data/Theo.")
         yaxis.SetLabelFont(42)
         yaxis.SetLabelOffset(0.01)
@@ -845,7 +904,12 @@ elif analysis=="ZZ4l2018":
         #fUse = ROOT.TFile("allyear_UnfHist.root","read") 
         #fUse = ROOT.TFile("UnfHistsFinal-18Apr2020-ZZ4lFullRun2.root","read")
 #fUse = ROOT.TFile.Open("UnfHistsFull09Nov2019-ZZ4l2018.root","update")
+
+#keep a "global" copy of variable name
+my_varName = ''
 for varName in runVariables:
+
+    my_varName = varName 
     print "varName:", varNames[varName]
     # save unfolded distributions by channel, then systematic
     hUnfolded = {}
