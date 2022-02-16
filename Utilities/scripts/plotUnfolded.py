@@ -416,7 +416,14 @@ def getLumiTextBox():
     texS1.SetTextColor(ROOT.kBlack)
     texS1.SetTextSize(0.045)
     texS1.Draw()
-    return texS,texS1
+
+    texS2 = ROOT.TLatex(0.23,0.965,"Preliminary")
+    texS2.SetNDC()
+    texS2.SetTextFont(52)
+    texS2.SetTextColor(ROOT.kBlack)
+    texS2.SetTextSize(0.045)
+    texS2.Draw()
+    return texS,texS1,texS2
 
 def getSigTextBox(x,y,sigLabel,size): #check whether actually used
     if sigLabel=="POWHEG+MCFM+Pythia8":
@@ -723,7 +730,7 @@ def generatePlots(hUnfolded,hUncUp,hUncDn,hTruth,hTruthAlt,varName,norm,normFb,l
         coords = [xcoords[0]-0.1, ycoords[0], xcoords[1], ycoords[1]] #extended legend frame
         legend = getPrettyLegend(hTrue, hUnf, hTrueAlt, UnfErrBand, coords)
         legend.Draw()
-        texS,texS1=getLumiTextBox()
+        texS,texS1,texS2=getLumiTextBox()
         sigLabel = "POWHEG+MCFM+Pythia8" #used?
         sigLabelAlt = "MG5_aMC@NLO+MCFM+Pythia8"
         #if varName=="dphiz1z2" or varName=="drz1z2":
