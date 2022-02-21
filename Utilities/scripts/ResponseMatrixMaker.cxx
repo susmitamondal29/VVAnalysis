@@ -1017,18 +1017,27 @@ DijetBranchResponseMatrixMaker<T>::getTrueValues(TChain& trueTree,
     {
       trueTree.GetEntry(row);
 
-      if(!this->selectTrueEvent(*mZ1,*mZ2))
+      if(!this->selectTrueEvent(*mZ1,*mZ2) && this->getVar().find("Full") == Str::npos)
         {continue;}
 
       if(this->getVar()=="Mass"){(*out)[trueEvt] = trueVal;}
       else if(this->getVar()=="Mass0j" && trueNJets == 0){(*out)[trueEvt] = trueVal;}
-      else if(this->getVar()=="Mass1j" && trueNJets == 1){
-	(*out)[trueEvt] = trueVal;}
+      else if(this->getVar()=="Mass1j" && trueNJets == 1){(*out)[trueEvt] = trueVal;}
 	//std::cout<<trueEvt<<" "<<trueVal<<std::endl; }
       else if(this->getVar()=="Mass2j" && trueNJets == 2){(*out)[trueEvt] = trueVal;}
       else if(this->getVar()=="Mass3j" && trueNJets == 3){(*out)[trueEvt] = trueVal;}
       else if(this->getVar()=="Mass34j" && trueNJets >= 3){(*out)[trueEvt] = trueVal;}
       else if(this->getVar()=="Mass4j" && trueNJets >= 4){(*out)[trueEvt] = trueVal;}
+
+       if(this->getVar()=="MassFull"){(*out)[trueEvt] = trueVal;}
+      else if(this->getVar()=="Mass0jFull" && trueNJets == 0){(*out)[trueEvt] = trueVal;}
+      else if(this->getVar()=="Mass1jFull" && trueNJets == 1){(*out)[trueEvt] = trueVal;}
+	//std::cout<<trueEvt<<" "<<trueVal<<std::endl; }
+      else if(this->getVar()=="Mass2jFull" && trueNJets == 2){(*out)[trueEvt] = trueVal;}
+      else if(this->getVar()=="Mass3jFull" && trueNJets == 3){(*out)[trueEvt] = trueVal;}
+      else if(this->getVar()=="Mass34jFull" && trueNJets >= 3){(*out)[trueEvt] = trueVal;}
+      else if(this->getVar()=="Mass4jFull" && trueNJets >= 4){(*out)[trueEvt] = trueVal;}
+
       else if(this->getVar()=="nJets"){(*out)[trueEvt] = trueNJets;}
       else if(this->getVar()=="mjj" && trueNJets >= 2){(*out)[trueEvt] = trueMjj;}
       else if(this->getVar()=="dEtajj" && trueNJets >= 2){(*out)[trueEvt] = std::abs(trueValvecfloat->at(0)-trueValvecfloat->at(1));}
@@ -1125,15 +1134,18 @@ DijetBranchResponseMatrixMaker<T>::selectEvent(const Str& syst) const
   float mZ1=*(JetBranchResponseMatrixMakerBase<T>::my_mZ1);
   float mZ2=*(JetBranchResponseMatrixMakerBase<T>::my_mZ2);
   bool  mass_sel = false;
+  bool  mass_selFull = false;
   bool  mass_selBase = mZ1 > 60. && mZ1 < 120. && mZ2 > 60. && mZ2 < 120.;
   bool  tight_sel = (this->tightZ1Leptons() && this->tightZ2Leptons());
   
   if (this->year ==2016 || this->year==2017){
     bool sip_sel= this->l1SIP3D < 4.0 && this->l2SIP3D < 4.0 && this->l3SIP3D < 4.0 && this->l4SIP3D < 4.0;
     mass_sel = mass_selBase && tight_sel && sip_sel;
+    mass_selFull = tight_sel && sip_sel;
   }
   if (this->year ==2018) {
     mass_sel = mass_selBase && tight_sel;
+    mass_selFull = tight_sel;
 
   }
   //std::cout<<"Confirm mZ1,mZ2:  "<<mZ1<<" "<<mZ2<<std::endl;
@@ -1170,6 +1182,14 @@ DijetBranchResponseMatrixMaker<T>::selectEvent(const Str& syst) const
     if (this->getVar() == "jetEta[1]") {return tmp_nJets >= 2 && mass_sel;}
     if (this->getVar() == "absjetEta[0]") {return tmp_nJets >= 1 && mass_sel;}
     if (this->getVar() == "absjetEta[1]") {return tmp_nJets >= 2 && mass_sel;}
+
+    if (this->getVar() == "MassFull") {return  mass_selFull;}
+    if (this->getVar() == "Mass0jFull") {return tmp_nJets == 0 && mass_selFull;}
+    if (this->getVar() == "Mass1jFull") {return tmp_nJets == 1 && mass_selFull;}
+    if (this->getVar() == "Mass2jFull") {return tmp_nJets == 2 && mass_selFull;}
+    if (this->getVar() == "Mass3jFUll") {return tmp_nJets == 3 && mass_selFull;}
+    if (this->getVar() == "Mass34jFull") {return tmp_nJets >= 3 && mass_selFull;}
+    if (this->getVar() == "Mass4jFull") {return tmp_nJets >= 4 && mass_selFull;}
   
 
   

@@ -6,6 +6,7 @@ dict = {}
 #Mass variables===================================================================
 varlist0 = ["Mass"]
 varlist = []
+varlistFull = []
 
 for var in varlist0:
     for j in range(0,5):
@@ -14,7 +15,15 @@ for var in varlist0:
 varlist.append("MassAllj") #for comparison check with original Mass variable
 varlist.append("Mass34j") #>=3j
 
+for var in varlist0:
+    for j in range(0,5):
+        varlistFull.append(var+"%sj"%j+"Full")
+
+varlistFull.append("MassFull") #for comparison check with original Mass variable
+varlistFull.append("Mass34jFull") #>=3j
+
 print(varlist)
+print(varlistFull)
 
 for var in varlist:
     dict[var] = {}
@@ -26,11 +35,28 @@ for var in varlist:
     if var == "Mass34j":
         nj = ">=3"
     dict[var]["units"] = '[GeV]'
-    if nj in ['0','1']:
+    if nj in ['All','0','1']:
         dict[var]["_binning"] = [100.] + [200.+50.*i for i in range(5)] + [500.,600.,800.,1000.]
     else:
         dict[var]["_binning"] = [100.,200.,400.,600.,1000.] 
     dict[var]["prettyVars"] = 'm_{4\\ell}' + "(%s jets)"%nj
+    dict[var]["responseClassNames"] = 'testJet'
+
+for var in varlistFull:
+    dict[var] = {}
+    nj = var.replace("jFull","").replace("Mass","")
+    if var == "MassFull":
+        nj = "All"
+    if var == "Mass4jFull":
+        nj = ">=4"
+    if var == "Mass34jFull":
+        nj = ">=3"
+    dict[var]["units"] = '[GeV]'
+    if nj in ['All','0','1']:
+        dict[var]["_binning"] = [80.,100.,120.,130.,180.,230.,300.,450.,600.,800.,1300.]
+    else:
+        dict[var]["_binning"] = [80.,100.,120.,130.,180.,230.,300.,450.,600.,800.,1300.]
+    dict[var]["prettyVars"] = 'Full m_{4\\ell}' + "(%s jets)"%nj
     dict[var]["responseClassNames"] = 'testJet'
 #====================================================================================    
 
