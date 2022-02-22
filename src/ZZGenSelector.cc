@@ -16,6 +16,13 @@ void ZZGenSelector::Init(TTree *tree)
       "GenMass3j",
       "GenMass34j",
       "GenMass4j",
+      "GenMassFull",
+      "GenMass0jFull",
+      "GenMass1jFull",
+      "GenMass2jFull",
+      "GenMass3jFull",
+      "GenMass34jFull",
+      "GenMass4jFull",
       "Genmjj",
       "GennJets",
       "Genyield",
@@ -39,6 +46,7 @@ void ZZGenSelector::Init(TTree *tree)
   weighthists1D_ = {
       "Genyield",
       "GenMass",
+      "GenMassFull",
       "GenZMass",
       "GenZZPt",
       "GenZZEta",
@@ -61,9 +69,15 @@ void ZZGenSelector::Init(TTree *tree)
       "GenMass2j",
       "GenMass3j",
       "GenMass34j",
-      "GenMass4j"};
+      "GenMass4j",
+      "GenMass0jFull",
+      "GenMass1jFull",
+      "GenMass2jFull",
+      "GenMass3jFull",
+      "GenMass34jFull",
+      "GenMass4jFull"};
 
-  //hists2D_ = {"GenZ1Mass_GenZ2Mass"};
+  // hists2D_ = {"GenZ1Mass_GenZ2Mass"};
   SelectorBase::Init(tree);
 }
 
@@ -102,7 +116,7 @@ void ZZGenSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::
     }
   }
 
-  //std::cout<<"Is the ZZGenSelectorBase fine until here"<<std::endl;
+  // std::cout<<"Is the ZZGenSelectorBase fine until here"<<std::endl;
   if (channel_ == eeee || channel_ == eemm || channel_ == mmee || channel_ == mmmm)
   {
     b_Genl4Pt->GetEntry(entry);
@@ -117,24 +131,24 @@ void ZZGenSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::
   b_GenZ1mass->GetEntry(entry);
   b_GenZ1pt->GetEntry(entry);
   b_GenZ1Phi->GetEntry(entry);
-  //std::cout<<"Genweight before: "<<Genweight<<std::endl;
+  // std::cout<<"Genweight before: "<<Genweight<<std::endl;
   Genweight = genWeight;
   if (channel_ == mmee)
   {
     if (e1e2IsZ1())
       Genweight = 0.0;
-    //Makes Genweight 0 if Z1 is ee hence should not go in _mmee histos
+    // Makes Genweight 0 if Z1 is ee hence should not go in _mmee histos
   }
   else if (channel_ == eemm)
   {
     if (!(e1e2IsZ1()))
       Genweight = 0.0;
-    //Makes Genweight 0 if Z1 is mm hence should not go in _eemm
+    // Makes Genweight 0 if Z1 is mm hence should not go in _eemm
   }
   b_GenMass->GetEntry(entry);
   b_GenPt->GetEntry(entry);
   b_GenEta->GetEntry(entry);
-  //std::cout<<"channel in LoadBranches function: "<<channel_<<std::endl;
+  // std::cout<<"channel in LoadBranches function: "<<channel_<<std::endl;
   if (channel_ == eemm || channel_ == mmee)
   {
     SetVariables(entry);
@@ -211,7 +225,7 @@ void ZZGenSelector::SetBranchesUWVV()
 
   if (channel_ == eeee)
   {
-    //std::cout<<"enum channel_: "<<channel_<<std::endl;
+    // std::cout<<"enum channel_: "<<channel_<<std::endl;
     fChain->SetBranchAddress("e1_e2_Mass", &GenZ1mass, &b_GenZ1mass);
     fChain->SetBranchAddress("e3_e4_Mass", &GenZ2mass, &b_GenZ2mass);
     fChain->SetBranchAddress("e1_e2_Pt", &GenZ1pt, &b_GenZ1pt);
@@ -233,8 +247,8 @@ void ZZGenSelector::SetBranchesUWVV()
     fChain->SetBranchAddress("e3Phi", &Genl3Phi, &b_Genl3Phi);
     fChain->SetBranchAddress("e4Phi", &Genl4Phi, &b_Genl4Phi);
   }
-  //Add 2e2mu channel also but it still needs to differentiate which one is Z1Mass and which one is Z2Mass leptons
-  //This is done with a flag at the time of Process for each event on the fly
+  // Add 2e2mu channel also but it still needs to differentiate which one is Z1Mass and which one is Z2Mass leptons
+  // This is done with a flag at the time of Process for each event on the fly
   else if (channel_ == eemm)
   {
     fChain->SetBranchAddress("e1_e2_Mass", &GenZ1mass, &b_GenZ1mass);
@@ -352,7 +366,7 @@ bool ZZGenSelector::ZZSelection()
   else
     return false;
 }
-//We already require 4 < Z1,Z2 < 120  in the "Loose Skim"
+// We already require 4 < Z1,Z2 < 120  in the "Loose Skim"
 bool ZZGenSelector::ZSelection()
 {
   if (GenZ1mass > 40.0 && GenZ2mass > 12.0)
@@ -376,10 +390,79 @@ bool ZZGenSelector::e1e2IsZ1()
 void ZZGenSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::string> variation)
 {
 
+  for (size_t i = 0; i < lheWeights.size(); i++) // expect 0 to 111 currently
+  {
+    SafeHistFill(weighthistMap1D_, getHistName("GenMassFull", variation.second), GenMass, i, lheWeights[i] / lheWeights[0] * Genweight);
+
+    if (GenjetPt->size() == 0 && GenjetPt->size() == GenjetEta->size())
+    {
+      SafeHistFill(weighthistMap1D_, getHistName("GenMass0jFull", variation.second), GenMass, i, lheWeights[i] / lheWeights[0] * Genweight);
+    }
+    else if (GenjetPt->size() == 1 && GenjetPt->size() == GenjetEta->size())
+    {
+      SafeHistFill(weighthistMap1D_, getHistName("GenMass1jFull", variation.second), GenMass, i, lheWeights[i] / lheWeights[0] * Genweight);
+    }
+    else if (GenjetPt->size() == 2 && GenjetPt->size() == GenjetEta->size())
+    {
+      SafeHistFill(weighthistMap1D_, getHistName("GenMass2jFull", variation.second), GenMass, i, lheWeights[i] / lheWeights[0] * Genweight);
+    }
+    else
+    {
+      if (GenjetPt->size() == 3 && GenjetPt->size() == GenjetEta->size())
+      {
+        SafeHistFill(weighthistMap1D_, getHistName("GenMass3jFull", variation.second), GenMass, i, lheWeights[i] / lheWeights[0] * Genweight);
+      }
+
+      if (GenjetPt->size() >= 3 && GenjetPt->size() == GenjetEta->size())
+      {
+        SafeHistFill(weighthistMap1D_, getHistName("GenMass34jFull", variation.second), GenMass, i, lheWeights[i] / lheWeights[0] * Genweight);
+      }
+
+      if (GenjetPt->size() >= 4 && GenjetPt->size() == GenjetEta->size())
+      {
+        SafeHistFill(weighthistMap1D_, getHistName("GenMass4jFull", variation.second), GenMass, i, lheWeights[i] / lheWeights[0] * Genweight);
+      }
+    }
+  }
+
+  SafeHistFill(histMap1D_, getHistName("GenMassFull", variation.second), GenMass, Genweight);
+  if (GenjetPt->size() == 0 && GenjetPt->size() == GenjetEta->size())
+  {
+    SafeHistFill(histMap1D_, getHistName("GenMass0jFull", variation.second), GenMass, Genweight);
+  }
+  else if (GenjetPt->size() == 1 && GenjetPt->size() == GenjetEta->size())
+  {
+    SafeHistFill(histMap1D_, getHistName("GenMass1jFull", variation.second), GenMass, Genweight);
+  }
+  else if (GenjetPt->size() == 2 && GenjetPt->size() == GenjetEta->size())
+  {
+    SafeHistFill(histMap1D_, getHistName("GenMass2jFull", variation.second), GenMass, Genweight);
+  }
+  else
+  {
+
+    if (GenjetPt->size() == 3 && GenjetPt->size() == GenjetEta->size())
+    {
+      SafeHistFill(histMap1D_, getHistName("GenMass3jFull", variation.second), GenMass, Genweight);
+    }
+
+    if (GenjetPt->size() >= 3 && GenjetPt->size() == GenjetEta->size())
+    {
+      SafeHistFill(histMap1D_, getHistName("GenMass34jFull", variation.second), GenMass, Genweight);
+    }
+
+    if (GenjetPt->size() >= 4 && GenjetPt->size() == GenjetEta->size())
+    {
+      SafeHistFill(histMap1D_, getHistName("GenMass4jFull", variation.second), GenMass, Genweight);
+    }
+  }
+
+  // Above doesn't have 60,120 GeV cut, below has.
+
   if (!ZZSelection())
     return;
 
-  for (size_t i = 0; i < lheWeights.size(); i++) //expect 0 to 111 currently
+  for (size_t i = 0; i < lheWeights.size(); i++) // expect 0 to 111 currently
   {
     SafeHistFill(weighthistMap1D_, getHistName("Genyield", variation.second), 1, i, lheWeights[i] / lheWeights[0] * Genweight);
     SafeHistFill(weighthistMap1D_, getHistName("GenMass", variation.second), GenMass, i, lheWeights[i] / lheWeights[0] * Genweight);
@@ -455,7 +538,7 @@ void ZZGenSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::st
   SafeHistFill(histMap1D_, getHistName("GenZZEta", variation.second), GenEta, Genweight);
   SafeHistFill(histMap1D_, getHistName("GendPhiZ1Z2", variation.second), GendPhiZZ, Genweight);
   SafeHistFill(histMap1D_, getHistName("GendRZ1Z2", variation.second), GendRZZ, Genweight);
-  //Making LeptonPt and Eta plots
+  // Making LeptonPt and Eta plots
   SafeHistFill(histMap1D_, getHistName("GenLepPt", variation.second), Genl1Pt, Genweight);
   SafeHistFill(histMap1D_, getHistName("GenLepPt", variation.second), Genl2Pt, Genweight);
   SafeHistFill(histMap1D_, getHistName("GenLepPt", variation.second), Genl3Pt, Genweight);
@@ -465,8 +548,8 @@ void ZZGenSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::st
   SafeHistFill(histMap1D_, getHistName("GenLepEta", variation.second), Genl3Eta, Genweight);
   SafeHistFill(histMap1D_, getHistName("GenLepEta", variation.second), Genl4Eta, Genweight);
 
-  //if (Genmjj<=100 || GenMass<=180 ||GenjetPt->size()<2){return;}
-  //std::cout<<"bug in selection?"<<std::endl;
+  // if (Genmjj<=100 || GenMass<=180 ||GenjetPt->size()<2){return;}
+  // std::cout<<"bug in selection?"<<std::endl;
   if (GenjetPt->size() > 0 && GenjetPt->size() == GenjetEta->size())
   {
     SafeHistFill(histMap1D_, getHistName("GenjetPt[0]", variation.second), GenjetPt->at(0), Genweight);
@@ -512,7 +595,7 @@ void ZZGenSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::st
       SafeHistFill(histMap1D_, getHistName("GenMass4j", variation.second), GenMass, Genweight);
     }
   }
-  //std::cout<<"no bug here?"<<std::endl;
+  // std::cout<<"no bug here?"<<std::endl;
 }
 
 void ZZGenSelector::SetupNewDirectory()

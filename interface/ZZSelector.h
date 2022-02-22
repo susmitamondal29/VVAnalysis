@@ -112,6 +112,7 @@ protected:
     void FillHistograms(Long64_t entry, std::pair<Systematic, std::string> variation) override;
     void ApplyScaleFactors();
     bool PassesZZSelection(bool nonPrompt);
+    bool PassesZZSelectionLoose(bool nonPrompt);
     bool PassesZZjjSelection();
     bool PassesHZZSelection(bool nonPrompt);
     unsigned int GetLheWeightInfo();
