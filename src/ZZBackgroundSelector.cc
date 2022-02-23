@@ -99,8 +99,10 @@ float ZZBackgroundSelector::getEventWeight(Long64_t entry) {
 void ZZBackgroundSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::string> variation) {
     ZZSelector::LoadBranchesUWVV(entry, variation);
     SetZ1Z2Masses(); 
-    if (!ZZSelection()){
-      return;}
+    //turn off ZZSelection otherwise it will cause problem in full mass range m4l plots
+    //if (!ZZSelection()){
+    //  return;}
+
     //std::cout<<"isNonPrompt_ from ZZSelector: "<<isNonPrompt_<<std::endl;
     //isNonPrompt_ = true;
     //std::cout<<"isNonPrompt_ from ZZBackgroundSelector: "<<isNonPrompt_<<std::endl;
