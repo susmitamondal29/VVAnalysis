@@ -343,6 +343,8 @@ def createCanvasPads(varName):
     pad1.cd()
     if varName!="drz1z2":
         pad1.SetLogy()
+    if "Full" in varName:
+        pad1.SetLogx()
     pad1.SetFillColor(0)
     pad1.SetFrameLineWidth(3)
     pad1.SetFrameBorderMode(0)
@@ -367,6 +369,9 @@ def createPad2(canvas):
    # bordermode = 1 box looks as it is in front of the screen
     pad2.SetTopMargin(0)  # joins upper and lower plot
     pad2.SetBottomMargin(0)
+    if "Full" in varName:
+        pad2.SetLogx()
+
     #pad2.SetGridx()
     #pad2.Draw()
     return pad2
@@ -384,6 +389,9 @@ def createPad3(canvas):
     pad3.SetBorderMode(0)
     pad3.SetTopMargin(0)  # joins upper and lower plot
     pad3.SetBottomMargin(0.35)
+    if "Full" in varName:
+        pad3.SetLogx()
+
     #pad3.SetGridx()
     #pad3.Draw()
     return pad3
@@ -830,7 +838,7 @@ def generatePlots(hUnfolded,hUncUp,hUncDn,hTruth,hTruthAlt,varName,norm,normFb,l
         MCTextAlt=getAxisTextBox(bottom_xy[0],bottom_xy[1],ratioName_alt,bottom_fontsize,False)
         AltTex = getSigTextBox(0.15,0.85,sigLabelAlt,0.11)
         #redraw axis
-        xaxis = ROOT.TGaxis(hUnf.GetXaxis().GetXmin(),ratioErrorBand.GetMinimum(),hUnf.GetXaxis().GetXmax(),ratioErrorBand.GetMinimum(),hUnf.GetXaxis().GetXmin(),hUnf.GetXaxis().GetXmax(),510)
+        xaxis = ROOT.TGaxis(hUnf.GetXaxis().GetXmin(),ratioErrorBand.GetMinimum(),hUnf.GetXaxis().GetXmax(),ratioErrorBand.GetMinimum(),hUnf.GetXaxis().GetXmin(),hUnf.GetXaxis().GetXmax(),510,"G")
         xaxis.SetTitle(prettyVars[varName]+''+units[varName])
         #labelTex = getSigTextBox(0.9,0.8,prettyVars[varName]+''+units[varName])
         #if varName=="mass":

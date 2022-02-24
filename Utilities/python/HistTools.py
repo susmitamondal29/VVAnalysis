@@ -29,7 +29,7 @@ def getDifference(fOut, name, dir1, dir2, ratioFunc=None):
 def getDifferenceDirect(fOut, name, comp1, comp2, ratioFunc=None):
     differences = ROOT.TList()
     differences.SetName(name)
-    for histname in [i.GetName() for i in comp1.GetListOfKeys()]:
+    for histname in [i.GetName() for i in fOut.Get("AllData").GetListOfKeys()]:
         if histname == "sumweights": continue
         hist1 = comp1.FindObject(histname)
         hist2 = comp2.FindObject(histname)

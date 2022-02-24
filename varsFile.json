@@ -46,7 +46,7 @@
         ], 
         "ymax_fac": 1.0, 
         "ratio_max": 1.8, 
-        "prettyVars": "Full m_{4\\ell}(>=4 jets)", 
+        "prettyVars": "m_{4\\ell}(>=4 jets)", 
         "bottom_xy": [
             0.2, 
             0.91
@@ -392,7 +392,7 @@
         ], 
         "ymax_fac": 1.0, 
         "ratio_max": 1.8, 
-        "prettyVars": "Full m_{4\\ell}(>=3 jets)", 
+        "prettyVars": "m_{4\\ell}(>=3 jets)", 
         "bottom_xy": [
             0.2, 
             0.91
@@ -423,7 +423,7 @@
         ], 
         "ymax_fac": 1.0, 
         "ratio_max": 1.8, 
-        "prettyVars": "Full m_{4\\ell}(0 jets)", 
+        "prettyVars": "m_{4\\ell}(0 jets)", 
         "bottom_xy": [
             0.2, 
             0.91
@@ -454,7 +454,7 @@
         ], 
         "ymax_fac": 1.0, 
         "ratio_max": 1.8, 
-        "prettyVars": "Full m_{4\\ell}(1 jets)", 
+        "prettyVars": "m_{4\\ell}(1 jets)", 
         "bottom_xy": [
             0.2, 
             0.91
@@ -485,7 +485,7 @@
         ], 
         "ymax_fac": 1.0, 
         "ratio_max": 1.8, 
-        "prettyVars": "Full m_{4\\ell}(2 jets)", 
+        "prettyVars": "m_{4\\ell}(2 jets)", 
         "bottom_xy": [
             0.2, 
             0.91
@@ -541,7 +541,7 @@
         ], 
         "ymax_fac": 1.0, 
         "ratio_max": 1.8, 
-        "prettyVars": "Full m_{4\\ell}(3 jets)", 
+        "prettyVars": "m_{4\\ell}(3 jets)", 
         "bottom_xy": [
             0.2, 
             0.91
@@ -572,7 +572,7 @@
         ], 
         "ymax_fac": 1.0, 
         "ratio_max": 1.8, 
-        "prettyVars": "Full m_{4\\ell}(All jets)", 
+        "prettyVars": "m_{4\\ell}(All jets)", 
         "bottom_xy": [
             0.2, 
             0.91

@@ -1632,7 +1632,8 @@ sigSampleDic.update(AltsigSampleDic)
 if args['test']:
     sigSamplesPath={}
     if analysis=="ZZ4l2016":
-        fUse = ROOT.TFile("SystGenFiles/For_unfolding_Hists02Feb2022_ZZ4l2016_Moriond_fullSyst.root","update") 
+        fUse = ROOT.TFile("SystGenFiles/Fullsys_fullrange16.root","update") 
+        #fUse = ROOT.TFile("SystGenFiles/For_unfolding_Hists02Feb2022_ZZ4l2016_Moriond_fullSyst.root","update") 
         #fUse = ROOT.TFile("SystGenFiles/For_unfolding_Hists15Dec2021_ZZ4l2016_Moriond_fullSyst.root","update")
         #fUse = ROOT.TFile("SystGenFiles/Hists25Jun2020-ZZ4l2016_Moriond.root","update") #Note one more recent file is not in the commented list 
         #fUse = ROOT.TFile("SystGenFiles/Hists31Mar2020-ZZ4l2016_Moriond.root","update")
@@ -1696,7 +1697,7 @@ allVVVmc,VVVSumW = HistTools.makeCompositeHists(fOut,"AllVVV", ConfigureJobs.get
     underflow=False, overflow=False)
 
 #This is the non-prompt background
-ewkcorr = HistTools.getDifference(fOut, "DataEWKCorrected", "AllData", "AllEWK")
+ewkcorr = HistTools.getDifferenceDirect(fOut, "DataEWKCorrected", alldata, ewkmc)
 
 print "Signals: ",ewkSumW
 #print the sum for a sample (zz4l-powheg)

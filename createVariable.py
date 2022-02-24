@@ -56,7 +56,7 @@ for var in varlistFull:
         dict[var]["_binning"] = [80.,100.,120.,130.,180.,230.,300.,450.,600.,800.,1300.]
     else:
         dict[var]["_binning"] = [80.,100.,120.,130.,180.,230.,300.,450.,600.,800.,1300.]
-    dict[var]["prettyVars"] = 'Full m_{4\\ell}' + "(%s jets)"%nj
+    dict[var]["prettyVars"] = 'm_{4\\ell}' + "(%s jets)"%nj
     dict[var]["responseClassNames"] = 'testJet'
 #====================================================================================    
 
