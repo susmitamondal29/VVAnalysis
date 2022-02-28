@@ -9,9 +9,9 @@ dict['altname']="zz4l-powheg"#"zz4l-amcatnlo"
 dict["sigLabel"] = "MG5_aMC@NLO+MCFM+Pythia8"#"POWHEG+MCFM+Pythia8"
 dict["sigLabelAlt"] = "POWHEG+MCFM+Pythia8"#"MG5_aMC@NLO+MCFM+Pythia8"
 dict["f16"]="2016Full_MassFull.root"
-dict["f17"]="2017Full.root"
-dict["f18"]="2018Full.root"
-dict["fFull"]="allFull.root"
+dict["f17"]="2017Full_MassFull.root"
+dict["f18"]="2018Full_MassFull.root"
+dict["fFull"]="allFull_MassFull.root"
 dict["reg"]=True
 dict['EWK']= [
         dict['nomname'],

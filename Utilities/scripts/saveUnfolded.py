@@ -1466,7 +1466,7 @@ def _sumUncertainties_info(norm,errDict,varName,hUnf,chan=''): #same as above bu
     
     for i in range(1,hUncUp.GetNbinsX()+1):
         if norm:# divided by normalized height in that bin to get the portion of shape change, then weighted by bin width for averaging
-            extraNfac = 1.0/(hUnf.GetBinContent(i)/tmparea0)*hUnf.GetBinWidth(i)/totalbw
+            #extraNfac = 1.0/(hUnf.GetBinContent(i)/tmparea0)*hUnf.GetBinWidth(i)/totalbw
             extraNfac = 1.0 #currently don't use average weighted by bin width
         ferrinfo.write("Bin %s\n"%i)
         totUncUp=totUncDn=0. #should be reset each time but not done in original codes?
@@ -1638,12 +1638,14 @@ if args['test']:
         #fUse = ROOT.TFile("SystGenFiles/Hists25Jun2020-ZZ4l2016_Moriond.root","update") #Note one more recent file is not in the commented list 
         #fUse = ROOT.TFile("SystGenFiles/Hists31Mar2020-ZZ4l2016_Moriond.root","update")
     elif analysis=="ZZ4l2017":
-        fUse = ROOT.TFile("SystGenFiles/For_unfolding_Hists02Feb2022_ZZ4l2017_Moriond_fullSyst.root","update")
+        fUse = ROOT.TFile("SystGenFiles/Fullsys_fullrange17_full.root","update")
+        #fUse = ROOT.TFile("SystGenFiles/For_unfolding_Hists02Feb2022_ZZ4l2017_Moriond_fullSyst.root","update")
         #fUse = ROOT.TFile("SystGenFiles/For_unfolding_Hists20Dec2021_ZZ4l2017_Moriond_fullSyst.root","update")
         #fUse = ROOT.TFile("SystGenFiles/For_unfolding_Hists17May2021_ZZ4l2017_Moriond_fullSyst.root","update")
         #fUse = ROOT.TFile("SystGenFiles/Hists07Jun2020-ZZ4l2017_Moriond.root","update")
     elif analysis=="ZZ4l2018": 
-        fUse = ROOT.TFile("SystGenFiles/For_unfolding_Hists02Feb2022_ZZ4l2018_MVA_fullSyst.root","update")
+        fUse = ROOT.TFile("SystGenFiles/Fullsys_fullrange18_full.root","update")
+        #fUse = ROOT.TFile("SystGenFiles/For_unfolding_Hists02Feb2022_ZZ4l2018_MVA_fullSyst.root","update")
         #fUse = ROOT.TFile("SystGenFiles/Syst_qqZZNewMCadded_Hists18Oct2021-ZZ4l2018_MVA.root","update")
         #fUse = ROOT.TFile("SystGenFiles/Syst_qqZZNewMCadded_Hists30Aug2021-ZZ4l2018_MVA.root","update") #Most recent before jet syst and pdf/scale syst
         #fUse = ROOT.TFile("SystGenFiles/Syst_qqZZNewMCadded_Hists14Jul2021-ZZ4l2018_MVA.root","update") #Recent results after adding new MC qqZZ first Round

@@ -838,7 +838,10 @@ def generatePlots(hUnfolded,hUncUp,hUncDn,hTruth,hTruthAlt,varName,norm,normFb,l
         MCTextAlt=getAxisTextBox(bottom_xy[0],bottom_xy[1],ratioName_alt,bottom_fontsize,False)
         AltTex = getSigTextBox(0.15,0.85,sigLabelAlt,0.11)
         #redraw axis
-        xaxis = ROOT.TGaxis(hUnf.GetXaxis().GetXmin(),ratioErrorBand.GetMinimum(),hUnf.GetXaxis().GetXmax(),ratioErrorBand.GetMinimum(),hUnf.GetXaxis().GetXmin(),hUnf.GetXaxis().GetXmax(),510,"G")
+        if "Full" in varName:
+            xaxis = ROOT.TGaxis(hUnf.GetXaxis().GetXmin(),ratioErrorBand.GetMinimum(),hUnf.GetXaxis().GetXmax(),ratioErrorBand.GetMinimum(),hUnf.GetXaxis().GetXmin(),hUnf.GetXaxis().GetXmax(),510,"G")
+        else:
+            xaxis = ROOT.TGaxis(hUnf.GetXaxis().GetXmin(),ratioErrorBand.GetMinimum(),hUnf.GetXaxis().GetXmax(),ratioErrorBand.GetMinimum(),hUnf.GetXaxis().GetXmin(),hUnf.GetXaxis().GetXmax(),510)
         xaxis.SetTitle(prettyVars[varName]+''+units[varName])
         #labelTex = getSigTextBox(0.9,0.8,prettyVars[varName]+''+units[varName])
         #if varName=="mass":

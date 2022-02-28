@@ -1187,7 +1187,7 @@ DijetBranchResponseMatrixMaker<T>::selectEvent(const Str& syst) const
     if (this->getVar() == "Mass0jFull") {return tmp_nJets == 0 && mass_selFull;}
     if (this->getVar() == "Mass1jFull") {return tmp_nJets == 1 && mass_selFull;}
     if (this->getVar() == "Mass2jFull") {return tmp_nJets == 2 && mass_selFull;}
-    if (this->getVar() == "Mass3jFUll") {return tmp_nJets == 3 && mass_selFull;}
+    if (this->getVar() == "Mass3jFull") {return tmp_nJets == 3 && mass_selFull;}
     if (this->getVar() == "Mass34jFull") {return tmp_nJets >= 3 && mass_selFull;}
     if (this->getVar() == "Mass4jFull") {return tmp_nJets >= 4 && mass_selFull;}
   

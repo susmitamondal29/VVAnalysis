@@ -123,9 +123,13 @@ dict['jetPt[1]']['ratio_min'] = 0.4
 dict['jetPt[1]']['top_xy'] = (0.6,0.87)
 dict['jetPt[1]']['bottom_xy'] = (0.6,0.91)
 
-dict['Mass4j']['top_xy'] = (0.6,0.87)
-dict['Mass4j']['bottom_xy'] = (0.6,0.91)
+#dict['Mass4j']['top_xy'] = (0.6,0.87)
+#dict['Mass4j']['bottom_xy'] = (0.6,0.91)
 
+dict['Mass1jFull']['top_xy'] = (0.4,0.87)
+dict['Mass1jFull']['bottom_xy'] = (0.4,0.91)
+dict['Mass2jFull']['top_xy'] = (0.37,0.87)
+dict['Mass2jFull']['bottom_xy'] = (0.37,0.91)
 
 with open(outputname,'w') as output_file:
   json.dump(dict,output_file,indent=4)
