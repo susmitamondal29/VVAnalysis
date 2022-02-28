@@ -505,6 +505,8 @@ def RatioErrorBand(Ratio,hUncUp,hUncDn,hTrueNoErrs,varName):
         return ratioGraph
 
 def MainErrorBand(hMain,hUncUp,hUncDn,varName,norm,normFb):
+        with open('varsFile.json') as var_json_file:
+            myvar_dict = json.load(var_json_file)
         MainGraph=ROOT.TGraphAsymmErrors(hMain)
         ROOT.SetOwnership(MainGraph,False)
         tmpData = hMain.Clone("tmp")
@@ -554,7 +556,7 @@ def MainErrorBand(hMain,hUncUp,hUncDn,varName,norm,normFb):
         #MainGraph.SetMaximum(1.5)
 
         #MainGraph.SetMaximum(1.2*(hMain.GetMaximum())*args["scaleymax"])
-        MainGraph.SetMinimum(args['scaleymin']*(hMain.GetMinimum()))
+        MainGraph.SetMinimum(myvar_dict[varName]["ymin_fac"]*args['scaleymin']*(hMain.GetMinimum()))
         #if varName=="drz1z2":
         #    MainGraph.SetMinimum(0.0)
         #else:

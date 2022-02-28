@@ -110,6 +110,7 @@ for key in dict.keys():
     dict[key]['bottom_xy']=(0.2,0.91) #top and bottom different pad settings
     dict[key]['bottom_size']=0.08
     dict[key]['ymax_fac']=1.
+    dict[key]['ymin_fac']=1.
     dict[key]['ratio_max'] =1.8
     dict[key]['ratio_min'] = 0.4
 
@@ -122,6 +123,7 @@ dict['jetPt[1]']['ratio_max'] = 2.99
 dict['jetPt[1]']['ratio_min'] = 0.4
 dict['jetPt[1]']['top_xy'] = (0.6,0.87)
 dict['jetPt[1]']['bottom_xy'] = (0.6,0.91)
+dict['jetPt[1]']['ymin_fac'] =1.3
 
 #dict['Mass4j']['top_xy'] = (0.6,0.87)
 #dict['Mass4j']['bottom_xy'] = (0.6,0.91)

@@ -6,6 +6,7 @@
             0.87
         ], 
         "bottom_size": 0.08, 
+        "ymin_fac": 1.0, 
         "_binning": [
             100.0, 
             200.0, 
@@ -31,6 +32,7 @@
             0.87
         ], 
         "bottom_size": 0.08, 
+        "ymin_fac": 1.0, 
         "_binning": [
             80.0, 
             100.0, 
@@ -62,6 +64,7 @@
             0.87
         ], 
         "bottom_size": 0.08, 
+        "ymin_fac": 1.0, 
         "_binning": [
             30.0, 
             50.0, 
@@ -88,6 +91,7 @@
             0.87
         ], 
         "bottom_size": 0.08, 
+        "ymin_fac": 1.0, 
         "_binning": [
             100.0, 
             200.0, 
@@ -113,6 +117,7 @@
             0.87
         ], 
         "bottom_size": 0.08, 
+        "ymin_fac": 1.0, 
         "_binning": [
             0.0, 
             1.2, 
@@ -138,6 +143,7 @@
             0.87
         ], 
         "bottom_size": 0.08, 
+        "ymin_fac": 1.0, 
         "_binning": [
             0.0, 
             1.0, 
@@ -163,6 +169,7 @@
             0.87
         ], 
         "bottom_size": 0.08, 
+        "ymin_fac": 1.0, 
         "_binning": [
             0.0, 
             1.5, 
@@ -187,6 +194,7 @@
             0.87
         ], 
         "bottom_size": 0.08, 
+        "ymin_fac": 1.0, 
         "_binning": [
             100.0, 
             200.0, 
@@ -212,6 +220,7 @@
             0.87
         ], 
         "bottom_size": 0.08, 
+        "ymin_fac": 1.0, 
         "_binning": [
             0.0, 
             1.5, 
@@ -237,6 +246,7 @@
             0.87
         ], 
         "bottom_size": 0.08, 
+        "ymin_fac": 1.0, 
         "_binning": [
             100.0, 
             200.0, 
@@ -267,6 +277,7 @@
             0.87
         ], 
         "bottom_size": 0.08, 
+        "ymin_fac": 1.0, 
         "_binning": [
             0.0, 
             200.0, 
@@ -292,6 +303,7 @@
             0.87
         ], 
         "bottom_size": 0.08, 
+        "ymin_fac": 1.0, 
         "_binning": [
             100.0, 
             200.0, 
@@ -322,6 +334,7 @@
             0.87
         ], 
         "bottom_size": 0.08, 
+        "ymin_fac": 1.0, 
         "_binning": [
             100.0, 
             200.0, 
@@ -352,6 +365,7 @@
             0.87
         ], 
         "bottom_size": 0.08, 
+        "ymin_fac": 1.3, 
         "_binning": [
             30.0, 
             50.0, 
@@ -377,6 +391,7 @@
             0.87
         ], 
         "bottom_size": 0.08, 
+        "ymin_fac": 1.0, 
         "_binning": [
             80.0, 
             100.0, 
@@ -408,6 +423,7 @@
             0.87
         ], 
         "bottom_size": 0.08, 
+        "ymin_fac": 1.0, 
         "_binning": [
             80.0, 
             100.0, 
@@ -439,6 +455,7 @@
             0.87
         ], 
         "bottom_size": 0.08, 
+        "ymin_fac": 1.0, 
         "_binning": [
             80.0, 
             100.0, 
@@ -466,10 +483,11 @@
     "Mass2jFull": {
         "ratio_min": 0.4, 
         "top_xy": [
-            0.4, 
+            0.37, 
             0.87
         ], 
         "bottom_size": 0.08, 
+        "ymin_fac": 1.0, 
         "_binning": [
             80.0, 
             100.0, 
@@ -487,7 +505,7 @@
         "ratio_max": 1.8, 
         "prettyVars": "m_{4\\ell}(2 jets)", 
         "bottom_xy": [
-            0.4, 
+            0.37, 
             0.91
         ], 
         "units": "[GeV]", 
@@ -501,6 +519,7 @@
             0.87
         ], 
         "bottom_size": 0.08, 
+        "ymin_fac": 1.0, 
         "_binning": [
             100.0, 
             200.0, 
@@ -526,6 +545,7 @@
             0.87
         ], 
         "bottom_size": 0.08, 
+        "ymin_fac": 1.0, 
         "_binning": [
             80.0, 
             100.0, 
@@ -557,6 +577,7 @@
             0.87
         ], 
         "bottom_size": 0.08, 
+        "ymin_fac": 1.0, 
         "_binning": [
             80.0, 
             100.0, 
