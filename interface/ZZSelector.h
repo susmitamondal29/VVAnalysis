@@ -113,6 +113,7 @@ protected:
     void ApplyScaleFactors();
     bool PassesZZSelection(bool nonPrompt);
     bool PassesZZSelectionLoose(bool nonPrompt);
+    bool Passes4eExtraCut();
     bool PassesZZjjSelection();
     bool PassesHZZSelection(bool nonPrompt);
     unsigned int GetLheWeightInfo();

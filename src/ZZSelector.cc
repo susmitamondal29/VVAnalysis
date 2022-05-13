@@ -14,7 +14,7 @@ void ZZSelector::Init(TTree *tree)
       {pileupUp, "CMS_pileupUp"},
       {pileupDown, "CMS_pileupDown"},
   };
-  doSystematics_ = true; // false;//true;
+  doSystematics_ = false;//true; // false;//true;
 
   // This would be set true inside ZZBackground Selector
   // isNonPrompt_ = false;
@@ -844,6 +844,24 @@ bool ZZSelector::PassesZZjjSelection()
   else
     return true;
 }
+
+bool ZZSelector::Passes4eExtraCut()
+{
+
+float lpt_arraySort[] = {l1Pt,l2Pt,l3Pt,l4Pt};
+std::sort(lpt_arraySort,lpt_arraySort+4,std::greater<float>());
+
+  if (channel_== eeee){
+    
+    if (lpt_arraySort[0]>23 && lpt_arraySort[1]>12)
+      {return true;}
+    else{
+      return false;}
+  }
+  else{
+    return true;}
+}
+
 bool ZZSelector::PassesZZSelection(bool nonPrompt)
 {
   // This nonPrompt boolean is for ZZBackgroundSelector
@@ -1017,6 +1035,12 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
     return;
   }
 
+  if (!Passes4eExtraCut()) //Apply extra 23/12 GeV cut to 4e channel
+  {
+    return;
+  }
+  
+
   std::vector<std::vector<float> *> vjetEta = {jetEta_jesUp, jetEta_jesDown, jetEta_jerUp, jetEta_jerDown};
   std::vector<std::vector<float> *> vjetPt = {jetPt_jesUp, jetPt_jesDown, jetPt_jerUp, jetPt_jerDown};
   std::vector<unsigned int> vnJets = {nJets_jesUp, nJets_jesDown, nJets_jerUp, nJets_jerDown};
@@ -1130,15 +1154,24 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
     }
   }
 
+//sort lepton pt
+float lpt_array[] = {l1Pt,l2Pt,l3Pt,l4Pt};
+std::sort(lpt_array,lpt_array+4,std::greater<float>());
+ float l1PtTmp,l2PtTmp,l3PtTmp,l4PtTmp;
+l1PtTmp= lpt_array[0];
+l2PtTmp= lpt_array[1];
+l3PtTmp= lpt_array[2];
+l4PtTmp= lpt_array[3];
+
 if (80<Mass && Mass<110){
-  SafeHistFill(histMap1D_, getHistName("LepPtFull", variation.second), l1Pt, weight);
-  SafeHistFill(histMap1D_, getHistName("LepPtFull", variation.second), l2Pt, weight);
-  SafeHistFill(histMap1D_, getHistName("LepPtFull", variation.second), l3Pt, weight);
-  SafeHistFill(histMap1D_, getHistName("LepPtFull", variation.second), l4Pt, weight);
-  SafeHistFill(histMap1D_, getHistName("LepPt1Full", variation.second), l1Pt, weight);
-  SafeHistFill(histMap1D_, getHistName("LepPt2Full", variation.second), l2Pt, weight);
-  SafeHistFill(histMap1D_, getHistName("LepPt3Full", variation.second), l3Pt, weight);
-  SafeHistFill(histMap1D_, getHistName("LepPt4Full", variation.second), l4Pt, weight);}
+  SafeHistFill(histMap1D_, getHistName("LepPtFull", variation.second), l1PtTmp, weight);
+  SafeHistFill(histMap1D_, getHistName("LepPtFull", variation.second), l2PtTmp, weight);
+  SafeHistFill(histMap1D_, getHistName("LepPtFull", variation.second), l3PtTmp, weight);
+  SafeHistFill(histMap1D_, getHistName("LepPtFull", variation.second), l4PtTmp, weight);
+  SafeHistFill(histMap1D_, getHistName("LepPt1Full", variation.second), l1PtTmp, weight);
+  SafeHistFill(histMap1D_, getHistName("LepPt2Full", variation.second), l2PtTmp, weight);
+  SafeHistFill(histMap1D_, getHistName("LepPt3Full", variation.second), l3PtTmp, weight);
+  SafeHistFill(histMap1D_, getHistName("LepPt4Full", variation.second), l4PtTmp, weight);}
   // bool noBlind = true;
   // Applying the ZZ Selection here
   // std::cout<<"Is fillHistograms working?"<<std::endl;
@@ -1328,14 +1361,14 @@ if (80<Mass && Mass<110){
   SafeHistFill(histMap1D_, getHistName("SIP3D", variation.second), l3SIP3D, weight);
   SafeHistFill(histMap1D_, getHistName("SIP3D", variation.second), l4SIP3D, weight);
   // Making LeptonPt and Eta plots
-  SafeHistFill(histMap1D_, getHistName("LepPt", variation.second), l1Pt, weight);
-  SafeHistFill(histMap1D_, getHistName("LepPt", variation.second), l2Pt, weight);
-  SafeHistFill(histMap1D_, getHistName("LepPt", variation.second), l3Pt, weight);
-  SafeHistFill(histMap1D_, getHistName("LepPt", variation.second), l4Pt, weight);
-  SafeHistFill(histMap1D_, getHistName("LepPt1", variation.second), l1Pt, weight);
-  SafeHistFill(histMap1D_, getHistName("LepPt2", variation.second), l2Pt, weight);
-  SafeHistFill(histMap1D_, getHistName("LepPt3", variation.second), l3Pt, weight);
-  SafeHistFill(histMap1D_, getHistName("LepPt4", variation.second), l4Pt, weight);
+  SafeHistFill(histMap1D_, getHistName("LepPt", variation.second), l1PtTmp, weight);
+  SafeHistFill(histMap1D_, getHistName("LepPt", variation.second), l2PtTmp, weight);
+  SafeHistFill(histMap1D_, getHistName("LepPt", variation.second), l3PtTmp, weight);
+  SafeHistFill(histMap1D_, getHistName("LepPt", variation.second), l4PtTmp, weight);
+  SafeHistFill(histMap1D_, getHistName("LepPt1", variation.second), l1PtTmp, weight);
+  SafeHistFill(histMap1D_, getHistName("LepPt2", variation.second), l2PtTmp, weight);
+  SafeHistFill(histMap1D_, getHistName("LepPt3", variation.second), l3PtTmp, weight);
+  SafeHistFill(histMap1D_, getHistName("LepPt4", variation.second), l4PtTmp, weight);
   SafeHistFill(histMap1D_, getHistName("LepEta", variation.second), l1Eta, weight);
   SafeHistFill(histMap1D_, getHistName("LepEta", variation.second), l2Eta, weight);
   SafeHistFill(histMap1D_, getHistName("LepEta", variation.second), l3Eta, weight);
