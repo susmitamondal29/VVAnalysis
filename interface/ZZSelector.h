@@ -114,6 +114,7 @@ protected:
     bool PassesZZSelection(bool nonPrompt);
     bool PassesZZSelectionLoose(bool nonPrompt);
     bool Passes4eExtraCut();
+    bool Passes2e2mExtraCut(Long64_t entry);
     bool PassesZZjjSelection();
     bool PassesHZZSelection(bool nonPrompt);
     unsigned int GetLheWeightInfo();
