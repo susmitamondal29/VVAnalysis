@@ -129,6 +129,9 @@ void ZZSelector::Init(TTree *tree)
       "Mass34jFull",
       "Mass4jFull"};
   ZZSelectorBase::Init(tree);
+  fCutFormula = new TTreeFormula("CutFormula", fOption, fChain);
+  fCutFormula->SetQuickLoad(kTRUE);
+  if (!fCutFormula->GetNdim()) { delete fCutFormula; fCutFormula = 0; }
 }
 
 void ZZSelector::SetBranchesUWVV()
@@ -212,7 +215,13 @@ void ZZSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::str
 {
 
   ZZSelectorBase::LoadBranchesUWVV(entry, variation);
-
+  
+  if ( fCutFormula && fCutFormula->EvalInstance() > 0. ){
+    passCurrentTrig = true;
+  }
+  else{
+    passCurrentTrig = false;
+  }
   // b_MtToMET->GetEntry(entry);
   // b_l1Pt->GetEntry(entry);
   // b_l2Pt->GetEntry(entry);
@@ -1218,6 +1227,12 @@ if (channel_== eemm){
 
 
 if (80<Mass && Mass<100){
+  if (passCurrentTrig){
+    std::cout<<"Passes Trigger count 1"<<std::endl;
+  }
+  else{
+    std::cout<<"Passes Trigger count 0"<<std::endl;
+  }
   SafeHistFill(histMap1D_, getHistName("LepPtFull", variation.second), l1PtTmp, weight);
   SafeHistFill(histMap1D_, getHistName("LepPtFull", variation.second), l2PtTmp, weight);
   SafeHistFill(histMap1D_, getHistName("LepPtFull", variation.second), l3PtTmp, weight);

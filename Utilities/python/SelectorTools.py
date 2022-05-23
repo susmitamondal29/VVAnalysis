@@ -8,6 +8,7 @@ import os
 import multiprocessing
 import subprocess
 import logging
+import UserInput
 
 class SelectorDriver(object):
     def __init__(self, analysis, selection, input_tier, year):
@@ -275,7 +276,12 @@ class SelectorDriver(object):
                 % (tree_name, filename, self.ntupleType)
             )
         logging.debug("Processing tree %s for file %s." % (tree.GetName(), rtfile.GetName()))
-        tree.Process(selector, "")
+        aliases = UserInput.readJson("Cuts/%s/aliases.json" % self.analysis)
+        for nameAlias, valueAlias in aliases["Event"].iteritems():
+            tree.SetAlias(nameAlias, valueAlias)
+        TriggerStr = "(singleIsoMuPass || doubleMuDZPass || tripleMuPass)"
+        #tree.Process(selector, "")
+        tree.Process(selector, TriggerStr)
         logging.debug("Processed with selector %s." % selector.GetName())
         if addSumweights:
             self.fillSumweightsHist(rtfile, filenum)

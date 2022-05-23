@@ -4,6 +4,7 @@
 #include <vector>
 #include "Analysis/VVAnalysis/interface/ZZSelectorBase.h"
 #include <TH3.h>
+#include <TTreeFormula.h>
 
 class ZZSelector : public ZZSelectorBase
 {
@@ -16,7 +17,8 @@ public:
     std::vector<float> *pdfWeights = NULL;
     std::vector<float> lheWeights;
     unsigned int weight_info_;
-
+    TTreeFormula   *fCutFormula;
+    bool passCurrentTrig;
     float dEtajj;
     float dEtajj_jesUp;
     float dEtajj_jesDown;
