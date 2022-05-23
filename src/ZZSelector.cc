@@ -61,7 +61,7 @@ void ZZSelector::Init(TTree *tree)
   // };
 
   hists1D_ = {
-      "yield", "Z1Mass", "Z2Mass", "ZMass", "ZZPt", "ZZEta", "dPhiZ1Z2", "dRZ1Z2", "ZPt", "LepPt", "LepPtFull", "LepEta",
+      "yield", "Z1Mass", "Z2Mass", "ZMass", "ZZPt", "ZZEta", "dPhiZ1Z2", "dRZ1Z2", "ZPt", "LepPt", "LepPtFull", "LepEta","PassTriggerFull",
       "LepPt1","LepPt2","LepPt3","LepPt4","LepPt1Full","LepPt2Full","LepPt3Full","LepPt4Full","e1PtSortedFull","e2PtSortedFull","e1PtSorted","e2PtSorted",
       "Mass", "Mass0j", "Mass1j", "Mass2j", "Mass3j", "Mass34j", "Mass4j", "nJets",
       "MassFull", "Mass0jFull", "Mass1jFull", "Mass2jFull", "Mass3jFull", "Mass34jFull", "Mass4jFull",
@@ -1228,11 +1228,9 @@ if (channel_== eemm){
 
 if (80<Mass && Mass<100){
   if (passCurrentTrig){
-    std::cout<<"Passes Trigger count 1"<<std::endl;
+    SafeHistFill(histMap1D_, getHistName("PassTriggerFull", variation.second), 1, weight);
   }
-  else{
-    std::cout<<"Passes Trigger count 0"<<std::endl;
-  }
+ 
   SafeHistFill(histMap1D_, getHistName("LepPtFull", variation.second), l1PtTmp, weight);
   SafeHistFill(histMap1D_, getHistName("LepPtFull", variation.second), l2PtTmp, weight);
   SafeHistFill(histMap1D_, getHistName("LepPtFull", variation.second), l3PtTmp, weight);
