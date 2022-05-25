@@ -279,7 +279,13 @@ class SelectorDriver(object):
         aliases = UserInput.readJson("Cuts/%s/aliases.json" % self.analysis)
         for nameAlias, valueAlias in aliases["Event"].iteritems():
             tree.SetAlias(nameAlias, valueAlias)
-        TriggerStr = "(singleIsoMuPass || doubleMuDZPass || tripleMuPass)"
+        #TriggerStr = "(singleIsoMuPass || doubleMuDZPass || tripleMuPass)"
+        #TriggerStr = "((singleIsoMuPass || doubleMuDZPass || tripleMuPass) && (singleEPass || doubleEPass || tripleEPass))"
+        #TriggerStr = "(!(singleIsoMuPass || doubleMuDZPass || tripleMuPass) && (singleEPass || doubleEPass || tripleEPass))"
+        TriggerStr = "((singleIsoMuPass || doubleMuDZPass || tripleMuPass) && (singleEPass))"
+        #TriggerStr = "((singleIsoMuPass || doubleMuDZPass || tripleMuPass) && (doubleEPass))"
+        #TriggerStr = "((singleIsoMuPass || doubleMuDZPass || tripleMuPass) && (singleEPass || doubleEPass))"
+        #TriggerStr = "((singleIsoMuPass || doubleMuDZPass || tripleMuPass) && (tripleEPass))"
         #tree.Process(selector, "")
         tree.Process(selector, TriggerStr)
         logging.debug("Processed with selector %s." % selector.GetName())

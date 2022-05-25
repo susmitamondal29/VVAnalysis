@@ -1080,12 +1080,14 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
   //  return;
   // }
   
-  // if (!Passes2e2mExtraCut(entry)) //Apply extra 23/12 GeV cut to electrons in 2e2m channel
+  //if (!Passes2e2mExtraCut(entry)) //Apply extra 23/12 GeV cut to electrons in 2e2m channel
   //  {
   // return;
   //  }
   
-
+  if (!passCurrentTrig){
+    return;
+      }
   std::vector<std::vector<float> *> vjetEta = {jetEta_jesUp, jetEta_jesDown, jetEta_jerUp, jetEta_jerDown};
   std::vector<std::vector<float> *> vjetPt = {jetPt_jesUp, jetPt_jesDown, jetPt_jerUp, jetPt_jerDown};
   std::vector<unsigned int> vnJets = {nJets_jesUp, nJets_jesDown, nJets_jerUp, nJets_jerDown};
@@ -1226,10 +1228,10 @@ if (channel_== eemm){
 
 
 
-if (80<Mass && Mass<100){
-  if (passCurrentTrig){
-    SafeHistFill(histMap1D_, getHistName("PassTriggerFull", variation.second), 1, weight);
-  }
+if (80<Mass && Mass<110){
+
+  SafeHistFill(histMap1D_, getHistName("PassTriggerFull", variation.second), 1, weight);
+
  
   SafeHistFill(histMap1D_, getHistName("LepPtFull", variation.second), l1PtTmp, weight);
   SafeHistFill(histMap1D_, getHistName("LepPtFull", variation.second), l2PtTmp, weight);
