@@ -14,7 +14,7 @@ void ZZSelector::Init(TTree *tree)
       {pileupUp, "CMS_pileupUp"},
       {pileupDown, "CMS_pileupDown"},
   };
-  doSystematics_ = false;//true; // false;//true;
+  doSystematics_ = false; // true; // false;//true;
 
   // This would be set true inside ZZBackground Selector
   // isNonPrompt_ = false;
@@ -61,8 +61,8 @@ void ZZSelector::Init(TTree *tree)
   // };
 
   hists1D_ = {
-      "yield", "Z1Mass", "Z2Mass", "ZMass", "ZZPt", "ZZEta", "dPhiZ1Z2", "dRZ1Z2", "ZPt", "LepPt", "LepPtFull", "LepEta","PassTriggerFull",
-      "LepPt1","LepPt2","LepPt3","LepPt4","LepPt1Full","LepPt2Full","LepPt3Full","LepPt4Full","e1PtSortedFull","e2PtSortedFull","e1PtSorted","e2PtSorted",
+      "yield", "Z1Mass", "Z2Mass", "ZMass", "ZZPt", "ZZEta", "dPhiZ1Z2", "dRZ1Z2", "ZPt", "LepPt", "LepPtFull", "LepEta", "PassTriggerFull",
+      "LepPt1", "LepPt2", "LepPt3", "LepPt4", "LepPt1Full", "LepPt2Full", "LepPt3Full", "LepPt4Full", "e1PtSortedFull", "e2PtSortedFull", "e1PtSorted", "e2PtSorted",
       "Mass", "Mass0j", "Mass1j", "Mass2j", "Mass3j", "Mass34j", "Mass4j", "nJets",
       "MassFull", "Mass0jFull", "Mass1jFull", "Mass2jFull", "Mass3jFull", "Mass34jFull", "Mass4jFull",
       "jetPt[0]", "jetPt[1]", "jetPt[2]", "jetEta[0]", "jetEta[1]", "absjetEta[0]", "absjetEta[1]", "jetEta[2]",
@@ -131,7 +131,11 @@ void ZZSelector::Init(TTree *tree)
   ZZSelectorBase::Init(tree);
   fCutFormula = new TTreeFormula("CutFormula", fOption, fChain);
   fCutFormula->SetQuickLoad(kTRUE);
-  if (!fCutFormula->GetNdim()) { delete fCutFormula; fCutFormula = 0; }
+  if (!fCutFormula->GetNdim())
+  {
+    delete fCutFormula;
+    fCutFormula = 0;
+  }
 }
 
 void ZZSelector::SetBranchesUWVV()
@@ -215,11 +219,13 @@ void ZZSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::str
 {
 
   ZZSelectorBase::LoadBranchesUWVV(entry, variation);
-  
-  if ( fCutFormula && fCutFormula->EvalInstance() > 0. ){
+
+  if (fCutFormula && fCutFormula->EvalInstance() > 0.)
+  {
     passCurrentTrig = true;
   }
-  else{
+  else
+  {
     passCurrentTrig = false;
   }
   // b_MtToMET->GetEntry(entry);
@@ -229,9 +235,9 @@ void ZZSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::str
   b_Mass->GetEntry(entry);
   b_Pt->GetEntry(entry);
   b_Eta->GetEntry(entry);
-  b_jetPt->GetEntry(entry);
+  // b_jetPt->GetEntry(entry);
   b_jetPhi->GetEntry(entry);
-  b_jetEta->GetEntry(entry);
+  // b_jetEta->GetEntry(entry);
 
   b_mjj->GetEntry(entry);
   if (isMC_)
@@ -857,49 +863,64 @@ bool ZZSelector::PassesZZjjSelection()
 bool ZZSelector::Passes4eExtraCut()
 {
 
-float lpt_arraySort[] = {l1Pt,l2Pt,l3Pt,l4Pt};
-std::sort(lpt_arraySort,lpt_arraySort+4,std::greater<float>());
+  float lpt_arraySort[] = {l1Pt, l2Pt, l3Pt, l4Pt};
+  std::sort(lpt_arraySort, lpt_arraySort + 4, std::greater<float>());
 
-  if (channel_== eeee){
-    
-    if (lpt_arraySort[0]>23 && lpt_arraySort[1]>12)
-      {return true;}
-    else{
-      return false;}
+  if (channel_ == eeee)
+  {
+
+    if (lpt_arraySort[0] > 23 && lpt_arraySort[1] > 12)
+    {
+      return true;
+    }
+    else
+    {
+      return false;
+    }
   }
-  else{
-    return true;}
+  else
+  {
+    return true;
+  }
 }
 
 bool ZZSelector::Passes2e2mExtraCut(Long64_t entry)
 {
 
-float lpt1Tmp = 0.;
-float lpt2Tmp = 0.;
+  float lpt1Tmp = 0.;
+  float lpt2Tmp = 0.;
 
-if (channel_== eemm){
-  float lpt_arraySort[] = {l1Pt,l2Pt}; //By default l1pt,l2pt set to e1pt,e2pt for eemm and mmee
-  std::sort(lpt_arraySort,lpt_arraySort+2,std::greater<float>());
-  lpt1Tmp = lpt_arraySort[0]; 
-  lpt2Tmp = lpt_arraySort[1];
-}
- else if (channel_== mmee){
-  float lpt_arraySort[] = {l3Pt,l4Pt}; // pt switched by SetVariables function
-  std::sort(lpt_arraySort,lpt_arraySort+2,std::greater<float>());
-  lpt1Tmp = lpt_arraySort[0]; 
-  lpt2Tmp = lpt_arraySort[1];
-}
-
-
-  if (channel_== eemm || channel_== mmee){
-    
-    if (lpt1Tmp>23 && lpt2Tmp>12)
-      {return true;}
-    else{
-      return false;}
+  if (channel_ == eemm)
+  {
+    float lpt_arraySort[] = {l1Pt, l2Pt}; // By default l1pt,l2pt set to e1pt,e2pt for eemm and mmee
+    std::sort(lpt_arraySort, lpt_arraySort + 2, std::greater<float>());
+    lpt1Tmp = lpt_arraySort[0];
+    lpt2Tmp = lpt_arraySort[1];
   }
-  else{
-    return true;}
+  else if (channel_ == mmee)
+  {
+    float lpt_arraySort[] = {l3Pt, l4Pt}; // pt switched by SetVariables function
+    std::sort(lpt_arraySort, lpt_arraySort + 2, std::greater<float>());
+    lpt1Tmp = lpt_arraySort[0];
+    lpt2Tmp = lpt_arraySort[1];
+  }
+
+  if (channel_ == eemm || channel_ == mmee)
+  {
+
+    if (lpt1Tmp > 23 && lpt2Tmp > 12)
+    {
+      return true;
+    }
+    else
+    {
+      return false;
+    }
+  }
+  else
+  {
+    return true;
+  }
 }
 
 bool ZZSelector::PassesZZSelection(bool nonPrompt)
@@ -1079,20 +1100,45 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
   // {
   //  return;
   // }
-  
-  //if (!Passes2e2mExtraCut(entry)) //Apply extra 23/12 GeV cut to electrons in 2e2m channel
-  //  {
-  // return;
-  //  }
-  
-  if (!passCurrentTrig){
-    return;
+
+  // if (!Passes2e2mExtraCut(entry)) //Apply extra 23/12 GeV cut to electrons in 2e2m channel
+  //   {
+  //  return;
+  //   }
+
+  // erase jet with pt<50GeV for testing
+  if (jetPt->size() == jetEta->size())
+  {
+    auto jetit = jetPt->begin();
+    auto jetait = jetEta->begin();
+    while (jetit != jetPt->end())
+    {
+      if (*jetit < 50)
+      {
+        jetit = jetPt->erase(jetit);
+        jetait = jetEta->erase(jetait);
       }
+      else
+      {
+        ++jetit;
+        ++jetait;
+      }
+    }
+  }
+  else
+  {
+    std::cout << "Something Wrong jetPt vs jetEta size" << jetPt->size() << " " << jetEta->size() << std::endl;
+  }
+
+  if (!passCurrentTrig)
+  {
+    return;
+  }
   std::vector<std::vector<float> *> vjetEta = {jetEta_jesUp, jetEta_jesDown, jetEta_jerUp, jetEta_jerDown};
   std::vector<std::vector<float> *> vjetPt = {jetPt_jesUp, jetPt_jesDown, jetPt_jerUp, jetPt_jerDown};
   std::vector<unsigned int> vnJets = {nJets_jesUp, nJets_jesDown, nJets_jerUp, nJets_jerDown};
   std::vector<float> vmjj = {mjj_jesUp, mjj_jesDown, mjj_jerUp, mjj_jerDown};
-  
+
   if ((variation.first == Central || (doaTGC_ && isaTGC_)) && isMC_)
   {
     // Do jet systematics JES and JER
@@ -1201,50 +1247,48 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
     }
   }
 
-//sort lepton pt
-float lpt_array[] = {l1Pt,l2Pt,l3Pt,l4Pt};
-std::sort(lpt_array,lpt_array+4,std::greater<float>());
-float l1PtTmp,l2PtTmp,l3PtTmp,l4PtTmp;
-l1PtTmp= lpt_array[0];
-l2PtTmp= lpt_array[1];
-l3PtTmp= lpt_array[2];
-l4PtTmp= lpt_array[3];
+  // sort lepton pt
+  float lpt_array[] = {l1Pt, l2Pt, l3Pt, l4Pt};
+  std::sort(lpt_array, lpt_array + 4, std::greater<float>());
+  float l1PtTmp, l2PtTmp, l3PtTmp, l4PtTmp;
+  l1PtTmp = lpt_array[0];
+  l2PtTmp = lpt_array[1];
+  l3PtTmp = lpt_array[2];
+  l4PtTmp = lpt_array[3];
 
-float e1PtTmp = 0.;
-float e2PtTmp = 0.;
-if (channel_== eemm){
-  float lpt_arraySort[] = {l1Pt,l2Pt}; //By default l1pt,l2pt set to e1pt,e2pt for eemm and mmee
-  std::sort(lpt_arraySort,lpt_arraySort+2,std::greater<float>());
-  e1PtTmp = lpt_arraySort[0];
-  e2PtTmp = lpt_arraySort[1];
+  float e1PtTmp = 0.;
+  float e2PtTmp = 0.;
+  if (channel_ == eemm)
+  {
+    float lpt_arraySort[] = {l1Pt, l2Pt}; // By default l1pt,l2pt set to e1pt,e2pt for eemm and mmee
+    std::sort(lpt_arraySort, lpt_arraySort + 2, std::greater<float>());
+    e1PtTmp = lpt_arraySort[0];
+    e2PtTmp = lpt_arraySort[1];
   }
- else if (channel_== mmee){
-  float lpt_arraySort[] = {l3Pt,l4Pt}; // pt switched by SetVariables function
-  std::sort(lpt_arraySort,lpt_arraySort+2,std::greater<float>());
-  e1PtTmp = lpt_arraySort[0];
-  e2PtTmp = lpt_arraySort[1];
+  else if (channel_ == mmee)
+  {
+    float lpt_arraySort[] = {l3Pt, l4Pt}; // pt switched by SetVariables function
+    std::sort(lpt_arraySort, lpt_arraySort + 2, std::greater<float>());
+    e1PtTmp = lpt_arraySort[0];
+    e2PtTmp = lpt_arraySort[1];
   }
 
+  if (80 < Mass && Mass < 110)
+  {
 
+    SafeHistFill(histMap1D_, getHistName("PassTriggerFull", variation.second), 1, weight);
 
-
-if (80<Mass && Mass<110){
-
-  SafeHistFill(histMap1D_, getHistName("PassTriggerFull", variation.second), 1, weight);
-
- 
-  SafeHistFill(histMap1D_, getHistName("LepPtFull", variation.second), l1PtTmp, weight);
-  SafeHistFill(histMap1D_, getHistName("LepPtFull", variation.second), l2PtTmp, weight);
-  SafeHistFill(histMap1D_, getHistName("LepPtFull", variation.second), l3PtTmp, weight);
-  SafeHistFill(histMap1D_, getHistName("LepPtFull", variation.second), l4PtTmp, weight);
-  SafeHistFill(histMap1D_, getHistName("LepPt1Full", variation.second), l1PtTmp, weight);
-  SafeHistFill(histMap1D_, getHistName("LepPt2Full", variation.second), l2PtTmp, weight);
-  SafeHistFill(histMap1D_, getHistName("LepPt3Full", variation.second), l3PtTmp, weight);
-  SafeHistFill(histMap1D_, getHistName("LepPt4Full", variation.second), l4PtTmp, weight);
-  SafeHistFill(histMap1D_, getHistName("e1PtSortedFull", variation.second), e1PtTmp, weight);
-  SafeHistFill(histMap1D_, getHistName("e2PtSortedFull", variation.second), e2PtTmp, weight);
-
-}
+    SafeHistFill(histMap1D_, getHistName("LepPtFull", variation.second), l1PtTmp, weight);
+    SafeHistFill(histMap1D_, getHistName("LepPtFull", variation.second), l2PtTmp, weight);
+    SafeHistFill(histMap1D_, getHistName("LepPtFull", variation.second), l3PtTmp, weight);
+    SafeHistFill(histMap1D_, getHistName("LepPtFull", variation.second), l4PtTmp, weight);
+    SafeHistFill(histMap1D_, getHistName("LepPt1Full", variation.second), l1PtTmp, weight);
+    SafeHistFill(histMap1D_, getHistName("LepPt2Full", variation.second), l2PtTmp, weight);
+    SafeHistFill(histMap1D_, getHistName("LepPt3Full", variation.second), l3PtTmp, weight);
+    SafeHistFill(histMap1D_, getHistName("LepPt4Full", variation.second), l4PtTmp, weight);
+    SafeHistFill(histMap1D_, getHistName("e1PtSortedFull", variation.second), e1PtTmp, weight);
+    SafeHistFill(histMap1D_, getHistName("e2PtSortedFull", variation.second), e2PtTmp, weight);
+  }
 
   // bool noBlind = true;
   // Applying the ZZ Selection here
@@ -1254,8 +1298,6 @@ if (80<Mass && Mass<110){
   {
     return;
   }
-
-
 
   // std::cout<<"eventWeight in ZZSelector: "<<weight<<std::endl;
   if ((variation.first == Central || (doaTGC_ && isaTGC_)) && isMC_)

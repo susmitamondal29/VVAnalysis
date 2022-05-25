@@ -286,8 +286,8 @@ class SelectorDriver(object):
         #TriggerStr = "((singleIsoMuPass || doubleMuDZPass || tripleMuPass) && (doubleEPass))"
         #TriggerStr = "((singleIsoMuPass || doubleMuDZPass || tripleMuPass) && (singleEPass || doubleEPass))"
         #TriggerStr = "((singleIsoMuPass || doubleMuDZPass || tripleMuPass) && (tripleEPass))"
-        #tree.Process(selector, "")
-        tree.Process(selector, TriggerStr)
+        tree.Process(selector, "")
+        #tree.Process(selector, TriggerStr)
         logging.debug("Processed with selector %s." % selector.GetName())
         if addSumweights:
             self.fillSumweightsHist(rtfile, filenum)
