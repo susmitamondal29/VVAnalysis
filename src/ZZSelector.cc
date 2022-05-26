@@ -266,6 +266,34 @@ void ZZSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::str
     b_jetEta_jerDown->GetEntry(entry);
   }
 
+  // erase jet with pt<50GeV for testing
+  bool raisejPt = false;
+  if (raisejPt)
+  {
+  if (jetPt->size() == jetEta->size())
+  {
+    auto jetit = jetPt->begin();
+    auto jetait = jetEta->begin();
+    while (jetit != jetPt->end())
+    {
+      if (*jetit < 50)
+      {
+        jetit = jetPt->erase(jetit);
+        jetait = jetEta->erase(jetait);
+      }
+      else
+      {
+        ++jetit;
+        ++jetait;
+      }
+    }
+  }
+  else
+  {
+    std::cout << "Something Wrong jetPt vs jetEta size" << jetPt->size() << " " << jetEta->size() << std::endl;
+  }
+  } //raise jet pt
+
   b_nJets->GetEntry(entry);
   if (isMC_)
   {
@@ -1106,34 +1134,12 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
   //  return;
   //   }
 
-  // erase jet with pt<50GeV for testing
-  if (jetPt->size() == jetEta->size())
-  {
-    auto jetit = jetPt->begin();
-    auto jetait = jetEta->begin();
-    while (jetit != jetPt->end())
-    {
-      if (*jetit < 50)
-      {
-        jetit = jetPt->erase(jetit);
-        jetait = jetEta->erase(jetait);
-      }
-      else
-      {
-        ++jetit;
-        ++jetait;
-      }
-    }
-  }
-  else
-  {
-    std::cout << "Something Wrong jetPt vs jetEta size" << jetPt->size() << " " << jetEta->size() << std::endl;
-  }
 
-  if (!passCurrentTrig)
-  {
-    return;
-  }
+
+  //if (!passCurrentTrig)
+  //{
+  //  return;
+  //}
   std::vector<std::vector<float> *> vjetEta = {jetEta_jesUp, jetEta_jesDown, jetEta_jerUp, jetEta_jerDown};
   std::vector<std::vector<float> *> vjetPt = {jetPt_jesUp, jetPt_jesDown, jetPt_jerUp, jetPt_jerDown};
   std::vector<unsigned int> vnJets = {nJets_jesUp, nJets_jesDown, nJets_jerUp, nJets_jerDown};
