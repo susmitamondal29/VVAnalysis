@@ -67,8 +67,10 @@ void ZZSelector::Init(TTree *tree)
       "MassFull", "Mass0jFull", "Mass1jFull", "Mass2jFull", "Mass3jFull", "Mass34jFull", "Mass4jFull",
       "jetPt[0]", "jetPt[1]", "jetPt[2]", "jetEta[0]", "jetEta[1]", "absjetEta[0]", "absjetEta[1]", "jetEta[2]",
       "jetPhi[0]", "jetPhi[1]", "jetPhi[2]", "mjj", "dEtajj", "SIP3D", "jetPt[01]", "jetEta[01]",
+      "absjetEtaN1","jetPtN1","jetPtN2","jetPtN3","absjetEtaN1_100"
       "PVDZ", "deltaPVDZ_sameZ", "deltaPVDZ_diffZ"};
 
+  jetTest2D_ = {"jetPtN2","jetPtN3"}; //also defined in hists1D_ to pass checks in InitializeHistogramsFromConfig()
   jethists1D_ = {
       "Mass",
       "Mass0j",
@@ -1536,6 +1538,15 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
     SafeHistFill(histMap1D_, getHistName("jetEta[0]", variation.second), jetEta->at(0), weight); //}
     SafeHistFill(histMap1D_, getHistName("absjetEta[0]", variation.second), std::abs(jetEta->at(0)), weight);
     SafeHistFill(histMap1D_, getHistName("jetPhi[0]", variation.second), jetPhi->at(0), weight);
+
+  if (jetPt->size() == 1 && jetPt->size() == jetEta->size()){
+    SafeHistFill(histMap1D_, getHistName("jetPtN1", variation.second), jetPt->at(0), weight);
+    SafeHistFill(histMap1D_, getHistName("absjetEtaN1", variation.second), std::abs(jetEta->at(0)), weight);
+    if (jetPt->at(0)<100){
+    SafeHistFill(histMap1D_, getHistName("absjetEtaN1_100", variation.second), std::abs(jetEta->at(0)), weight);
+    }
+  }
+
   }
   if (jetPt->size() > 1 && jetPt->size() == jetEta->size())
   {
@@ -1551,6 +1562,8 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
     {
       SafeHistFill(histMap1D_, getHistName("jetEta[01]", variation.second), jetEta->at(0), weight);
       SafeHistFill(histMap1D_, getHistName("jetEta[01]", variation.second), jetEta->at(1), weight);
+      // pt vs eta for 2-jet event lowest pt jet
+      SafeHistFill(jetTestMap2D_, getHistName("jetPtN2", variation.second), jetPt->at(1),std::abs(jetEta->at(1)), weight);
     }
     SafeHistFill(histMap1D_, getHistName("jetPt[01]", variation.second), jetPt->at(0), weight);
     SafeHistFill(histMap1D_, getHistName("jetPt[01]", variation.second), jetPt->at(1), weight);
@@ -1561,6 +1574,13 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
     SafeHistFill(histMap1D_, getHistName("jetPt[2]", variation.second), jetPt->at(2), weight);
     SafeHistFill(histMap1D_, getHistName("jetEta[2]", variation.second), jetEta->at(2), weight);
     SafeHistFill(histMap1D_, getHistName("jetPhi[2]", variation.second), jetPhi->at(2), weight);
+
+    if (jetPt->size() == 3 && jetPt->size() == jetEta->size())
+    {
+     
+      // pt vs eta for 3-jet event lowest pt jet
+      SafeHistFill(jetTestMap2D_, getHistName("jetPtN3", variation.second), jetPt->at(2),std::abs(jetEta->at(2)), weight);
+    }
   }
 
   //    if (!PassesZZjjSelection()){

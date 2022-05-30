@@ -198,11 +198,13 @@ class SelectorBase : public TSelector {
     std::map<std::string, TH2D*> hists2D_ = {};
     std::map<std::string, TH2D*> weighthistMap1D_ = {};
     std::map<std::string, TH2D*> jethistMap1D_ = {}; //jet systematics
+    std::map<std::string, TH2D*> jetTestMap2D_ = {};
     std::map<std::string, TH3D*> weighthistMap2D_ {};
 
     std::vector<std::string> hists1D_ = {};
     std::vector<std::string> weighthists1D_ = {};
     std::vector<std::string> jethists1D_ = {};
+    std::vector<std::string> jetTest2D_ = {};
     // The histograms for which you also want systematic variations
     std::vector<std::string> systHists_ = {};
     std::vector<std::string> systHists2D_ = {};

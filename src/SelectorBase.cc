@@ -199,6 +199,7 @@ void SelectorBase::InitializeHistogramsFromConfig() {
     InitializeHistMap(hists1D_, histMap1D_);
     InitializeHistMap(weighthists1D_, weighthistMap1D_);
     InitializeHistMap(jethists1D_, jethistMap1D_);
+    InitializeHistMap(jetTest2D_, jetTestMap2D_);
 
     for (auto && entry : *histInfo) {  
         TNamed* currentHistInfo = dynamic_cast<TNamed*>(entry);
@@ -272,6 +273,13 @@ void SelectorBase::InitializeHistogramFromConfig(std::string name, std::string c
             AddObject<TH2D>(jethistMap1D_[histName], 
                 (name+"_jetsysts_"+channel).c_str(), histData[0].c_str(),
                 nbins, xmin, xmax, 4, 0, 4); // 4 systs for JES and JER
+        }
+
+        if (isMC_ && !isNonPrompt_ && (jetTestMap2D_.find(histName) != jetTestMap2D_.end())) { 
+           //std::cout<<"Is weightHists getting filled?"<<std::endl;
+            AddObject<TH2D>(jetTestMap2D_[histName], 
+                (name+"_vsJetEta_"+channel).c_str(), histData[0].c_str(),
+                nbins, xmin, xmax, 50, 0, 5); //jetPt vs jetEta for single nJets, also define hist in hists1D_ to pass checks in InitializeHistogramsFromConfig()
         }
     }
     else {
