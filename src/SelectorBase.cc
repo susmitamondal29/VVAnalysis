@@ -275,7 +275,7 @@ void SelectorBase::InitializeHistogramFromConfig(std::string name, std::string c
                 nbins, xmin, xmax, 4, 0, 4); // 4 systs for JES and JER
         }
 
-        if (isMC_ && !isNonPrompt_ && (jetTestMap2D_.find(histName) != jetTestMap2D_.end())) { 
+        if (jetTestMap2D_.find(histName) != jetTestMap2D_.end()) { 
            //std::cout<<"Is weightHists getting filled?"<<std::endl;
             AddObject<TH2D>(jetTestMap2D_[histName], 
                 (name+"_vsJetEta_"+channel).c_str(), histData[0].c_str(),

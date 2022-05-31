@@ -67,10 +67,10 @@ void ZZSelector::Init(TTree *tree)
       "MassFull", "Mass0jFull", "Mass1jFull", "Mass2jFull", "Mass3jFull", "Mass34jFull", "Mass4jFull",
       "jetPt[0]", "jetPt[1]", "jetPt[2]", "jetEta[0]", "jetEta[1]", "absjetEta[0]", "absjetEta[1]", "jetEta[2]",
       "jetPhi[0]", "jetPhi[1]", "jetPhi[2]", "mjj", "dEtajj", "SIP3D", "jetPt[01]", "jetEta[01]",
-      "absjetEtaN1","jetPtN1","jetPtN2","jetPtN3","absjetEtaN1_100"
+      "absjetEtaN1","jetPtN1","jetPtN2","jetPtN3","absjetEtaN1_100",
       "PVDZ", "deltaPVDZ_sameZ", "deltaPVDZ_diffZ"};
 
-  jetTest2D_ = {"jetPtN2","jetPtN3"}; //also defined in hists1D_ to pass checks in InitializeHistogramsFromConfig()
+  jetTest2D_ = {"jetPtN1","jetPtN2","jetPtN3"}; //also defined in hists1D_ to pass checks in InitializeHistogramsFromConfig()
   jethists1D_ = {
       "Mass",
       "Mass0j",
@@ -131,13 +131,14 @@ void ZZSelector::Init(TTree *tree)
       "Mass34jFull",
       "Mass4jFull"};
   ZZSelectorBase::Init(tree);
-  fCutFormula = new TTreeFormula("CutFormula", fOption, fChain);
-  fCutFormula->SetQuickLoad(kTRUE);
-  if (!fCutFormula->GetNdim())
-  {
-    delete fCutFormula;
-    fCutFormula = 0;
-  }
+  //fCutFormula = new TTreeFormula("CutFormula", fOption, fChain);
+  //fCutFormula->SetQuickLoad(kTRUE);
+  //if (!fCutFormula->GetNdim())
+  //{
+  //  delete fCutFormula;
+  //  fCutFormula = 0;
+  //}
+  fCutFormula = 0; //turn off trigger cut test
 }
 
 void ZZSelector::SetBranchesUWVV()
@@ -1542,6 +1543,7 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
   if (jetPt->size() == 1 && jetPt->size() == jetEta->size()){
     SafeHistFill(histMap1D_, getHistName("jetPtN1", variation.second), jetPt->at(0), weight);
     SafeHistFill(histMap1D_, getHistName("absjetEtaN1", variation.second), std::abs(jetEta->at(0)), weight);
+    SafeHistFill(jetTestMap2D_, getHistName("jetPtN1", variation.second), jetPt->at(0),std::abs(jetEta->at(0)), weight);
     if (jetPt->at(0)<100){
     SafeHistFill(histMap1D_, getHistName("absjetEtaN1_100", variation.second), std::abs(jetEta->at(0)), weight);
     }
