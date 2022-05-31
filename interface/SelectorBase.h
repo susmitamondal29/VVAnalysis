@@ -11,6 +11,7 @@
 #include <TEfficiency.h>
 #include <exception>
 #include <iostream>
+#include <string>
 
 // Headers needed by this particular selector
 #include <vector>
