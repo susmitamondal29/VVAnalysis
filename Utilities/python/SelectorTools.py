@@ -276,9 +276,12 @@ class SelectorDriver(object):
                 % (tree_name, filename, self.ntupleType)
             )
         logging.debug("Processing tree %s for file %s." % (tree.GetName(), rtfile.GetName()))
-        aliases = UserInput.readJson("Cuts/%s/aliases.json" % self.analysis)
-        for nameAlias, valueAlias in aliases["Event"].iteritems():
-            tree.SetAlias(nameAlias, valueAlias)
+        
+        #Codes for trigger test
+        #aliases = UserInput.readJson("Cuts/%s/aliases.json" % self.analysis)
+        #for nameAlias, valueAlias in aliases["Event"].iteritems():
+        #    tree.SetAlias(nameAlias, valueAlias)
+        
         #TriggerStr = "(singleIsoMuPass || doubleMuDZPass || tripleMuPass)"
         #TriggerStr = "((singleIsoMuPass || doubleMuDZPass || tripleMuPass) && (singleEPass || doubleEPass || tripleEPass))"
         #TriggerStr = "(!(singleIsoMuPass || doubleMuDZPass || tripleMuPass) && (singleEPass || doubleEPass || tripleEPass))"
