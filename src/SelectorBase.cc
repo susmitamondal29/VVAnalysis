@@ -320,12 +320,22 @@ void SelectorBase::InitializeHistogramFromConfig(std::string name, std::string c
         }
 
         // jetPt vs jetEta for single nJets, also define hist in hists1D_ to pass checks in InitializeHistogramsFromConfig()
+        // Now also include jet Eta vs jet Phi for HEM15/16 studies
         float jEta_binning[] = {0.0, 1.5, 2.4, 3.2, 4.7};
         float jPt_binning[] = {30., 50., 100., 200., 300., 500.};
         float jEta_binning2[] = {0.0, 1.5, 3.0, 4.7};
         float jPt_binning2[] = {30., 50., 100., 170., 300.};
+        float jPhi_binning[] = {-3.15,-2.5,-1.57,-0.87,0.0,0.87,1.57,2.5,3.15};
+        float jEta_binning3[] = {-4.7,-3.0,-2.5,-1.3,0.0, 1.3, 2.5,3.0, 4.7};
         if (jetTestMap2D_.find(histName) != jetTestMap2D_.end())
         {
+            if (histName.find("HEM") != std::string::npos)
+            {
+                AddObject<TH2D>(jetTestMap2D_[histName],
+                                (name + "_JetEtaVsPhi_" + channel).c_str(), histData[0].c_str(),
+                                8, jPhi_binning, 8, jEta_binning3);
+            }
+
             if (histName.find("N1") != std::string::npos)
             {
                 AddObject<TH2D>(jetTestMap2D_[histName],
