@@ -67,10 +67,10 @@ void ZZSelector::Init(TTree *tree)
       "MassFull", "Mass0jFull", "Mass1jFull", "Mass2jFull", "Mass3jFull", "Mass34jFull", "Mass4jFull",
       "jetPt[0]", "jetPt[1]", "jetPt[2]", "jetEta[0]", "jetEta[1]", "absjetEta[0]", "absjetEta[1]", "jetEta[2]",
       "jetPhi[0]", "jetPhi[1]", "jetPhi[2]", "mjj", "dEtajj", "SIP3D", "jetPt[01]", "jetEta[01]",
-      "absjetEtaN1", "jetPtN1", "jetPtN2", "jetPtN3", "absjetEtaN1_100", "jetHEM_AB", "jetHEM_CD",
+      "absjetEtaN1", "jetPtN1", "jetPtN2", "jetPtN3", "absjetEtaN1_100", "jetHEM_AB", "jetHEM_CD","jetHEM2_AB", "jetHEM2_CD",
       "PVDZ", "deltaPVDZ_sameZ", "deltaPVDZ_diffZ"};
 
-  jetTest2D_ = {"jetPtN1", "jetPtN2", "jetPtN3", "jetHEM_AB", "jetHEM_CD"}; // also defined in hists1D_ to pass checks in InitializeHistogramsFromConfig()
+  jetTest2D_ = {"jetPtN1", "jetPtN2", "jetPtN3", "jetHEM_AB", "jetHEM_CD","jetHEM2_AB", "jetHEM2_CD"}; // also defined in hists1D_ to pass checks in InitializeHistogramsFromConfig()
   jethists1D_ = {
       "Mass",
       "Mass0j",
@@ -1543,10 +1543,12 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
       if (run < 319077)
       {
         SafeHistFill(jetTestMap2D_, getHistName("jetHEM_AB", variation.second), jetPhi->at(ind), jetEta->at(ind), weight);
+        SafeHistFill(jetTestMap2D_, getHistName("jetHEM2_AB", variation.second), jetPhi->at(ind), jetPt->at(ind), weight);
       }
       else
       {
         SafeHistFill(jetTestMap2D_, getHistName("jetHEM_CD", variation.second), jetPhi->at(ind), jetEta->at(ind), weight);
+        SafeHistFill(jetTestMap2D_, getHistName("jetHEM2_CD", variation.second), jetPhi->at(ind), jetPt->at(ind), weight);
       }
     }
 
