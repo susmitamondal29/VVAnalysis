@@ -334,8 +334,8 @@ void SelectorBase::InitializeHistogramFromConfig(std::string name, std::string c
                 if (histName.find("HEM2") != std::string::npos)
                 {
                     AddObject<TH2D>(jetTestMap2D_[histName],
-                                    (name + "_JetPtVsPhi_" + channel).c_str(), histData[0].c_str(),
-                                    8, jPhi_binning, 7, jPt_binning);
+                                    (name + "_JetEtaVsPhiFillPt_" + channel).c_str(), histData[0].c_str(),
+                                    8, jPhi_binning, 8, jEta_binning3);
                 }
                 else
                 {
