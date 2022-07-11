@@ -390,12 +390,16 @@ void ZZSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::str
 
 void ZZSelector::ApplyScaleFactors()
 {
+
+  bool applyPUSF = false;
+  if (applyPUSF){
   for (unsigned int ind = 0; ind < jetPt->size(); ind++){
     if(jetPt->at(ind)<50){
     auto jetbin = jetPUSF_->FindBin(jetPt->at(ind),jetEta->at(ind));
     auto jetPUSF =  jetPUSF_->GetBinContent(jetbin);
     weight *= jetPUSF;
     }
+  }
   }
   // In order to get around the Overflow issue, set the Pt, not ideal.
   // std::cout<<"weight before SF: "<<weight<<std::endl;
