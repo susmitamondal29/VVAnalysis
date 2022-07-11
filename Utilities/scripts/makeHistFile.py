@@ -73,6 +73,7 @@ def makeHistFile(args):
     if args['analysis'] == "WZxsec2016" or args['analysis'] == 'Zstudy_2016' or args['scalefactors_file']:
         addScaleFacs = True
     fjetPUSF = ROOT.TFile("data/jetSF/scalefactorsPUID_81Xtraining.root")
+    fjetPUeff= ROOT.TFile("data/jetSF/effcyPUID_81Xtraining.root")
     sf_inputs = [ROOT.TParameter(bool)("applyScaleFacs", False)]
     fr_inputs = []
     if addScaleFacs:
@@ -97,6 +98,8 @@ def makeHistFile(args):
                 electronRunGapSF.SetName("electronRunGapSF")
                 jetPUSF = fjetPUSF.Get("h2_eff_sf2018_T")
                 jetPUSF.SetName("jetPUSF")
+                jetPUeff = fjetPUeff.Get("h2_eff_mc2018_T")
+                jetPUeff.SetName("jetPUeff")
             elif "2016" in args['scalefactors_file']:
                 muonRunSF= fScales.Get('muonRun16SF')
                 muonRunSF.SetName("muonRunSF")
@@ -110,6 +113,8 @@ def makeHistFile(args):
                 electronRunGapSF.SetName("electronRunGapSF")
                 jetPUSF = fjetPUSF.Get("h2_eff_sf2016_T")
                 jetPUSF.SetName("jetPUSF")
+                jetPUeff = fjetPUeff.Get("h2_eff_mc2016_T")
+                jetPUeff.SetName("jetPUeff")
             elif "2017" in args['scalefactors_file']:
                 muonRunSF= fScales.Get('muonRun17SF')
                 muonRunSF.SetName("muonRunSF")
@@ -123,13 +128,15 @@ def makeHistFile(args):
                 electronRunGapSF.SetName("electronRunGapSF")
                 jetPUSF = fjetPUSF.Get("h2_eff_sf2017_T")
                 jetPUSF.SetName("jetPUSF")
+                jetPUeff = fjetPUeff.Get("h2_eff_mc2017_T")
+                jetPUeff.SetName("jetPUeff")
             else: 
                 print "what scale factors you want?"
                 sys.exit()
             pileupSF = fScales.Get('pileupSF')
 
             fr_inputs = [eZZTightFakeRate, mZZTightFakeRate,]
-            sf_inputs = [electronLowRecoSF,electronRecoSF,electronRunSF, electronRunGapSF,muonRunSF,pileupSF,jetPUSF]
+            sf_inputs = [electronLowRecoSF,electronRecoSF,electronRunSF, electronRunGapSF,muonRunSF,pileupSF,jetPUSF,jetPUeff]
         else:
             fScales = ROOT.TFile('data/scaleFactors.root')
             mCBTightFakeRate = fScales.Get("mCBTightFakeRate")

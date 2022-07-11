@@ -18,6 +18,10 @@ void ZZSelectorBase::SetScaleFactors()
   if (jetPUSF_ == nullptr)
     std::invalid_argument("Must pass jet PU id SF");
 
+  jetPUeff_ = (TH2F *) GetInputList()->FindObject("jetPUeff");
+  if (jetPUeff_ == nullptr)
+    std::invalid_argument("Must pass jet PU id eff");
+
   pileupSF_ = (ScaleFactor *)GetInputList()->FindObject("pileupSF");
   if (pileupSF_ == nullptr)
     std::invalid_argument("Must pass pileup weights SF");

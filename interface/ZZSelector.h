@@ -67,6 +67,11 @@ public:
     float dPhiZZ; //DeltaPhi between Z1 and Z2
     float dRZZ;   //DeltaR between Z1 and Z2
 
+    std::vector<int> *jetPUID = NULL;
+    std::vector<int> *isGenJetMatched = NULL;
+
+    TBranch *b_jetPUID;
+    TBranch *b_isGenJetMatched;
     TBranch *b_mjj;
     TBranch *b_mjj_jesUp;
     TBranch *b_mjj_jesDown;

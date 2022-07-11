@@ -157,8 +157,11 @@ void ZZSelector::SetBranchesUWVV()
   fChain->SetBranchAddress("Eta", &Eta, &b_Eta);
 
   fChain->SetBranchAddress("jetPt", &jetPt, &b_jetPt);
+  
   if (isMC_)
   {
+    fChain->SetBranchAddress("jetPUID", &jetPUID, &b_jetPUID);
+    fChain->SetBranchAddress("isGenJetMatched", &isGenJetMatched, &b_isGenJetMatched);
     fChain->SetBranchAddress("jetPt_jesUp", &jetPt_jesUp, &b_jetPt_jesUp);
     fChain->SetBranchAddress("jetPt_jesDown", &jetPt_jesDown, &b_jetPt_jesDown);
     fChain->SetBranchAddress("jetPt_jerUp", &jetPt_jerUp, &b_jetPt_jerUp);
@@ -254,6 +257,8 @@ void ZZSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::str
   b_jetPt->GetEntry(entry);
   if (isMC_)
   {
+    b_jetPUID->GetEntry(entry);
+    b_isGenJetMatched->GetEntry(entry);
     b_jetPt_jesUp->GetEntry(entry);
     b_jetPt_jesDown->GetEntry(entry);
     b_jetPt_jerUp->GetEntry(entry);
@@ -391,16 +396,63 @@ void ZZSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::str
 void ZZSelector::ApplyScaleFactors()
 {
 
-  bool applyPUSF = false;
+  bool applyPUSF = true;
   if (applyPUSF){
-  for (unsigned int ind = 0; ind < jetPt->size(); ind++){
+
+  for (std::size_t ind = 0; ind < jetPt->size(); ind++){
+
+    if (isGenJetMatched->at(ind) <1){ //only used real jets for applying SF
+      continue;  
+    }
+
     if(jetPt->at(ind)<50){
     auto jetbin = jetPUSF_->FindBin(jetPt->at(ind),jetEta->at(ind));
-    auto jetPUSF =  jetPUSF_->GetBinContent(jetbin);
-    weight *= jetPUSF;
+    float jetPUSF = (float) jetPUSF_->GetBinContent(jetbin);
+    auto jeffbin = jetPUeff_->FindBin(jetPt->at(ind),jetEta->at(ind));
+    float jeffPU =  (float) jetPUeff_->GetBinContent(jeffbin);
+    float mulfac = 1.;
+
+    if (jetPUID->at(ind)<7){ //doesn't pass PU id
+      mulfac = (1.-jetPUSF*jeffPU)/(1.-jeffPU);
+    }
+    else{
+      mulfac = jetPUSF;
+    }
+    weight *= mulfac;
     }
   }
   }
+
+  //apply jet PU id for remaining processing if MC. For data, should apply PU id at ntuplization step
+  if (jetPt->size() == jetEta->size() && jetPt->size() == jetPUID->size() && jetPUID->size() == isGenJetMatched->size())
+    {
+      auto jetit = jetPt->begin();
+      auto jetait = jetEta->begin();
+      auto jPUIDit = jetPUID->begin();
+
+      while (jetit != jetPt->end())
+      {
+        
+          if(*jetit < 50 && *jPUIDit <7){
+          jetit = jetPt->erase(jetit);
+          jetait = jetEta->erase(jetait);
+          jPUIDit = jetPUID->erase(jPUIDit);
+          }
+          else
+          {
+          ++jetit;
+          ++jetait;
+          ++jPUIDit;
+          }
+        
+        
+      }
+    }
+    else
+    {
+      std::cout << "Something Wrong jetPt vs jetEta, jetPUID, isGenJetMatched size" << jetPt->size() << " " << jetEta->size() << " " << jetPUID->size()<< " " << isGenJetMatched->size()<< std::endl;
+    }
+
   // In order to get around the Overflow issue, set the Pt, not ideal.
   // std::cout<<"weight before SF: "<<weight<<std::endl;
   if (channel_ == eeee)
