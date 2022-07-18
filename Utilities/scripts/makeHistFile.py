@@ -134,7 +134,10 @@ def makeHistFile(args):
                 print "what scale factors you want?"
                 sys.exit()
             pileupSF = fScales.Get('pileupSF')
-
+            jetPUSF.SetDirectory(0)
+            jetPUeff.SetDirectory(0)
+            ROOT.SetOwnership(jetPUSF,False)
+            ROOT.SetOwnership(jetPUeff,False)
             fr_inputs = [eZZTightFakeRate, mZZTightFakeRate,]
             sf_inputs = [electronLowRecoSF,electronRecoSF,electronRunSF, electronRunGapSF,muonRunSF,pileupSF,jetPUSF,jetPUeff]
         else:
