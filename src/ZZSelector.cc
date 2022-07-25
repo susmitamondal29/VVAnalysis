@@ -66,11 +66,11 @@ void ZZSelector::Init(TTree *tree)
       "Mass", "Mass0j", "Mass1j", "Mass2j", "Mass3j", "Mass34j", "Mass4j", "nJets",
       "MassFull", "Mass0jFull", "Mass1jFull", "Mass2jFull", "Mass3jFull", "Mass34jFull", "Mass4jFull",
       "jetPt[0]", "jetPt[1]", "jetPt[2]", "jetEta[0]", "jetEta[1]", "absjetEta[0]", "absjetEta[1]", "jetEta[2]",
-      "jetPhi[0]", "jetPhi[1]", "jetPhi[2]", "mjj", "dEtajj", "SIP3D", "jetPt[01]", "jetEta[01]",
-      "absjetEtaN1", "jetPtN1", "jetPtN2", "jetPtN3", "absjetEtaN1_100", "jetHEM_AB", "jetHEM_CD","jetHEM2_AB", "jetHEM2_CD",
+      "jetPhi[0]", "jetPhi[1]", "jetPhi[2]", "mjj", "dEtajj", "SIP3D", "jetPt[01]", "jetEta[01]", "jetEtaAllj","absjetEtaAllj",
+      "absjetEtaN1", "jetPtN1", "jetPtN2", "jetPtN3", "absjetEtaN1_100", "jetHEM_AB", "jetHEM_CD", "jetHEM2_AB", "jetHEM2_CD",
       "PVDZ", "deltaPVDZ_sameZ", "deltaPVDZ_diffZ"};
 
-  jetTest2D_ = {"jetPtN1", "jetPtN2", "jetPtN3", "jetHEM_AB", "jetHEM_CD","jetHEM2_AB", "jetHEM2_CD"}; // also defined in hists1D_ to pass checks in InitializeHistogramsFromConfig()
+  jetTest2D_ = {"jetPtN1", "jetPtN2", "jetPtN3", "jetHEM_AB", "jetHEM_CD", "jetHEM2_AB", "jetHEM2_CD"}; // also defined in hists1D_ to pass checks in InitializeHistogramsFromConfig()
   jethists1D_ = {
       "Mass",
       "Mass0j",
@@ -157,11 +157,13 @@ void ZZSelector::SetBranchesUWVV()
   fChain->SetBranchAddress("Eta", &Eta, &b_Eta);
 
   fChain->SetBranchAddress("jetPt", &jetPt, &b_jetPt);
-  
+
+  fChain->SetBranchAddress("jetPUID", &jetPUID, &b_jetPUID);
   if (isMC_)
   {
-    fChain->SetBranchAddress("jetPUID", &jetPUID, &b_jetPUID);
-    fChain->SetBranchAddress("isGenJetMatched", &isGenJetMatched, &b_isGenJetMatched);
+    
+    if (applyPUSF_){
+    fChain->SetBranchAddress("isGenJetMatched", &isGenJetMatched, &b_isGenJetMatched);}
     fChain->SetBranchAddress("jetPt_jesUp", &jetPt_jesUp, &b_jetPt_jesUp);
     fChain->SetBranchAddress("jetPt_jesDown", &jetPt_jesDown, &b_jetPt_jesDown);
     fChain->SetBranchAddress("jetPt_jerUp", &jetPt_jerUp, &b_jetPt_jerUp);
@@ -255,10 +257,12 @@ void ZZSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::str
   }
 
   b_jetPt->GetEntry(entry);
+  b_jetPUID->GetEntry(entry);
   if (isMC_)
   {
-    b_jetPUID->GetEntry(entry);
-    b_isGenJetMatched->GetEntry(entry);
+    
+    if (applyPUSF_){
+    b_isGenJetMatched->GetEntry(entry);}
     b_jetPt_jesUp->GetEntry(entry);
     b_jetPt_jesDown->GetEntry(entry);
     b_jetPt_jerUp->GetEntry(entry);
@@ -320,10 +324,41 @@ void ZZSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::str
       SetVariables(entry);
     }
   }
+
   if (isMC_)
   {
     ApplyScaleFactors();
   }
+
+  // apply jet PU id for remaining processing if MC. For data, should apply PU id at ntuplization step
+  if (jetPt->size() == jetEta->size() && jetPt->size() == jetPUID->size() )//&& jetPUID->size() == isGenJetMatched->size())
+  {
+    auto jetit = jetPt->begin();
+    auto jetait = jetEta->begin();
+    auto jPUIDit = jetPUID->begin();
+
+    while (jetit != jetPt->end())
+    {
+
+      if (*jetit < 50 && *jPUIDit < 7)
+      {
+        jetit = jetPt->erase(jetit);
+        jetait = jetEta->erase(jetait);
+        jPUIDit = jetPUID->erase(jPUIDit);
+      }
+      else
+      {
+        ++jetit;
+        ++jetait;
+        ++jPUIDit;
+      }
+    }
+  }
+  else
+  {
+    std::cout << "Something Wrong jetPt vs jetEta, jetPUID, isGenJetMatched size" << jetPt->size() << " " << jetEta->size() << " " << jetPUID->size() << std::endl; //<< " " << isGenJetMatched->size() << std::endl;
+  }
+
   if (variation.first == Central)
   {
     if (isMC_ && doSystematics_ && !isNonPrompt_)
@@ -396,62 +431,38 @@ void ZZSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::str
 void ZZSelector::ApplyScaleFactors()
 {
 
-  bool applyPUSF = true;
-  if (applyPUSF){
+  //bool applyPUSF = true;
+  if (applyPUSF_)
+  {
 
-  for (std::size_t ind = 0; ind < jetPt->size(); ind++){
-
-    if (isGenJetMatched->at(ind) <1){ //only used real jets for applying SF
-      continue;  
-    }
-
-    if(jetPt->at(ind)<50){
-    auto jetbin = jetPUSF_->FindBin(jetPt->at(ind),jetEta->at(ind));
-    float jetPUSF = (float) jetPUSF_->GetBinContent(jetbin);
-    auto jeffbin = jetPUeff_->FindBin(jetPt->at(ind),jetEta->at(ind));
-    float jeffPU =  (float) jetPUeff_->GetBinContent(jeffbin);
-    float mulfac = 1.;
-
-    if (jetPUID->at(ind)<7){ //doesn't pass PU id
-      mulfac = (1.-jetPUSF*jeffPU)/(1.-jeffPU);
-    }
-    else{
-      mulfac = jetPUSF;
-    }
-    weight *= mulfac;
-    }
-  }
-  }
-
-  //apply jet PU id for remaining processing if MC. For data, should apply PU id at ntuplization step
-  if (jetPt->size() == jetEta->size() && jetPt->size() == jetPUID->size() && jetPUID->size() == isGenJetMatched->size())
+    for (std::size_t ind = 0; ind < jetPt->size(); ind++)
     {
-      auto jetit = jetPt->begin();
-      auto jetait = jetEta->begin();
-      auto jPUIDit = jetPUID->begin();
 
-      while (jetit != jetPt->end())
+      if (isGenJetMatched->at(ind) < 1)
+      { // only used real jets for applying SF
+        continue;
+      }
+
+      if (jetPt->at(ind) < 50)
       {
-        
-          if(*jetit < 50 && *jPUIDit <7){
-          jetit = jetPt->erase(jetit);
-          jetait = jetEta->erase(jetait);
-          jPUIDit = jetPUID->erase(jPUIDit);
-          }
-          else
-          {
-          ++jetit;
-          ++jetait;
-          ++jPUIDit;
-          }
-        
-        
+        auto jetbin = jetPUSF_->FindBin(jetPt->at(ind), jetEta->at(ind));
+        float jetPUSF = (float)jetPUSF_->GetBinContent(jetbin);
+        auto jeffbin = jetPUeff_->FindBin(jetPt->at(ind), jetEta->at(ind));
+        float jeffPU = (float)jetPUeff_->GetBinContent(jeffbin);
+        float mulfac = 1.;
+
+        if (jetPUID->at(ind) < 7)
+        { // doesn't pass PU id
+          mulfac = (1. - jetPUSF * jeffPU) / (1. - jeffPU);
+        }
+        else
+        {
+          mulfac = jetPUSF;
+        }
+        weight *= mulfac;
       }
     }
-    else
-    {
-      std::cout << "Something Wrong jetPt vs jetEta, jetPUID, isGenJetMatched size" << jetPt->size() << " " << jetEta->size() << " " << jetPUID->size()<< " " << isGenJetMatched->size()<< std::endl;
-    }
+  }
 
   // In order to get around the Overflow issue, set the Pt, not ideal.
   // std::cout<<"weight before SF: "<<weight<<std::endl;
@@ -1360,6 +1371,12 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
     SafeHistFill(histMap1D_, getHistName("e2PtSortedFull", variation.second), e2PtTmp, weight);
   }
 
+  //eta for all jets in full mass range
+  for (unsigned int ind = 0; ind < jetPt->size(); ind++)
+    {
+      SafeHistFill(histMap1D_, getHistName("jetEtaAllj", variation.second), jetEta->at(ind), weight);
+      SafeHistFill(histMap1D_, getHistName("absjetEtaAllj", variation.second), std::abs(jetEta->at(ind)), weight); 
+    }
   // bool noBlind = true;
   // Applying the ZZ Selection here
   // std::cout<<"Is fillHistograms working?"<<std::endl;
@@ -1603,15 +1620,18 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
 
     for (unsigned int ind = 0; ind < jetPt->size(); ind++)
     {
+      //SafeHistFill(histMap1D_, getHistName("jetEtaAllj", variation.second), jetEta->at(ind), weight);
+      //SafeHistFill(histMap1D_, getHistName("absjetEtaAllj", variation.second), std::abs(jetEta->at(ind)), weight); 
+
       if (run < 319077)
       {
         SafeHistFill(jetTestMap2D_, getHistName("jetHEM_AB", variation.second), jetPhi->at(ind), jetEta->at(ind), weight);
-        SafeHistFill(jetTestMap2D_, getHistName("jetHEM2_AB", variation.second), jetPhi->at(ind), jetEta->at(ind), jetPt->at(ind)*weight);
+        SafeHistFill(jetTestMap2D_, getHistName("jetHEM2_AB", variation.second), jetPhi->at(ind), jetEta->at(ind), jetPt->at(ind) * weight);
       }
       else
       {
         SafeHistFill(jetTestMap2D_, getHistName("jetHEM_CD", variation.second), jetPhi->at(ind), jetEta->at(ind), weight);
-        SafeHistFill(jetTestMap2D_, getHistName("jetHEM2_CD", variation.second), jetPhi->at(ind), jetEta->at(ind), jetPt->at(ind)*weight);
+        SafeHistFill(jetTestMap2D_, getHistName("jetHEM2_CD", variation.second), jetPhi->at(ind), jetEta->at(ind), jetPt->at(ind) * weight);
       }
     }
 
