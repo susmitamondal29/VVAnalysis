@@ -12,7 +12,7 @@ public:
     bool applyFullSelection_ = true;
     bool isaTGC_ = false;
     bool doaTGC_ = false;
-    bool applyPUSF_ = true;
+    bool applyPUSF_ = false;//true;
 
     std::vector<float> *scaleWeights = NULL;
     std::vector<float> *pdfWeights = NULL;

@@ -345,6 +345,7 @@ void ZZSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::str
         jetit = jetPt->erase(jetit);
         jetait = jetEta->erase(jetait);
         jPUIDit = jetPUID->erase(jPUIDit);
+	std::cout<<"A jet is removed by PU id"<<std::endl;
       }
       else
       {
@@ -1374,8 +1375,9 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
   //eta for all jets in full mass range
   for (unsigned int ind = 0; ind < jetPt->size(); ind++)
     {
+      if (jetPt->at(ind)>50){
       SafeHistFill(histMap1D_, getHistName("jetEtaAllj", variation.second), jetEta->at(ind), weight);
-      SafeHistFill(histMap1D_, getHistName("absjetEtaAllj", variation.second), std::abs(jetEta->at(ind)), weight); 
+      SafeHistFill(histMap1D_, getHistName("absjetEtaAllj", variation.second), std::abs(jetEta->at(ind)), weight); }
     }
   // bool noBlind = true;
   // Applying the ZZ Selection here
