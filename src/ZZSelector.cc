@@ -66,9 +66,9 @@ void ZZSelector::Init(TTree *tree)
       "Mass", "Mass0j", "Mass1j", "Mass2j", "Mass3j", "Mass34j", "Mass4j", "nJets",
       "MassFull", "Mass0jFull", "Mass1jFull", "Mass2jFull", "Mass3jFull", "Mass34jFull", "Mass4jFull",
       "jetPt[0]", "jetPt[1]", "jetPt[2]", "jetEta[0]", "jetEta[1]", "absjetEta[0]", "absjetEta[1]", "jetEta[2]",
-      "jetPhi[0]", "jetPhi[1]", "jetPhi[2]", "mjj", "dEtajj", "SIP3D", "jetPt[01]", "jetEta[01]", 
-      "jetEtaAllj","absjetEtaAllj","jetEtaAllj50","absjetEtaAllj50","jetEtaAllj_120","absjetEtaAllj_120","jetEtaAllj50_120","absjetEtaAllj50_120",
-      "jetEtaAllj_180","absjetEtaAllj_180","jetEtaAllj50_180","absjetEtaAllj50_180",
+      "jetPhi[0]", "jetPhi[1]", "jetPhi[2]", "mjj", "dEtajj", "SIP3D", "jetPt[01]", "jetEta[01]",
+      "jetEtaAllj", "absjetEtaAllj", "jetEtaAllj50", "absjetEtaAllj50", "jetEtaAllj_120", "absjetEtaAllj_120", "jetEtaAllj50_120", "absjetEtaAllj50_120",
+      "jetEtaAllj_180", "absjetEtaAllj_180", "jetEtaAllj50_180", "absjetEtaAllj50_180",
       "absjetEtaN1", "jetPtN1", "jetPtN2", "jetPtN3", "absjetEtaN1_100", "jetHEM_AB", "jetHEM_CD", "jetHEM2_AB", "jetHEM2_CD",
       "PVDZ", "deltaPVDZ_sameZ", "deltaPVDZ_diffZ"};
 
@@ -163,15 +163,19 @@ void ZZSelector::SetBranchesUWVV()
   fChain->SetBranchAddress("jetPUID", &jetPUID, &b_jetPUID);
   if (isMC_)
   {
-    
+
     applyPUSF_ = false;
-    if (applyPUSF_){
-      try{ //catching doesn't seem to work. Crash directly in either here or getentry()
-    fChain->SetBranchAddress("isGenJetMatched", &isGenJetMatched, &b_isGenJetMatched);}
-    catch(...){
-      applyPUSF_ = false;
-      std::cout<<"Cannot set address; PU SF is not applied for this sample"<<std::endl;
-    }
+    if (applyPUSF_)
+    {
+      try
+      { // catching doesn't seem to work. Crash directly in either here or getentry()
+        fChain->SetBranchAddress("isGenJetMatched", &isGenJetMatched, &b_isGenJetMatched);
+      }
+      catch (...)
+      {
+        applyPUSF_ = false;
+        std::cout << "Cannot set address; PU SF is not applied for this sample" << std::endl;
+      }
     }
     fChain->SetBranchAddress("jetPt_jesUp", &jetPt_jesUp, &b_jetPt_jesUp);
     fChain->SetBranchAddress("jetPt_jesDown", &jetPt_jesDown, &b_jetPt_jesDown);
@@ -269,13 +273,17 @@ void ZZSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::str
   b_jetPUID->GetEntry(entry);
   if (isMC_)
   {
-    if (applyPUSF_){
-      try{ //catching doesn't seem to work. Crash directly somewhere for sample without isGenJetMatched.
-    b_isGenJetMatched->GetEntry(entry);}
-    catch(...){
-    applyPUSF_ = false;
-    std::cout<<"PU SF is not applied for this sample"<<std::endl;
-    }
+    if (applyPUSF_)
+    {
+      try
+      { // catching doesn't seem to work. Crash directly somewhere for sample without isGenJetMatched.
+        b_isGenJetMatched->GetEntry(entry);
+      }
+      catch (...)
+      {
+        applyPUSF_ = false;
+        std::cout << "PU SF is not applied for this sample" << std::endl;
+      }
     }
     b_jetPt_jesUp->GetEntry(entry);
     b_jetPt_jesDown->GetEntry(entry);
@@ -344,37 +352,78 @@ void ZZSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::str
     ApplyScaleFactors();
   }
 
-  bool applyjetPUID = true;
-  if (applyjetPUID){
-  // apply jet PU id for remaining processing if MC. For data, should apply PU id at ntuplization step but can also apply here
-  if (jetPt->size() == jetEta->size() && jetPt->size() == jetPUID->size() )//&& jetPUID->size() == isGenJetMatched->size())
+  if (isMC_)
   {
-    auto jetit = jetPt->begin();
-    auto jetait = jetEta->begin();
-    auto jPUIDit = jetPUID->begin();
-
-    while (jetit != jetPt->end())
+    bool applyjetMatch = true;
+    if (applyjetMatch)
     {
-
-      if (*jetit < 50 && *jPUIDit < 7)
+      // apply jet PU id for remaining processing if MC. For data, should apply PU id at ntuplization step but can also apply here
+      if (jetPt->size() == jetEta->size() && jetPt->size() == jetPUID->size() && jetPUID->size() == isGenJetMatched->size())
       {
-        jetit = jetPt->erase(jetit);
-        jetait = jetEta->erase(jetait);
-        jPUIDit = jetPUID->erase(jPUIDit);
-	//std::cout<<"A jet is removed by PU id"<<std::endl;
+        auto jetit = jetPt->begin();
+        auto jetait = jetEta->begin();
+        auto jPUIDit = jetPUID->begin();
+        auto jmatchit = isGenJetMatched->begin();
+
+        while (jetit != jetPt->end())
+        {
+
+          if (*jmatchit < 1)
+          {
+            jetit = jetPt->erase(jetit);
+            jetait = jetEta->erase(jetait);
+            jPUIDit = jetPUID->erase(jPUIDit);
+            jmatchit = isGenJetMatched->erase(jmatchit);
+            // std::cout<<"A jet is removed by PU id"<<std::endl;
+          }
+          else
+          {
+            ++jetit;
+            ++jetait;
+            ++jPUIDit;
+            ++jmatchit;
+          }
+        }
       }
       else
       {
-        ++jetit;
-        ++jetait;
-        ++jPUIDit;
+        std::cout << "Something Wrong jetPt vs jetEta, jetPUID, isGenJetMatched size" << jetPt->size() << " " << jetEta->size() << " " << jetPUID->size() << std::endl; //<< " " << isGenJetMatched->size() << std::endl;
       }
     }
   }
-  else
+
+  bool applyjetPUID = true;
+  if (applyjetPUID)
   {
-    std::cout << "Something Wrong jetPt vs jetEta, jetPUID, isGenJetMatched size" << jetPt->size() << " " << jetEta->size() << " " << jetPUID->size() << std::endl; //<< " " << isGenJetMatched->size() << std::endl;
-  }
+    // apply jet PU id for remaining processing if MC. For data, should apply PU id at ntuplization step but can also apply here
+    if (jetPt->size() == jetEta->size() && jetPt->size() == jetPUID->size()) //&& jetPUID->size() == isGenJetMatched->size())
+    {
+      auto jetit = jetPt->begin();
+      auto jetait = jetEta->begin();
+      auto jPUIDit = jetPUID->begin();
+
+      while (jetit != jetPt->end())
+      {
+
+        if (*jetit < 50 && *jPUIDit < 7)
+        {
+          jetit = jetPt->erase(jetit);
+          jetait = jetEta->erase(jetait);
+          jPUIDit = jetPUID->erase(jPUIDit);
+          // std::cout<<"A jet is removed by PU id"<<std::endl;
+        }
+        else
+        {
+          ++jetit;
+          ++jetait;
+          ++jPUIDit;
+        }
+      }
+    }
+    else
+    {
+      std::cout << "Something Wrong jetPt vs jetEta, jetPUID, isGenJetMatched size" << jetPt->size() << " " << jetEta->size() << " " << jetPUID->size() << std::endl; //<< " " << isGenJetMatched->size() << std::endl;
+    }
   }
 
   if (variation.first == Central)
@@ -449,7 +498,7 @@ void ZZSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::str
 void ZZSelector::ApplyScaleFactors()
 {
 
-  //bool applyPUSF = true;
+  // bool applyPUSF = true;
   if (applyPUSF_)
   {
 
@@ -1389,27 +1438,31 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
     SafeHistFill(histMap1D_, getHistName("e2PtSortedFull", variation.second), e2PtTmp, weight);
   }
 
-  //eta for all jets in full mass range
+  // eta for all jets in full mass range
   for (unsigned int ind = 0; ind < jetPt->size(); ind++)
+  {
+    SafeHistFill(histMap1D_, getHistName("jetEtaAllj", variation.second), jetEta->at(ind), weight);
+    SafeHistFill(histMap1D_, getHistName("absjetEtaAllj", variation.second), std::abs(jetEta->at(ind)), weight);
+
+    if (jetPt->at(ind) > 50)
     {
-      SafeHistFill(histMap1D_, getHistName("jetEtaAllj", variation.second), jetEta->at(ind), weight);
-      SafeHistFill(histMap1D_, getHistName("absjetEtaAllj", variation.second), std::abs(jetEta->at(ind)), weight);
-
-      if (jetPt->at(ind)>50){
       SafeHistFill(histMap1D_, getHistName("jetEtaAllj50", variation.second), jetEta->at(ind), weight);
-      SafeHistFill(histMap1D_, getHistName("absjetEtaAllj50", variation.second), std::abs(jetEta->at(ind)), weight); }
+      SafeHistFill(histMap1D_, getHistName("absjetEtaAllj50", variation.second), std::abs(jetEta->at(ind)), weight);
     }
+  }
 
-  
-  if (Mass<180){
+  if (Mass < 180)
+  {
     for (unsigned int ind = 0; ind < jetPt->size(); ind++)
     {
       SafeHistFill(histMap1D_, getHistName("jetEtaAllj_180", variation.second), jetEta->at(ind), weight);
       SafeHistFill(histMap1D_, getHistName("absjetEtaAllj_180", variation.second), std::abs(jetEta->at(ind)), weight);
 
-      if (jetPt->at(ind)>50){
-      SafeHistFill(histMap1D_, getHistName("jetEtaAllj50_180", variation.second), jetEta->at(ind), weight);
-      SafeHistFill(histMap1D_, getHistName("absjetEtaAllj50_180", variation.second), std::abs(jetEta->at(ind)), weight); }
+      if (jetPt->at(ind) > 50)
+      {
+        SafeHistFill(histMap1D_, getHistName("jetEtaAllj50_180", variation.second), jetEta->at(ind), weight);
+        SafeHistFill(histMap1D_, getHistName("absjetEtaAllj50_180", variation.second), std::abs(jetEta->at(ind)), weight);
+      }
     }
   }
   // bool noBlind = true;
@@ -1422,14 +1475,16 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
   }
 
   for (unsigned int ind = 0; ind < jetPt->size(); ind++)
-    {
-      SafeHistFill(histMap1D_, getHistName("jetEtaAllj_120", variation.second), jetEta->at(ind), weight);
-      SafeHistFill(histMap1D_, getHistName("absjetEtaAllj_120", variation.second), std::abs(jetEta->at(ind)), weight);
+  {
+    SafeHistFill(histMap1D_, getHistName("jetEtaAllj_120", variation.second), jetEta->at(ind), weight);
+    SafeHistFill(histMap1D_, getHistName("absjetEtaAllj_120", variation.second), std::abs(jetEta->at(ind)), weight);
 
-      if (jetPt->at(ind)>50){
+    if (jetPt->at(ind) > 50)
+    {
       SafeHistFill(histMap1D_, getHistName("jetEtaAllj50_120", variation.second), jetEta->at(ind), weight);
-      SafeHistFill(histMap1D_, getHistName("absjetEtaAllj50_120", variation.second), std::abs(jetEta->at(ind)), weight); }
+      SafeHistFill(histMap1D_, getHistName("absjetEtaAllj50_120", variation.second), std::abs(jetEta->at(ind)), weight);
     }
+  }
 
   // std::cout<<"eventWeight in ZZSelector: "<<weight<<std::endl;
   if ((variation.first == Central || (doaTGC_ && isaTGC_)) && isMC_)
@@ -1665,8 +1720,8 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
 
     for (unsigned int ind = 0; ind < jetPt->size(); ind++)
     {
-      //SafeHistFill(histMap1D_, getHistName("jetEtaAllj", variation.second), jetEta->at(ind), weight);
-      //SafeHistFill(histMap1D_, getHistName("absjetEtaAllj", variation.second), std::abs(jetEta->at(ind)), weight); 
+      // SafeHistFill(histMap1D_, getHistName("jetEtaAllj", variation.second), jetEta->at(ind), weight);
+      // SafeHistFill(histMap1D_, getHistName("absjetEtaAllj", variation.second), std::abs(jetEta->at(ind)), weight);
 
       if (run < 319077)
       {
