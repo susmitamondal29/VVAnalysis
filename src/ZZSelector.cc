@@ -164,14 +164,15 @@ void ZZSelector::SetBranchesUWVV()
   if (isMC_)
   {
     
-    applyPUSF_ = true;
-    try{
+    applyPUSF_ = false;
+    if (applyPUSF_){
+      try{ //catching doesn't seem to work. Crash directly in either here or getentry()
     fChain->SetBranchAddress("isGenJetMatched", &isGenJetMatched, &b_isGenJetMatched);}
     catch(...){
       applyPUSF_ = false;
       std::cout<<"Cannot set address; PU SF is not applied for this sample"<<std::endl;
     }
-    
+    }
     fChain->SetBranchAddress("jetPt_jesUp", &jetPt_jesUp, &b_jetPt_jesUp);
     fChain->SetBranchAddress("jetPt_jesDown", &jetPt_jesDown, &b_jetPt_jesDown);
     fChain->SetBranchAddress("jetPt_jerUp", &jetPt_jerUp, &b_jetPt_jerUp);
@@ -268,12 +269,13 @@ void ZZSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::str
   b_jetPUID->GetEntry(entry);
   if (isMC_)
   {
-    
-    try{
+    if (applyPUSF_){
+      try{ //catching doesn't seem to work. Crash directly somewhere for sample without isGenJetMatched.
     b_isGenJetMatched->GetEntry(entry);}
     catch(...){
     applyPUSF_ = false;
     std::cout<<"PU SF is not applied for this sample"<<std::endl;
+    }
     }
     b_jetPt_jesUp->GetEntry(entry);
     b_jetPt_jesDown->GetEntry(entry);
@@ -342,7 +344,9 @@ void ZZSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::str
     ApplyScaleFactors();
   }
 
-  // apply jet PU id for remaining processing if MC. For data, should apply PU id at ntuplization step
+  bool applyjetPUID = true;
+  if (applyjetPUID){
+  // apply jet PU id for remaining processing if MC. For data, should apply PU id at ntuplization step but can also apply here
   if (jetPt->size() == jetEta->size() && jetPt->size() == jetPUID->size() )//&& jetPUID->size() == isGenJetMatched->size())
   {
     auto jetit = jetPt->begin();
@@ -357,7 +361,7 @@ void ZZSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::str
         jetit = jetPt->erase(jetit);
         jetait = jetEta->erase(jetait);
         jPUIDit = jetPUID->erase(jPUIDit);
-	std::cout<<"A jet is removed by PU id"<<std::endl;
+	//std::cout<<"A jet is removed by PU id"<<std::endl;
       }
       else
       {
@@ -370,6 +374,7 @@ void ZZSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::str
   else
   {
     std::cout << "Something Wrong jetPt vs jetEta, jetPUID, isGenJetMatched size" << jetPt->size() << " " << jetEta->size() << " " << jetPUID->size() << std::endl; //<< " " << isGenJetMatched->size() << std::endl;
+  }
   }
 
   if (variation.first == Central)
