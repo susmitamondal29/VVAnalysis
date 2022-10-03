@@ -12,7 +12,8 @@ public:
     bool applyFullSelection_ = true;
     bool isaTGC_ = false;
     bool doaTGC_ = false;
-    bool applyPUSF_ = true;
+    bool applyPUSF_ = false;
+    bool applyPUSFNtp_ = true;
 
     std::vector<float> *scaleWeights = NULL;
     std::vector<float> *pdfWeights = NULL;
@@ -36,6 +37,7 @@ public:
     float zep3l_jerUp;
     float zep3l_jerDown;
     Float_t mjj;
+    Float_t jetPUSFmulfac;
     Float_t mjj_jesUp;
     Float_t mjj_jesDown;
     Float_t mjj_jerUp;
@@ -73,6 +75,7 @@ public:
 
     TBranch *b_jetPUID;
     TBranch *b_isGenJetMatched;
+    TBranch *b_jetPUSFmulfac;
     TBranch *b_mjj;
     TBranch *b_mjj_jesUp;
     TBranch *b_mjj_jesDown;

@@ -165,11 +165,12 @@ void ZZSelector::SetBranchesUWVV()
   {
 
     applyPUSF_ = false;
-    if (applyPUSF_)
+    if (applyPUSF_ || applyPUSFNtp_)
     {
       try
       { // catching doesn't seem to work. Crash directly in either here or getentry()
         fChain->SetBranchAddress("isGenJetMatched", &isGenJetMatched, &b_isGenJetMatched);
+        fChain->SetBranchAddress("jetPUSFmulfac", &jetPUSFmulfac, &b_jetPUSFmulfac);
       }
       catch (...)
       {
@@ -273,11 +274,12 @@ void ZZSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::str
   b_jetPUID->GetEntry(entry);
   if (isMC_)
   {
-    if (applyPUSF_)
+    if (applyPUSF_ || applyPUSFNtp_)
     {
       try
       { // catching doesn't seem to work. Crash directly somewhere for sample without isGenJetMatched.
         b_isGenJetMatched->GetEntry(entry);
+        b_jetPUSFmulfac->GetEntry(entry);
       }
       catch (...)
       {
@@ -354,10 +356,10 @@ void ZZSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::str
 
   if (isMC_)
   {
-    bool applyjetMatch = true;
+    bool applyjetMatch = false;
     if (applyjetMatch)
     {
-      // apply jet PU id for remaining processing if MC. For data, should apply PU id at ntuplization step but can also apply here
+      // apply gen jet matching for remaining processing if MC. For data, should apply PU id at ntuplization step but can also apply here
       if (jetPt->size() == jetEta->size() && jetPt->size() == jetPUID->size() && jetPUID->size() == isGenJetMatched->size())
       {
         auto jetit = jetPt->begin();
@@ -392,7 +394,7 @@ void ZZSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::str
     }
   }
 
-  bool applyjetPUID = true;
+  bool applyjetPUID = false;
   if (applyjetPUID)
   {
     // apply jet PU id for remaining processing if MC. For data, should apply PU id at ntuplization step but can also apply here
@@ -498,6 +500,10 @@ void ZZSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::str
 void ZZSelector::ApplyScaleFactors()
 {
 
+  if (applyPUSFNtp_){
+
+    weight *= jetPUSFmulfac;
+  }
   // bool applyPUSF = true;
   if (applyPUSF_)
   {
