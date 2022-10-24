@@ -19,39 +19,7 @@ void ZZSelector::Init(TTree *tree)
   // This would be set true inside ZZBackground Selector
   // isNonPrompt_ = false;
 
-  systHists_ = {
-      "yield",
-      "Mass",
-      "MassFull",
-      "nJets",
-      "jetPt[1]",
-      "jetPt[0]",
-      "jetEta[0]",
-      "jetEta[1]",
-      "absjetEta[0]",
-      "absjetEta[1]",
-      "mjj",
-      "dEtajj",
-      "Mass0j",
-      "Mass1j",
-      "Mass2j",
-      "Mass3j",
-      "Mass34j",
-      "Mass4j",
-      "Mass0jFull",
-      "Mass1jFull",
-      "Mass2jFull",
-      "Mass3jFull",
-      "Mass34jFull",
-      "Mass4jFull",
-      "ZMass",
-      "ZZPt",
-      "ZZEta",
-      "dPhiZ1Z2",
-      "dRZ1Z2",
-      "ZPt",
-      "LepPt",
-      "LepEta"};
+  systHists_ = $systHists ;
   // hists1D_ = {
   //      "yield", "backgroundControlYield","nTruePU","nvtx","ZMass","Z1Mass","Z2Mass","ZZPt",
   //      "Z1Pt","Z2Pt","Z1Phi","Z2Phi","dPhiZ1Z2","ZPt","LepPt","LepEta","Lep12Pt","Lep12Eta",
@@ -60,78 +28,12 @@ void ZZSelector::Init(TTree *tree)
   //      "Z2lep2_Eta","Z2lep2_Phi","Z2lep2_Pt","Z2lep2_PdgId","Mass","nJets",
   // };
 
-  hists1D_ = {
-      "yield", "Z1Mass", "Z2Mass", "ZMass", "ZZPt", "ZZEta", "dPhiZ1Z2", "dRZ1Z2", "ZPt", "LepPt", "LepPtFull", "LepEta", "PassTriggerFull",
-      "LepPt1", "LepPt2", "LepPt3", "LepPt4", "LepPt1Full", "LepPt2Full", "LepPt3Full", "LepPt4Full", "e1PtSortedFull", "e2PtSortedFull", "e1PtSorted", "e2PtSorted",
-      "Mass", "Mass0j", "Mass1j", "Mass2j", "Mass3j", "Mass34j", "Mass4j", "nJets",
-      "MassFull", "Mass0jFull", "Mass1jFull", "Mass2jFull", "Mass3jFull", "Mass34jFull", "Mass4jFull",
-      "jetPt[0]", "jetPt[1]", "jetPt[2]", "jetEta[0]", "jetEta[1]", "absjetEta[0]", "absjetEta[1]", "jetEta[2]",
-      "jetPhi[0]", "jetPhi[1]", "jetPhi[2]", "mjj", "dEtajj", "SIP3D", "jetPt[01]", "jetEta[01]",
-      "jetEtaAllj", "absjetEtaAllj", "jetEtaAllj50", "absjetEtaAllj50", "jetEtaAllj_120", "absjetEtaAllj_120", "jetEtaAllj50_120", "absjetEtaAllj50_120",
-      "jetEtaAllj_180", "absjetEtaAllj_180", "jetEtaAllj50_180", "absjetEtaAllj50_180",
-      "absjetEtaN1", "jetPtN1", "jetPtN2", "jetPtN3", "absjetEtaN1_100", "jetHEM_AB", "jetHEM_CD", "jetHEM2_AB", "jetHEM2_CD",
-      "PVDZ", "deltaPVDZ_sameZ", "deltaPVDZ_diffZ"};
+  hists1D_ = $hists1D;
 
-  jetTest2D_ = {"jetPtN1", "jetPtN2", "jetPtN3", "jetHEM_AB", "jetHEM_CD", "jetHEM2_AB", "jetHEM2_CD"}; // also defined in hists1D_ to pass checks in InitializeHistogramsFromConfig()
-  jethists1D_ = {
-      "Mass",
-      "Mass0j",
-      "Mass1j",
-      "Mass2j",
-      "Mass3j",
-      "Mass34j",
-      "Mass4j",
-      "MassFull",
-      "Mass0jFull",
-      "Mass1jFull",
-      "Mass2jFull",
-      "Mass3jFull",
-      "Mass34jFull",
-      "Mass4jFull",
-      "nJets",
-      "jetPt[0]",
-      "jetPt[1]",
-      "jetEta[0]",
-      "jetEta[1]",
-      "absjetEta[0]",
-      "absjetEta[1]",
-      "mjj",
-      "dEtajj",
-  };
+  jetTest2D_ = $jetTest2D; // also defined in hists1D_ to pass checks in InitializeHistogramsFromConfig()
+  jethists1D_ = $jethists1D;
 
-  weighthists1D_ = {
-      "yield",
-      "Mass",
-      "MassFull",
-      "ZMass",
-      "ZZPt",
-      "ZZEta",
-      "dPhiZ1Z2",
-      "dRZ1Z2",
-      "ZPt",
-      "LepPt",
-      "LepEta",
-      "nJets",
-      "jetPt[1]",
-      "jetPt[0]",
-      "jetEta[0]",
-      "jetEta[1]",
-      "absjetEta[0]",
-      "absjetEta[1]",
-      "mjj",
-      "dEtajj",
-      "Mass0j",
-      "Mass1j",
-      "Mass2j",
-      "Mass3j",
-      "Mass34j",
-      "Mass4j",
-      "Mass0jFull",
-      "Mass1jFull",
-      "Mass2jFull",
-      "Mass3jFull",
-      "Mass34jFull",
-      "Mass4jFull"};
+  weighthists1D_ = $weighthists1D;
   ZZSelectorBase::Init(tree);
   // fCutFormula = new TTreeFormula("CutFormula", fOption, fChain);
   // fCutFormula->SetQuickLoad(kTRUE);
