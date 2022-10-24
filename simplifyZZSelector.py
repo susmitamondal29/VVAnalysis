@@ -22,6 +22,9 @@ baseList2 = baseList[1:]
 testList = ["yield", "Mass"]
 testList2 = testList[1:]
 
+#baseList = testList
+#baseList2 = testList2
+
 systHist_Ori= [
       "yield",
       "Mass",
@@ -168,14 +171,14 @@ mapdict["jetTest2D"] = "jetTestMap2D_"
 mapdict["jethists1D"] = "jethistMap1D_"
 mapdict["weighthists1D"] = "weighthistMap1D_"
 
-ft = open("src/ZZSelectorTemplate.cc","r")
+ft = open("src/ZZSelector.template","r")
 template = string.Template(ft.read())
 output = template.substitute(dict)
 with open("src/ZZSelectorTemplateFilledTmp.cc","w") as fout:
     fout.write(output)
 
 with open("src/ZZSelectorTemplateFilledTmp.cc","r") as fout2:
-    with open("src/ZZSelectorTemplateFilled.cc","w") as foutf:
+    with open("src/ZZSelectorFilled.template","w") as foutf:
         for line in fout2:
             if not "\n" in line:
                 print("Line doesn't contain \\n")
@@ -192,5 +195,5 @@ with open("src/ZZSelectorTemplateFilledTmp.cc","r") as fout2:
             
             foutf.write(line)
 
-print("src/ZZSelectorTemplateFilled.cc produced")
+print("src/ZZSelectorFilled.template produced")
 os.remove("src/ZZSelectorTemplateFilledTmp.cc")
