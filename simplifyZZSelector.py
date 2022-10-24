@@ -206,3 +206,130 @@ with open("src/ZZSelectorTemplateFilledTmp.cc","r") as fout2:
 
 print("src/ZZSelectorFilled.template produced")
 os.remove("src/ZZSelectorTemplateFilledTmp.cc")
+
+
+#Gen Selector
+Gendict = {}
+Genldict = {}
+Genodict = {}
+Genmapdict = {}
+
+GenbaseList = ["Gen"+li for li in baseList]
+GenbaseList2 = ["Gen"+li for li in baseList2]
+
+Genhists1D_Ori = [
+      "GenMass",
+      "GenMass0j",
+      "GenMass1j",
+      "GenMass2j",
+      "GenMass3j",
+      "GenMass34j",
+      "GenMass4j",
+      "GenMassFull",
+      "GenMass0jFull",
+      "GenMass1jFull",
+      "GenMass2jFull",
+      "GenMass3jFull",
+      "GenMass34jFull",
+      "GenMass4jFull",
+      "Genmjj",
+      "GennJets",
+      "Genyield",
+      "GenZMass",
+      "GenZZPt",
+      "GenZZEta",
+      "GenZPt",
+      "GendPhiZ1Z2",
+      "GendRZ1Z2",
+      "GenLepPt",
+      "GenLepEta",
+      "GenjetPt[0]",
+      "GenjetPt[1]",
+      "GenjetEta[0]",
+      "GenjetEta[1]",
+      "GenabsjetEta[0]",
+      "GenabsjetEta[1]",
+      "GendEtajj",
+]
+
+
+Genodict["Genhists1D"] = Genhists1D_Ori
+Genldict["Genhists1D"] = GenbaseList
+Gendict["Genhists1D"] = listToStr(Genldict["Genhists1D"])
+
+Genweighthists1D_Ori = [
+      "Genyield",
+      "GenMass",
+      "GenMassFull",
+      "GenZMass",
+      "GenZZPt",
+      "GenZZEta",
+      "GendPhiZ1Z2",
+      "GendRZ1Z2",
+      "GenZPt",
+      "GenLepPt",
+      "GenLepEta",
+      "GennJets",
+      "GenjetPt[1]",
+      "GenjetPt[0]",
+      "GenjetEta[0]",
+      "GenjetEta[1]",
+      "GenabsjetEta[0]",
+      "GenabsjetEta[1]",
+      "Genmjj",
+      "GendEtajj",
+      "GenMass0j",
+      "GenMass1j",
+      "GenMass2j",
+      "GenMass3j",
+      "GenMass34j",
+      "GenMass4j",
+      "GenMass0jFull",
+      "GenMass1jFull",
+      "GenMass2jFull",
+      "GenMass3jFull",
+      "GenMass34jFull",
+      "GenMass4jFull"]
+
+Genodict["Genweighthists1D"] = Genweighthists1D_Ori
+Genldict["Genweighthists1D"] = GenbaseList
+Gendict["Genweighthists1D"] = listToStr(Genldict["Genweighthists1D"])
+
+Genmapdict["Genhists1D"] = "histMap1D_"
+Genmapdict["Genweighthists1D"] = "weighthistMap1D_"
+
+ft2 = open("src/ZZGenSelector.template","r")
+template2 = string.Template(ft2.read())
+output2 = template2.substitute(Gendict)
+with open("src/ZZGenSelectorTemplateFilledTmp.cc","w") as foutGen:
+    foutGen.write(output2)
+
+with open("src/ZZGenSelectorTemplateFilledTmp.cc","r") as fout2Gen:
+    with open("src/ZZGenSelectorFilled.template","w") as foutfGen:
+        for line in fout2Gen:
+
+            #For suppressing not used variables warning in compiling
+            #if not "LepPtFull" in hists1DList:
+            #    if "// sort lepton pt" in line:
+            #        line = "/*" + line
+            #    
+            #    if "//finish sorting lepton pt" in line:
+            #        line = line + "*/" + "\n"
+
+            if not "\n" in line:
+                print("Line doesn't contain \\n")
+                line+= "\n"
+
+            if "SafeHistFill" in line:
+                for key in Genmapdict.keys():
+                    if Genmapdict[key] in line:
+                        for item in Genodict[key]:
+                            if item in line and line.find(item) < line.find("variation") and not item in Genldict[key]:
+                                if not "//" in line or line.find("//") > line.find("SafeHistFill"):
+                                    line = "//" + line
+            
+            
+            foutfGen.write(line)
+
+print("src/ZZGenSelectorFilled.template produced")
+os.remove("src/ZZGenSelectorTemplateFilledTmp.cc")
