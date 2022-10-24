@@ -180,6 +180,15 @@ with open("src/ZZSelectorTemplateFilledTmp.cc","w") as fout:
 with open("src/ZZSelectorTemplateFilledTmp.cc","r") as fout2:
     with open("src/ZZSelectorFilled.template","w") as foutf:
         for line in fout2:
+
+            #For suppressing not used variables warning in compiling
+            if not "LepPtFull" in hists1DList:
+                if "// sort lepton pt" in line:
+                    line = "/*" + line
+                
+                if "//finish sorting lepton pt" in line:
+                    line = line + "*/" + "\n"
+
             if not "\n" in line:
                 print("Line doesn't contain \\n")
                 line+= "\n"
