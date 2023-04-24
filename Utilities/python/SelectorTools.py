@@ -162,9 +162,17 @@ class SelectorDriver(object):
             else: 
                 for dataset, file_path in self.datasets.iteritems():
                     self.processDataset(dataset, file_path, chan)
+
+                #Multiple files in 1-thread case also, and do the combination here instead of inside processParallel
+                tempTreeFiles = ["FilledNtuples/TreeFile_"+self.tempfileName(dataset) for dataset in self.datasets]
+                
+                self.combineParallelTreeFiles(tempTreeFiles, chan)
         if len(self.channels) > 1 and self.numCores > 1:
             tempfiles = [self.outfile_name.replace(".root", "_%s.root" % c) for c in self.channels]
             self.combineParallelFiles(tempfiles, "Inclusive")
+
+            tempTreefiles = ["FilledNtuples/TreeFile_"+self.outfile_name.replace(".root", "_%s.root" % c) for c in self.channels]
+            self.combineParallelTreeFiles(tempTreefiles, "Inclusive")
 
     def processDataset(self, dataset, file_path, chan):
         logging.info("Processing dataset %s" % dataset)
@@ -269,7 +277,11 @@ class SelectorDriver(object):
     def combineParallelTreeFiles(self, tempfiles, chan):
         tempfiles = filter(os.path.isfile, tempfiles)
         
-        outfile = "FilledNtuples/TreeFile_"+self.outfile_name.replace(".root", "_%s.root" % chan)
+        if chan != "Inclusive":
+            outfile = "FilledNtuples/TreeFile_"+self.outfile_name.replace(".root", "_%s.root" % chan)
+        else:
+            outfile = "FilledNtuples/TreeFile_%s_"%self.selector_name + self.outfile_name.replace(".root", "_%s.root" % chan)
+            
         outfileMerged = ROOT.TFile.Open(outfile,"recreate")
         outfileMerged.Close() 
         for f in tempfiles:
