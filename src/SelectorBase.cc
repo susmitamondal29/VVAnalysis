@@ -112,6 +112,14 @@ void SelectorBase::Init(TTree *tree)
         throw std::invalid_argument(message);
     }
 
+    ftntpName_ = name_ + "_fTreeNtuple_"+ channelName_;
+    ftntp_ = dynamic_cast<TTree *>(fOutput->FindObject(ftntpName_.c_str()));
+    if (ftntp_ == nullptr)
+    {
+        ftntp_ = new TTree(ftntpName_.c_str(),"Ntuple of selected events");
+        fOutput->Add(ftntp_);
+    }
+
     if (currentHistDir_ == nullptr)
     {
         currentHistDir_ = new TList();
@@ -427,4 +435,19 @@ std::string SelectorBase::getHistName(std::string histName, std::string variatio
     if (variationName != "")
         return histName + "_" + variationName + "_" + channel;
     return histName + "_" + channel;
+}
+
+//Copy of getHistName, used for naming ntuple TTree branch
+std::string SelectorBase::getBranchName(std::string bName, std::string variationName)
+{
+    return getBranchName(bName, variationName, "");
+}
+
+std::string SelectorBase::getBranchName(std::string bName, std::string variationName, std::string channel)
+{
+    if (channel == "")
+        channel = channelName_;
+    if (variationName != "")
+        return bName + "_" + variationName + "_" + channel;
+    return bName + "_" + channel;
 }

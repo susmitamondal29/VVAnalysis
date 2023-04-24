@@ -1534,6 +1534,15 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
   // std::cout<<"isNonPrompt_ in FillHistograms after ZZSelection:"<<isNonPrompt_<<std::endl;
   // std::cout<<run<<":"<<lumi<<":"<<evt<<std::endl;
   // std::cout << "variation.second: "<<variation.second;
+
+  //=====================A place where the on-shell selections have been applied and we fill the ntuple====================================================
+  
+  if (writeNtp_){
+    SafeSetBranch(ftntp_, getBranchName("weight", variation.second), &weight);
+    SafeSetBranch(ftntp_, getBranchName("Mass", variation.second), &Mass); 
+    ftntp_->Fill();
+  }
+  
   SafeHistFill(histMap1D_, getHistName("Mass", variation.second), Mass, weight);
 //  SafeHistFill(histMap1D_, getHistName("PVDZ", variation.second), l1PVDZ, weight);
 //  SafeHistFill(histMap1D_, getHistName("PVDZ", variation.second), l2PVDZ, weight);
