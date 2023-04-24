@@ -235,8 +235,8 @@ class SelectorDriver(object):
         ntuple_written.Write() #write TTree
         self.current_Treefile.Close()
         
-        dataset_list.Delete()
-        ntuple_written.Delete()
+        #dataset_list.Delete()
+        #ntuple_written.Delete()
         output_list.Delete()
         return True
 
@@ -285,7 +285,7 @@ class SelectorDriver(object):
         outfileMerged = ROOT.TFile.Open(outfile,"recreate")
         outfileMerged.Close() 
         for f in tempfiles:
-            os.system("rootcp %s:* %s"(f,outfile))
+            os.system("rootcp %s:* %s"%(f,outfile))
         
        
         map(os.remove, tempfiles)
