@@ -171,8 +171,9 @@ class SelectorDriver(object):
             tempfiles = [self.outfile_name.replace(".root", "_%s.root" % c) for c in self.channels]
             self.combineParallelFiles(tempfiles, "Inclusive")
 
-            tempTreefiles = ["FilledNtuples/TreeFile_"+self.outfile_name.replace(".root", "_%s.root" % c) for c in self.channels]
-            self.combineParallelTreeFiles(tempTreefiles, "Inclusive")
+        #Same tree files regardless of single of multi-thread 
+        tempTreefiles = ["FilledNtuples/TreeFile_"+self.outfile_name.replace(".root", "_%s.root" % c) for c in self.channels]
+        self.combineParallelTreeFiles(tempTreefiles, "Inclusive")
 
     def processDataset(self, dataset, file_path, chan):
         logging.info("Processing dataset %s" % dataset)

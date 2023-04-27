@@ -527,6 +527,12 @@ void ZZGenSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::st
     }
   }
 
+   if (writeNtp_){
+    SafeSetBranch(ftntp_, getBranchName("Genweight", variation.second), &Genweight);
+    SafeSetBranch(ftntp_, getBranchName("GenMass", variation.second), &GenMass); 
+    ftntp_->Fill();
+  }
+
   SafeHistFill(histMap1D_, getHistName("Genyield", variation.second), 1, Genweight);
   SafeHistFill(histMap1D_, getHistName("GenMass", variation.second), GenMass, Genweight);
   SafeHistFill(histMap1D_, getHistName("GennJets", variation.second), GenjetPt->size(), Genweight);
