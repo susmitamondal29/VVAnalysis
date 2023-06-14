@@ -1536,10 +1536,17 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
   // std::cout << "variation.second: "<<variation.second;
 
   //=====================A place where the on-shell selections have been applied and we fill the ntuple====================================================
-  
+  int nJets_tmp = jetPt->size();
+
   if (writeNtp_){
     SafeSetBranch(ftntp_, getBranchName("weight", variation.second), &weight);
     SafeSetBranch(ftntp_, getBranchName("Mass", variation.second), &Mass); 
+    SafeSetBranch(ftntp_, getBranchName("nJets", variation.second), &nJets_tmp); 
+
+    if (nJets_tmp >=2){
+    SafeSetBranch(ftntp_, getBranchName("mjj", variation.second), &mjj);   
+    SafeSetBranch(ftntp_, getBranchName("dEtajj", variation.second), &dEtajj);
+    }
     ftntp_->Fill();
   }
   
@@ -1600,6 +1607,7 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
 //  SafeHistFill(histMap1D_, getHistName("LepEta", variation.second), l3Eta, weight);
 //  SafeHistFill(histMap1D_, getHistName("LepEta", variation.second), l4Eta, weight);
   SafeHistFill(histMap1D_, getHistName("nJets", variation.second), jetPt->size(), weight);
+  
 
   if (jetPt->size() == 0 && jetPt->size() == jetEta->size())
   {
