@@ -1543,6 +1543,10 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
     SafeSetBranch(ftntp_, getBranchName("Mass", variation.second), &Mass); 
     SafeSetBranch(ftntp_, getBranchName("nJets", variation.second), &nJets_tmp); 
 
+    SafeSetBranch(ftntp_, getBranchName("run", variation.second), &run); 
+    SafeSetBranch(ftntp_, getBranchName("lumi", variation.second), &lumi); 
+    SafeSetBranch(ftntp_, getBranchName("evt", variation.second), &evt); 
+
     if (nJets_tmp >=2){
     SafeSetBranch(ftntp_, getBranchName("mjj", variation.second), &mjj);   
     SafeSetBranch(ftntp_, getBranchName("dEtajj", variation.second), &dEtajj);
