@@ -445,8 +445,8 @@ std::string SelectorBase::getBranchName(std::string bName, std::string variation
 
 std::string SelectorBase::getBranchName(std::string bName, std::string variationName, std::string channel)
 {
-    if (channel == "")
-        channel = channelName_;
+    //if (channel == "")
+    //    channel = channelName_;
     if (variationName != "")
         return bName + "_" + variationName + "_" + channel;
     return bName + "_" + channel;
