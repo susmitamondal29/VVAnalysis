@@ -11,6 +11,7 @@
 #include <TEfficiency.h>
 #include <exception>
 #include <iostream>
+#include <string>
 
 // Headers needed by this particular selector
 #include <vector>
@@ -145,12 +146,15 @@ class SelectorBase : public TSelector {
 
     TList *currentHistDir_{nullptr};
     TH1D* sumWeightsHist_;
+    TTree          *ftntp_ = nullptr; //Tree to store selected ntuple events, if choose to write
 
     bool doSystematics_;
     bool isNonPrompt_ = false;
     bool addSumweights_;
     bool applyScaleFactors_;
     bool applyPrefiringCorr_;
+    bool writeNtp_ = true; //Whether to write selected events into ntuple
+    std::string ftntpName_; //Tree name containing dataset, channel 
     
     // Readers to access the data (delete the ones you do not need).
     SelectorBase(TTree * /*tree*/ =0) { }
@@ -198,11 +202,13 @@ class SelectorBase : public TSelector {
     std::map<std::string, TH2D*> hists2D_ = {};
     std::map<std::string, TH2D*> weighthistMap1D_ = {};
     std::map<std::string, TH2D*> jethistMap1D_ = {}; //jet systematics
+    std::map<std::string, TH2D*> jetTestMap2D_ = {};
     std::map<std::string, TH3D*> weighthistMap2D_ {};
 
     std::vector<std::string> hists1D_ = {};
     std::vector<std::string> weighthists1D_ = {};
     std::vector<std::string> jethists1D_ = {};
+    std::vector<std::string> jetTest2D_ = {};
     // The histograms for which you also want systematic variations
     std::vector<std::string> systHists_ = {};
     std::vector<std::string> systHists2D_ = {};
@@ -233,6 +239,8 @@ class SelectorBase : public TSelector {
     std::vector<std::string> ReadHistDataFromConfig(std::string histDataString);
     std::string getHistName(std::string histName, std::string variationName, std::string channel);
     std::string getHistName(std::string histName, std::string variationName);
+    std::string getBranchName(std::string bName, std::string variationName, std::string channel);
+    std::string getBranchName(std::string bName, std::string variationName);
     template<typename T>
     void InitializeHistMap(std::vector<std::string>& labels, std::map<std::string, T*>& histMap);
 
@@ -243,6 +251,22 @@ class SelectorBase : public TSelector {
 	if (container[histname] != nullptr)
 	    container[histname]->Fill(args...);
     };
+
+    //Set branch for the ntuple, expected to be called in the histogram filling stage
+    //Expect fundamental types like float and int
+    template<typename T>
+    void SafeSetBranch(TTree* tree, std::string bName, T* var) {
+
+    TBranch * branch = tree->GetBranch(bName.c_str());
+    if (branch == nullptr){
+        tree->Branch(bName.c_str(),var);
+    }
+
+    else{
+        tree->SetBranchAddress(bName.c_str(),var);
+    }
+
+    }
   
     template<typename T, typename... Args>
 	void HistFullFill(std::map<std::string, T*> container,

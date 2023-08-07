@@ -8,6 +8,7 @@ import os
 import multiprocessing
 import subprocess
 import logging
+import UserInput
 
 class SelectorDriver(object):
     def __init__(self, analysis, selection, input_tier, year):
@@ -161,9 +162,18 @@ class SelectorDriver(object):
             else: 
                 for dataset, file_path in self.datasets.iteritems():
                     self.processDataset(dataset, file_path, chan)
+
+                #Multiple files in 1-thread case also, and do the combination here instead of inside processParallel
+                tempTreeFiles = ["FilledNtuples/TreeFile_"+self.tempfileName(dataset) for dataset in self.datasets]
+                
+                self.combineParallelTreeFiles(tempTreeFiles, chan)
         if len(self.channels) > 1 and self.numCores > 1:
             tempfiles = [self.outfile_name.replace(".root", "_%s.root" % c) for c in self.channels]
             self.combineParallelFiles(tempfiles, "Inclusive")
+
+        #Same tree files regardless of single of multi-thread 
+        tempTreefiles = ["FilledNtuples/TreeFile_"+self.outfile_name.replace(".root", "_%s.root" % c) for c in self.channels]
+        self.combineParallelTreeFiles(tempTreefiles, "Inclusive")
 
     def processDataset(self, dataset, file_path, chan):
         logging.info("Processing dataset %s" % dataset)
@@ -188,6 +198,7 @@ class SelectorDriver(object):
         output_list = select.GetOutputList()
         name = self.inputs.FindObject("name").GetTitle()
         dataset_list = output_list.FindObject(name)
+        ntuple_written = output_list.FindObject(name + "_fTreeNtuple_"+ chan)
         if not dataset_list or dataset_list.ClassName() != "TList":
             logging.warning("No output found for dataset %s" % dataset)
             dataset_list = output_list.FindObject("Unknown")
@@ -196,17 +207,38 @@ class SelectorDriver(object):
             else:
                 logging.warning('Skipping dataset %s' % dataset)
                 return False
+
+        if not ntuple_written or ntuple_written.ClassName() != "TTree":
+            logging.warning("No filled ntuple found for dataset %s" % dataset)
+            
+            #logging.warning('For filled ntuple skipping dataset %s' % dataset)
+            
+
         if addSumweights:
             dataset_list.Add(ROOT.gROOT.FindObject("sumweights"))
         if self.numCores > 1:
             self.outfile.Close()
             chanNum = self.channels.index(chan)
+            #Shouldn't matter whether recreate or update for hists, since the temp files will be deleted after hadd
             self.current_file = ROOT.TFile.Open(self.tempfileName(dataset), "recreate" if chanNum == 0 else "update")
+        
+        #Always create temp file for ntuple case regardless of whether multithread
+        if not os.path.isdir("FilledNtuples"):
+            os.mkdir("FilledNtuples")
+        
         OutputTools.writeOutputListItem(dataset_list, self.current_file)
-        dataset_list.Delete()
-        output_list.Delete()
+        
         if self.current_file != self.outfile:
             self.current_file.Close()
+
+        self.current_Treefile = ROOT.TFile.Open("FilledNtuples/TreeFile_"+self.tempfileName(dataset), "recreate")
+        self.current_Treefile.cd()
+        ntuple_written.Write() #write TTree
+        self.current_Treefile.Close()
+        
+        #dataset_list.Delete()
+        #ntuple_written.Delete()
+        output_list.Delete()
         return True
 
     def getFileNames(self, file_path):
@@ -243,13 +275,32 @@ class SelectorDriver(object):
         else:
             raise RuntimeError("Failed to collect data from parallel run")
 
+    def combineParallelTreeFiles(self, tempfiles, chan):
+        tempfiles = filter(os.path.isfile, tempfiles)
+        
+        if chan != "Inclusive":
+            outfile = "FilledNtuples/TreeFile_"+self.outfile_name.replace(".root", "_%s.root" % chan)
+        else:
+            outfile = "FilledNtuples/TreeFile_%s_"%self.selector_name + self.outfile_name.replace(".root", "_%s.root" % chan)
+            
+        outfileMerged = ROOT.TFile.Open(outfile,"recreate")
+        outfileMerged.Close() 
+        for f in tempfiles:
+            os.system("rootcp %s:* %s"%(f,outfile))
+        
+       
+        map(os.remove, tempfiles)
+       
+
     def processParallelByDataset(self, datasets, chan):
         numCores = min(self.numCores, len(datasets))
         p = multiprocessing.Pool(processes=self.numCores)
         p.map(self, [[dataset, f, chan] for dataset, f in datasets.iteritems()])
         # Store arrays in temp files, since it can get way too big to keep around in memory
         tempfiles = [self.tempfileName(d) for d in datasets] 
+        tempTreeFiles = ["FilledNtuples/TreeFile_"+self.tempfileName(d) for d in datasets]
         self.combineParallelFiles(tempfiles, chan)
+        self.combineParallelTreeFiles(tempTreeFiles, chan)
 
     # Pool.map can only take in one argument, so expand the array
     def processDatasetHelper(self, args):
@@ -275,7 +326,21 @@ class SelectorDriver(object):
                 % (tree_name, filename, self.ntupleType)
             )
         logging.debug("Processing tree %s for file %s." % (tree.GetName(), rtfile.GetName()))
+        
+        #Codes for trigger test
+        #aliases = UserInput.readJson("Cuts/%s/aliases.json" % self.analysis)
+        #for nameAlias, valueAlias in aliases["Event"].iteritems():
+        #    tree.SetAlias(nameAlias, valueAlias)
+        
+        #TriggerStr = "(singleIsoMuPass || doubleMuDZPass || tripleMuPass)"
+        #TriggerStr = "((singleIsoMuPass || doubleMuDZPass || tripleMuPass) && (singleEPass || doubleEPass || tripleEPass))"
+        #TriggerStr = "(!(singleIsoMuPass || doubleMuDZPass || tripleMuPass) && (singleEPass || doubleEPass || tripleEPass))"
+        TriggerStr = "((singleIsoMuPass || doubleMuDZPass || tripleMuPass) && (singleEPass))"
+        #TriggerStr = "((singleIsoMuPass || doubleMuDZPass || tripleMuPass) && (doubleEPass))"
+        #TriggerStr = "((singleIsoMuPass || doubleMuDZPass || tripleMuPass) && (singleEPass || doubleEPass))"
+        #TriggerStr = "((singleIsoMuPass || doubleMuDZPass || tripleMuPass) && (tripleEPass))"
         tree.Process(selector, "")
+        #tree.Process(selector, TriggerStr)
         logging.debug("Processed with selector %s." % selector.GetName())
         if addSumweights:
             self.fillSumweightsHist(rtfile, filenum)

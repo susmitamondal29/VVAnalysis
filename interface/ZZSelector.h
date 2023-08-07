@@ -4,6 +4,7 @@
 #include <vector>
 #include "Analysis/VVAnalysis/interface/ZZSelectorBase.h"
 #include <TH3.h>
+#include <TTreeFormula.h>
 
 class ZZSelector : public ZZSelectorBase
 {
@@ -11,12 +12,15 @@ public:
     bool applyFullSelection_ = true;
     bool isaTGC_ = false;
     bool doaTGC_ = false;
+    bool applyPUSF_ = false;
+    bool applyPUSFNtp_ = true;
 
     std::vector<float> *scaleWeights = NULL;
     std::vector<float> *pdfWeights = NULL;
     std::vector<float> lheWeights;
     unsigned int weight_info_;
-
+    TTreeFormula   *fCutFormula;
+    bool passCurrentTrig;
     float dEtajj;
     float dEtajj_jesUp;
     float dEtajj_jesDown;
@@ -33,6 +37,7 @@ public:
     float zep3l_jerUp;
     float zep3l_jerDown;
     Float_t mjj;
+    Float_t jetPUSFmulfac;
     Float_t mjj_jesUp;
     Float_t mjj_jesDown;
     Float_t mjj_jerUp;
@@ -71,6 +76,12 @@ public:
     float dPhill;
     //    double cosTheta_1;
 
+    std::vector<int> *jetPUID = NULL;
+    std::vector<int> *isGenJetMatched = NULL;
+
+    TBranch *b_jetPUID;
+    TBranch *b_isGenJetMatched;
+    TBranch *b_jetPUSFmulfac;
     TBranch *b_mjj;
     TBranch *b_mjj_jesUp;
     TBranch *b_mjj_jesDown;
@@ -119,6 +130,8 @@ protected:
     void ApplyScaleFactors();
     bool PassesZZSelection(bool nonPrompt);
     bool PassesZZSelectionLoose(bool nonPrompt);
+    bool Passes4eExtraCut();
+    bool Passes2e2mExtraCut(Long64_t entry);
     bool PassesZZjjSelection();
     bool PassesHZZSelection(bool nonPrompt);
     unsigned int GetLheWeightInfo();

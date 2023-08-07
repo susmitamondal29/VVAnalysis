@@ -25,6 +25,8 @@ public:
     ScaleFactor *eIdSF_;
     ScaleFactor *eGapIdSF_;
     ScaleFactor *mIdSF_;
+    TH2F *jetPUSF_;
+    TH2F *jetPUeff_;
     //ScaleFactor* mIsoSF_;
 
     //bool isVBS_;
