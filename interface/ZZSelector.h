@@ -64,6 +64,12 @@ public:
     Float_t Eta;
     float dPhiZZ; //DeltaPhi between Z1 and Z2
     float dRZZ;   //DeltaR between Z1 and Z2
+    float cosTheta_1; 
+    float cosTheta_2;
+    float cosTheta_3;
+    float cosTheta_4;
+    float dPhill;
+    //    double cosTheta_1;
 
     TBranch *b_mjj;
     TBranch *b_mjj_jesUp;
@@ -127,6 +133,7 @@ protected:
     bool HZZLowMass();
     bool HZZMediumMass();
     bool TestMuons();
+    void GetPolarizationAngle();
     void ShiftEfficiencies(Systematic variation);
 };
 

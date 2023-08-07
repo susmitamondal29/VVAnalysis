@@ -1,6 +1,8 @@
+#include<iostream>
 #include "Analysis/VVAnalysis/interface/ZZSelector.h"
 #include "TLorentzVector.h"
 #include <boost/algorithm/string.hpp>
+using namespace std;
 
 void ZZSelector::Init(TTree *tree)
 {
@@ -14,7 +16,7 @@ void ZZSelector::Init(TTree *tree)
       {pileupUp, "CMS_pileupUp"},
       {pileupDown, "CMS_pileupDown"},
   };
-  doSystematics_ = true; // false;//true;
+  doSystematics_ = false; // false;//true;
 
   // This would be set true inside ZZBackground Selector
   // isNonPrompt_ = false;
@@ -49,9 +51,15 @@ void ZZSelector::Init(TTree *tree)
       "ZZEta",
       "dPhiZ1Z2",
       "dRZ1Z2",
+      "CosTheta",
+      //"CosTheta_1",
+      //"CosTheta_2",
+      //"CosTheta_3",
+      //"CosTheta_4",
       "ZPt",
       "LepPt",
-      "LepEta"};
+      "LepEta",
+      "dPhiOSll"};
   // hists1D_ = {
   //      "yield", "backgroundControlYield","nTruePU","nvtx","ZMass","Z1Mass","Z2Mass","ZZPt",
   //      "Z1Pt","Z2Pt","Z1Phi","Z2Phi","dPhiZ1Z2","ZPt","LepPt","LepEta","Lep12Pt","Lep12Eta",
@@ -61,12 +69,12 @@ void ZZSelector::Init(TTree *tree)
   // };
 
   hists1D_ = {
-      "yield", "Z1Mass", "Z2Mass", "ZMass", "ZZPt", "ZZEta", "dPhiZ1Z2", "dRZ1Z2", "ZPt", "LepPt", "LepEta",
+    "yield", "Z1Mass", "Z2Mass", "ZMass", "ZZPt", "ZZEta", "dPhiZ1Z2", "dRZ1Z2", "ZPt","Z1Phi","Z2Phi","LepPt", "LepEta",
       "Mass", "Mass0j", "Mass1j", "Mass2j", "Mass3j", "Mass34j", "Mass4j", "nJets",
       "MassFull", "Mass0jFull", "Mass1jFull", "Mass2jFull", "Mass3jFull", "Mass34jFull", "Mass4jFull",
       "jetPt[0]", "jetPt[1]", "jetPt[2]", "jetEta[0]", "jetEta[1]", "absjetEta[0]", "absjetEta[1]", "jetEta[2]",
       "jetPhi[0]", "jetPhi[1]", "jetPhi[2]", "mjj", "dEtajj", "SIP3D", "jetPt[01]", "jetEta[01]",
-      "PVDZ", "deltaPVDZ_sameZ", "deltaPVDZ_diffZ"};
+    "PVDZ", "deltaPVDZ_sameZ", "deltaPVDZ_diffZ","CosTheta","dPhiOSll"};//"CosTheta_2","CosTheta_3", "CosTheta_4","CosTheta"};//"cosTheta_1","cosTheta_2","cosTheta_3", "cosTheta_4"};
 
   jethists1D_ = {
       "Mass",
@@ -115,6 +123,12 @@ void ZZSelector::Init(TTree *tree)
       "absjetEta[1]",
       "mjj",
       "dEtajj",
+      "CosTheta",
+      "dPhiOSll",
+      //"CosTheta_1",
+      //"CosTheta_2",
+      // "CosTheta_3",
+      //"CosTheta_4"
       "Mass0j",
       "Mass1j",
       "Mass2j",
@@ -144,6 +158,7 @@ void ZZSelector::SetBranchesUWVV()
   fChain->SetBranchAddress("Mass", &Mass, &b_Mass);
   fChain->SetBranchAddress("Pt", &Pt, &b_Pt);
   fChain->SetBranchAddress("Eta", &Eta, &b_Eta);
+
 
   fChain->SetBranchAddress("jetPt", &jetPt, &b_jetPt);
   if (isMC_)
@@ -213,9 +228,11 @@ void ZZSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::str
   ZZSelectorBase::LoadBranchesUWVV(entry, variation);
 
   // b_MtToMET->GetEntry(entry);
-  // b_l1Pt->GetEntry(entry);
-  // b_l2Pt->GetEntry(entry);
-  // b_l3Pt->GetEntry(entry);
+  b_l1Charge->GetEntry(entry);
+  b_l2Charge->GetEntry(entry);
+  b_l3Charge->GetEntry(entry);
+  b_l4Charge->GetEntry(entry);
+
   b_Mass->GetEntry(entry);
   b_Pt->GetEntry(entry);
   b_Eta->GetEntry(entry);
@@ -266,8 +283,20 @@ void ZZSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::str
     if (TightZZLeptons())
     {
       SetVariables(entry);
+      GetPolarizationAngle();
     }
   }
+  // std::cout<<"channel in LoadBranches function: "<<channel_<<std::endl;                                                                
+  if (channel_ == eeee || channel_ == mmmm)
+    {
+      // if(TightZZLeptons()){//i don't think this condition is needed even though it might save time but it messes up sf application for C Rs in eemm,mmee states                                                                                                                    
+	if (TightZZLeptons())
+	  {
+	    SetVariables(entry);
+	    GetPolarizationAngle();
+	  }
+    }
+
   if (isMC_)
   {
     ApplyScaleFactors();
@@ -320,7 +349,9 @@ void ZZSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::str
     float dphi = fabs(phi1 - phi2);
     if (dphi > pi)
       dphi = 2.0 * pi - dphi;
+    //cout<<dphi<<"Dphi"<<endl;
     return dphi;
+ 
   };
   auto deltaEtajj = [](std::vector<float> *jEta)
   {
@@ -335,11 +366,166 @@ void ZZSelector::LoadBranchesUWVV(Long64_t entry, std::pair<Systematic, std::str
     float dEta = eta1 - eta2;
     return std::sqrt(dPhi * dPhi + dEta * dEta);
   };
-
   dEtajj = deltaEtajj(jetEta);
   dPhiZZ = deltaPhiZZ(Z1Phi, Z2Phi);
+  if (channel_ == eemm )//|| channel_ == mmee)
+    {
+      //cout<<l1Phi<<"l1Phi"<<endl;
+      //cout<<l1Phi<<"l2Phi"<<endl;
+      //cout<<l3Phi<<"l3Phi"<<endl;
+      //cout<<l3Phi<<"l4Phi"<<endl;
+      if (l1Charge>0 && l3Charge<0) {
+        dPhill = deltaPhiZZ(l1Phi, l3Phi);}
+	//cout<<l1Phi<<"l1Phi"<<endl;}
+       if (l2Charge>0 && l4Charge<0) {
+	 dPhill = deltaPhiZZ(l2Phi, l4Phi);}
+       // cout<<l1Phi<<"l2Phi"<<endl;}
+       if (l1Charge>0 && l4Charge<0) {
+	 dPhill = deltaPhiZZ(l1Phi, l4Phi);}
+       if (l2Charge>0 && l3Charge<0) {
+        dPhill = deltaPhiZZ(l2Phi, l3Phi);}
+    }
+  if (channel_ == mmee )//|| channel_ == mmee)                                                                                            
+    {
+      if (l1Charge<0 && l3Charge>0) {
+        dPhill = deltaPhiZZ(l1Phi, l3Phi);}
+      //      cout<<dPhill<<"dPhilleemmm"<<endl;}                                                                                       
+      if (l2Charge<0 && l4Charge>0) {
+        dPhill = deltaPhiZZ(l2Phi, l4Phi);}
+      if (l1Charge<0 && l4Charge>0) {
+	dPhill = deltaPhiZZ(l1Phi, l4Phi);}
+      if (l2Charge<0 && l3Charge>0) {
+        dPhill = deltaPhiZZ(l2Phi, l3Phi);}
+    }
+  //  if (channel_ == eeee || channel_ == mmmm)                                                                            
+                                                                                                                           
+  //{
+  //  if (l1Charge<0 && l3Charge>0) {
+  //    dPhill = deltaPhiZZ(l1Phi, l3Phi);}
+      //      cout<<dPhill<<"dPhilleemmm"<<endl;}                                                                        
+//  if (l2Charge<0 && l4Charge>0) {
+  //      dPhill = deltaPhiZZ(l2Phi, l4Phi);}
+  //  if (l1Charge<0 && l4Charge>0) {
+  //    dPhill = deltaPhiZZ(l1Phi, l4Phi);}
+  //  if (l2Charge<0 && l3Charge>0) {
+  //    dPhill = deltaPhiZZ(l2Phi, l3Phi);}
+  //}
+
   dRZZ = deltaRZZ(Z1Eta, Z2Eta, dPhiZZ);
 }
+
+auto costheta = [] (TLorentzVector z1P4, TLorentzVector z2P4, TLorentzVector l1P4) {
+  
+//double costheta (TLorentzVector z1P4, TLorentzVector z2P4, TLorentzVector l1P4)
+  
+  TLorentzVector zzP4=z1P4+z2P4;
+  l1P4.Boost(-z1P4.BoostVector());
+  z1P4.Boost(-zzP4.BoostVector());
+  TLorentzVector lP4_z1=l1P4;
+  TLorentzVector z1P4_zz=z1P4;
+  double ct = lP4_z1.Vect().Dot(z1P4_zz.Vect()) / (lP4_z1.Vect().Mag()*z1P4_zz.Vect().Mag());
+  /*  if (ct<0.01){ cout<<"This ct loop is excuted"<<endl; 
+    cout <<"CosTheta= " <<ct<< endl;
+    cout<<"z1 -----------"<<endl;
+    cout<<"z1p4PT= "<<z1P4(0)<<endl;
+    cout<<"z1p4Eta= "<<z1P4(1)<<endl;
+    cout<<"z1p4Phi= "<<z1P4(2)<<endl;
+    cout<<"z1p4Mass= "<<z1P4(3)<<endl;
+    cout<<"z2-------------"<<endl;
+    cout<<"z2p4PT= "<<z2P4(0)<<endl;
+    cout<<"z2p4Eta= "<<z2P4(1)<<endl;
+    cout<<"z2p4Phi= "<<z2P4(2)<<endl;
+    cout<<"z2p4Mass= "<<z2P4(3)<<endl;
+    cout<<"Lepton1---------"<<endl;
+    cout<<"l1P4PT= "<<l1P4(0)<<endl;
+    cout<<"l1P4Eta= "<<l1P4(1)<<endl;
+    cout<<"l1P4Phi= "<<l1P4(2)<<endl;
+    cout<<"l1P4Mass= "<<l1P4(3)<<endl;
+       cout<<"----------------------------------------------------------------------------"<<endl;}*/
+  /*cout<<"----------------------------------------------------------------------------"<<endl; 
+ if(Z1mass>100)
+{
+    cout <<"CosTheta= " <<ct<< endl;
+    cout<<"z1Mass= "<<z1Mass<<endl;
+  }
+  cout<<"-------------"<<endl;
+  if(Z2mass)>100)
+    {
+      cout <<"CosTheta= " <<ct<< endl;
+      cout<<"z2Mass= "<<z2Mass<<endl;
+    }
+  cout<<"----------------------------------------------------------------------------"<<endl;
+  */
+
+ 
+  return ct;
+};
+  
+//dEtajj = deltaEtajj(jetEta);
+//dPhiZZ = deltaPhiZZ(Z1Phi, Z2Phi);
+//dRZZ = deltaRZZ(Z1Eta, Z2Eta, dPhiZZ);
+//}
+
+  void ZZSelector::GetPolarizationAngle()
+{
+
+    TLorentzVector z1P4;
+    z1P4.SetPtEtaPhiM(Z1pt, Z1Eta, Z1Phi, Z1mass);
+
+    TLorentzVector z2P4;
+    z2P4.SetPtEtaPhiM(Z2pt, Z2Eta, Z2Phi, Z2mass);
+
+    TLorentzVector l1P4;
+    l1P4.SetPtEtaPhiM(l1Pt,l1Eta,l1Phi,l1Mass);
+
+    TLorentzVector l2P4;
+    l2P4.SetPtEtaPhiM(l2Pt,l2Eta,l2Phi,l2Mass);
+
+    TLorentzVector l3P4;
+    l3P4.SetPtEtaPhiM(l3Pt,l3Eta,l3Phi,l3Mass);
+
+    TLorentzVector l4P4;
+    l4P4.SetPtEtaPhiM(l4Pt,l4Eta,l4Phi,l4Mass);
+    
+    cosTheta_1 = costheta(z1P4,z2P4,l1P4);
+    /* if(cosTheta_1<0.01){cout<<"This CosTheta_1 loop gets executed"<<endl;
+      cout <<"CosTheta_1= " <<cosTheta_1<< endl;
+      cout<<"z1 -----------"<<endl;
+      cout<<"z1PT= "<<z1P4(0)<<endl;
+      cout<<"z1Eta= "<<z1P4(1)<<endl;
+      cout<<"z1Phi= "<<z1P4(2)<<endl;
+      cout<<"z1Mass= "<<z1P4(3)<<endl;
+      cout<<"z2-------------"<<endl;
+      cout<<"z2p4PT= "<<z2P4(0)<<endl;
+      cout<<"z2p4Eta= "<<z2P4(1)<<endl;
+      cout<<"z2p4Phi= "<<z2P4(2)<<endl;
+      cout<<"z2p4Mass= "<<z2P4(3)<<endl;
+      cout<<"Lepton1---------"<<endl;
+      cout<<"l1P4PT= "<<l1P4(0)<<endl;
+      cout<<"l1P4Eta= "<<l1P4(1)<<endl;
+      cout<<"l1P4Phi= "<<l1P4(2)<<endl;
+      cout<<"l1P4Mass= "<<l1P4(3)<<endl;
+      cout<<"----------------------------------------------------------------------------"<<endl;}*/
+    cosTheta_2 = costheta(z1P4,z2P4,l2P4);
+    cosTheta_3 = costheta(z2P4,z1P4,l3P4);
+    cosTheta_4 = costheta(z2P4,z1P4,l4P4);
+    //    if(Z1mass>100)                                                                                                                           
+    //{                                                                                                                                         
+    //	cout <<"CosTheta= " <<cosTheta_1<< endl;                                                                                                      
+    // cout<<"z1Mass= "<<Z1mass<<endl;                                                                                                       //
+    // }                                                                                                                                       
+    // cout<<"-------------"<<endl;                                                                                                            
+    //if(Z2mass>100)                                                                                                                         
+    //{                                                                                                                                     
+    //cout <<"CosTheta= " <<cosTheta_1<< endl;                                                                                                    
+    // cout<<"z2Mass= "<<Z2mass<<endl;                                                                                                     
+    //}                                                                                                                                     
+    //cout<<"----------------------------------------------------------------------------"<<endl;  
+    }
+
+
+
+
 
 void ZZSelector::ApplyScaleFactors()
 {
@@ -357,35 +543,43 @@ void ZZSelector::ApplyScaleFactors()
       if (l1IsGap)
       {
         weight *= eGapIdSF_->Evaluate2D(std::abs(l1Eta), pt_e1);
+       // weight *= eGapIdSF_->Evaluate2D(std::abs(l1Charge), pt_e1);
         // std::cout<<"weight for GapE: "<<weight<<std::endl;
       }
       else
       {
         weight *= eIdSF_->Evaluate2D(std::abs(l1Eta), pt_e1);
+        //weight *= eIdSF_->Evaluate2D(std::abs(l1Charge), pt_e1);
       }
       if (l2IsGap)
       {
         weight *= eGapIdSF_->Evaluate2D(std::abs(l2Eta), pt_e2);
-      }
+       //weight *= eGapIdSF_->Evaluate2D(std::abs(l2Charge), pt_e2);
+       }
       else
       {
         weight *= eIdSF_->Evaluate2D(std::abs(l2Eta), pt_e2);
+        //weight *= eIdSF_->Evaluate2D(std::abs(l2Charge), pt_e2);
       }
       if (l3IsGap)
       {
         weight *= eGapIdSF_->Evaluate2D(std::abs(l3Eta), pt_e3);
+         //weight *= eGapIdSF_->Evaluate2D(std::abs(l3Charge), pt_e3);
       }
       else
       {
         weight *= eIdSF_->Evaluate2D(std::abs(l3Eta), pt_e3);
+        //weight *= eIdSF_->Evaluate2D(std::abs(l3Charge), pt_e3);
       }
       if (l4IsGap)
       {
         weight *= eGapIdSF_->Evaluate2D(std::abs(l4Eta), pt_e4);
+        //weight *= eGapIdSF_->Evaluate2D(std::abs(l4Charge), pt_e4);
       }
       else
       {
         weight *= eIdSF_->Evaluate2D(std::abs(l4Eta), pt_e4);
+        //weight *= eIdSF_->Evaluate2D(std::abs(l4Charge), pt_e4);
       }
     }
     if (eRecoSF_ != nullptr and eLowRecoSF_ != nullptr)
@@ -394,34 +588,44 @@ void ZZSelector::ApplyScaleFactors()
       if (l1Pt < 20)
       {
         weight *= eLowRecoSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
+        // weight *= eLowRecoSF_->Evaluate2D(std::abs(l1Charge), l1Pt);
       }
       else
       {
         weight *= eRecoSF_->Evaluate2D(std::abs(l1Eta), pt_e1);
+        //weight *= eRecoSF_->Evaluate2D(std::abs(l1Charge), pt_e1);
       }
       if (l2Pt < 20)
       {
         weight *= eLowRecoSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
+        //weight *= eLowRecoSF_->Evaluate2D(std::abs(l2Charge), l2Pt);
       }
       else
       {
         weight *= eRecoSF_->Evaluate2D(std::abs(l2Eta), pt_e2);
+        //weight *= eRecoSF_->Evaluate2D(std::abs(l2Charge), pt_e2);
+
       }
       if (l3Pt < 20)
       {
         weight *= eLowRecoSF_->Evaluate2D(std::abs(l3Eta), l3Pt);
+        //weight *= eLowRecoSF_->Evaluate2D(std::abs(l3Charge), l3Pt);
       }
       else
       {
         weight *= eRecoSF_->Evaluate2D(std::abs(l3Eta), pt_e3);
+        //weight *= eRecoSF_->Evaluate2D(std::abs(l3Charge), pt_e3);
       }
       if (l4Pt < 20)
       {
         weight *= eLowRecoSF_->Evaluate2D(std::abs(l4Eta), l4Pt);
+         //weight *= eLowRecoSF_->Evaluate2D(std::abs(l4Charge), l4Pt);
+
       }
       else
       {
         weight *= eRecoSF_->Evaluate2D(std::abs(l4Eta), pt_e4);
+         //weight *= eRecoSF_->Evaluate2D(std::abs(l4Charge), pt_e4);
       }
     }
   }
@@ -437,18 +641,24 @@ void ZZSelector::ApplyScaleFactors()
       if (l1IsGap)
       {
         weight *= eGapIdSF_->Evaluate2D(std::abs(l1Eta), pt_e1);
+         //weight *= eGapIdSF_->Evaluate2D(std::abs(l1Charge), pt_e1);
       }
       else
       {
         weight *= eIdSF_->Evaluate2D(std::abs(l1Eta), pt_e1);
+         //weight *= eIdSF_->Evaluate2D(std::abs(l1Charge), pt_e1);
       }
       if (l2IsGap)
       {
         weight *= eGapIdSF_->Evaluate2D(std::abs(l2Eta), pt_e2);
+        //weight *= eGapIdSF_->Evaluate2D(std::abs(l2Charge), pt_e2);
+
       }
       else
       {
         weight *= eIdSF_->Evaluate2D(std::abs(l2Eta), pt_e2);
+        //weight *= eIdSF_->Evaluate2D(std::abs(l2Charge), pt_e2);
+
       }
     }
     // Applying Electron Reco SFs
@@ -457,24 +667,32 @@ void ZZSelector::ApplyScaleFactors()
       if (l1Pt < 20)
       {
         weight *= eLowRecoSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
+        //weight *= eLowRecoSF_->Evaluate2D(std::abs(l1Charge), l1Pt);
+
       }
       else
       {
         weight *= eRecoSF_->Evaluate2D(std::abs(l1Eta), pt_e1);
+        //weight *= eRecoSF_->Evaluate2D(std::abs(l1Charge), pt_e1);
+
       }
       if (l2Pt < 20)
       {
         weight *= eLowRecoSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
+       // weight *= eLowRecoSF_->Evaluate2D(std::abs(l2Charge), l2Pt);
       }
       else
       {
         weight *= eRecoSF_->Evaluate2D(std::abs(l2Eta), pt_e2);
+       // weight *= eRecoSF_->Evaluate2D(std::abs(l2Charge), pt_e2);
       }
     }
     if (mIdSF_ != nullptr)
     {
       weight *= mIdSF_->Evaluate2D(std::abs(l3Eta), pt_m3);
+      //weight *= mIdSF_->Evaluate2D(std::abs(l3Charge), pt_m3);
       weight *= mIdSF_->Evaluate2D(std::abs(l4Eta), pt_m4);
+    //  weight *= mIdSF_->Evaluate2D(std::abs(l4Charge), pt_m4);
     }
   }
   else if (channel_ == mmee)
@@ -486,25 +704,31 @@ void ZZSelector::ApplyScaleFactors()
     if (mIdSF_ != nullptr)
     {
       weight *= mIdSF_->Evaluate2D(std::abs(l1Eta), pt_m1);
+      //weight *= mIdSF_->Evaluate2D(std::abs(l1Charge), pt_m1);
       weight *= mIdSF_->Evaluate2D(std::abs(l2Eta), pt_m2);
+      //weight *= mIdSF_->Evaluate2D(std::abs(l2Charge), pt_m2);
     }
     if (eIdSF_ != nullptr and eGapIdSF_ != nullptr)
     {
       if (l3IsGap)
       {
         weight *= eGapIdSF_->Evaluate2D(std::abs(l3Eta), pt_e3);
+        //weight *= eGapIdSF_->Evaluate2D(std::abs(l3Charge), pt_e3);
       }
       else
       {
         weight *= eIdSF_->Evaluate2D(std::abs(l3Eta), pt_e3);
+        //weight *= eIdSF_->Evaluate2D(std::abs(l3Charge), pt_e3);
       }
       if (l4IsGap)
       {
         weight *= eGapIdSF_->Evaluate2D(std::abs(l4Eta), pt_e4);
+         //weight *= eGapIdSF_->Evaluate2D(std::abs(l4Charge), pt_e4);
       }
       else
       {
         weight *= eIdSF_->Evaluate2D(std::abs(l4Eta), pt_e4);
+        //weight *= eIdSF_->Evaluate2D(std::abs(l4Charge), pt_e4);
       }
     }
     // Applying Electron Reco SFs
@@ -513,18 +737,22 @@ void ZZSelector::ApplyScaleFactors()
       if (l3Pt < 20)
       {
         weight *= eLowRecoSF_->Evaluate2D(std::abs(l3Eta), l3Pt);
+        //weight *= eLowRecoSF_->Evaluate2D(std::abs(l3Charge), l3Pt);
       }
       else
       {
         weight *= eRecoSF_->Evaluate2D(std::abs(l3Eta), pt_e3);
+        //weight *= eRecoSF_->Evaluate2D(std::abs(l3Charge), pt_e3);
       }
       if (l4Pt < 20)
       {
         weight *= eLowRecoSF_->Evaluate2D(std::abs(l4Eta), l4Pt);
+         //weight *= eLowRecoSF_->Evaluate2D(std::abs(l4Charge), l4Pt);
       }
       else
       {
         weight *= eRecoSF_->Evaluate2D(std::abs(l4Eta), pt_e4);
+       // weight *= eRecoSF_->Evaluate2D(std::abs(l4Charge), pt_e4);
       }
     }
   }
@@ -540,9 +768,14 @@ void ZZSelector::ApplyScaleFactors()
       weight *= mIdSF_->Evaluate2D(std::abs(l2Eta), pt_m2);
       weight *= mIdSF_->Evaluate2D(std::abs(l3Eta), pt_m3);
       weight *= mIdSF_->Evaluate2D(std::abs(l4Eta), pt_m4);
-    }
+      // weight *= mIdSF_->Evaluate2D(std::abs(l1Charge), pt_m1);
+     // weight *= mIdSF_->Evaluate2D(std::abs(l2Charge), pt_m2);
+     // weight *= mIdSF_->Evaluate2D(std::abs(l3Charge), pt_m3);
+      //weight *= mIdSF_->Evaluate2D(std::abs(l4Charge), pt_m4);
+    }//cout<<"weight_mmmm1"<<weight<<endl;
+  
   }
-  if (pileupSF_ != nullptr)
+if (pileupSF_ != nullptr)
   {
     weight *= pileupSF_->Evaluate1D(nTruePU);
   }
@@ -559,6 +792,12 @@ void ZZSelector::SetVariables(Long64_t entry)
     float tempPt = Z1pt;
     Z1pt = Z2pt;
     Z2pt = tempPt;
+    float tempeta = Z1Eta;
+    Z1Eta = Z2Eta;
+    Z2Eta = tempeta;
+    float tempPhi = Z1Phi;
+    Z1Phi = Z2Phi;
+    Z2Phi = tempPhi;
     bool templ1IsTight = l1IsTight;
     l1IsTight = l3IsTight;
     l3IsTight = templ1IsTight;
@@ -619,6 +858,12 @@ void ZZSelector::SetVariables(Long64_t entry)
     float templ2Mass = l2Mass;
     l2Mass = l4Mass;
     l4Mass = templ2Mass;
+    float templ1Charge = l1Charge;
+    l1Charge = l3Charge;
+    l3Charge = templ1Charge;
+    float templ2Charge = l2Charge;
+    l2Charge = l4Charge;
+    l4Charge = templ2Charge;
   }
 }
 void ZZSelector::ShiftEfficiencies(Systematic variation)
@@ -626,7 +871,7 @@ void ZZSelector::ShiftEfficiencies(Systematic variation)
   ScaleFactor::Variation shift = ScaleFactor::Variation::ShiftUp;
   if (variation == electronEfficiencyDown || variation == electronRecoEffDown || variation == muonEfficiencyDown)
     shift = ScaleFactor::Variation::ShiftDown;
-
+  cout<<"StartOFlopp"<<endl;
   if (channel_ == eeee)
   {
     float pt_e1 = l1Pt < EleSF_MAX_PT_ ? l1Pt : EleSF_MAX_PT_ - 0.01;
@@ -643,36 +888,45 @@ void ZZSelector::ShiftEfficiencies(Systematic variation)
         if (l1Pt < 20)
         {
           weight *= eLowRecoSF_->Evaluate2D(std::abs(l1Eta), l1Pt, shift) / eLowRecoSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
+  //         weight *= eLowRecoSF_->Evaluate2D(std::abs(l1Charge), l1Pt, shift) / eLowRecoSF_->Evaluate2D(std::abs(l1Charge), l1Pt);
         }
         else
         {
           weight *= eRecoSF_->Evaluate2D(std::abs(l1Eta), pt_e1, shift) / eRecoSF_->Evaluate2D(std::abs(l1Eta), pt_e1);
+    //      weight *= eRecoSF_->Evaluate2D(std::abs(l1Charge), pt_e1, shift) / eRecoSF_->Evaluate2D(std::abs(l1Charge), pt_e1);
         }
         if (l2Pt < 20)
         {
           weight *= eLowRecoSF_->Evaluate2D(std::abs(l2Eta), l2Pt, shift) / eLowRecoSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
+      //    weight *= eLowRecoSF_->Evaluate2D(std::abs(l2Charge), l2Pt, shift) / eLowRecoSF_->Evaluate2D(std::abs(l2Charge), l2Pt);
         }
         else
         {
           weight *= eRecoSF_->Evaluate2D(std::abs(l2Eta), pt_e2, shift) / eRecoSF_->Evaluate2D(std::abs(l2Eta), pt_e2);
+        //  weight *= eRecoSF_->Evaluate2D(std::abs(l2Charge), pt_e2, shift) / eRecoSF_->Evaluate2D(std::abs(l2Charge), pt_e2);
         }
         if (l3Pt < 20)
         {
           weight *= eLowRecoSF_->Evaluate2D(std::abs(l3Eta), l3Pt, shift) / eLowRecoSF_->Evaluate2D(std::abs(l3Eta), l3Pt);
+          //weight *= eLowRecoSF_->Evaluate2D(std::abs(l3Charge), l3Pt, shift) / eLowRecoSF_->Evaluate2D(std::abs(l3Charge), l3Pt);
         }
         else
         {
           weight *= eRecoSF_->Evaluate2D(std::abs(l3Eta), pt_e3, shift) / eRecoSF_->Evaluate2D(std::abs(l3Eta), pt_e3);
+         // weight *= eRecoSF_->Evaluate2D(std::abs(l3Charge), pt_e3, shift) / eRecoSF_->Evaluate2D(std::abs(l3Charge), pt_e3);
         }
         if (l4Pt < 20)
         {
           weight *= eLowRecoSF_->Evaluate2D(std::abs(l4Eta), l4Pt, shift) / eLowRecoSF_->Evaluate2D(std::abs(l4Eta), l4Pt);
+        //   weight *= eLowRecoSF_->Evaluate2D(std::abs(l4Charge), l4Pt, shift) / eLowRecoSF_->Evaluate2D(std::abs(l4Charge), l4Pt);
         }
         else
         {
           weight *= eRecoSF_->Evaluate2D(std::abs(l4Eta), pt_e4, shift) / eRecoSF_->Evaluate2D(std::abs(l4Eta), pt_e4);
+          //weight *= eRecoSF_->Evaluate2D(std::abs(l4Charge), pt_e4, shift) / eRecoSF_->Evaluate2D(std::abs(l4Charge), pt_e4);
+
         }
-      }
+      }//cout<<"weight_eeee"<<weight<<endl;
     }
     // Applying Electron ID SFs Up/Down for ElectronIDEffSyst
     else if (variation == electronEfficiencyUp || variation == electronEfficiencyDown)
@@ -682,39 +936,48 @@ void ZZSelector::ShiftEfficiencies(Systematic variation)
         if (l1IsGap)
         {
           weight *= eGapIdSF_->Evaluate2D(std::abs(l1Eta), pt_e1, shift) / eGapIdSF_->Evaluate2D(std::abs(l1Eta), pt_e1);
+          //weight *= eGapIdSF_->Evaluate2D(std::abs(l1Charge), pt_e1, shift) / eGapIdSF_->Evaluate2D(std::abs(l1Charge), pt_e1);
         }
         else
         {
           weight *= eIdSF_->Evaluate2D(std::abs(l1Eta), pt_e1, shift) / eIdSF_->Evaluate2D(std::abs(l1Eta), pt_e1);
+          //weight *= eIdSF_->Evaluate2D(std::abs(l1Charge), pt_e1, shift) / eIdSF_->Evaluate2D(std::abs(l1Charge), pt_e1);
         }
         if (l2IsGap)
         {
           weight *= eGapIdSF_->Evaluate2D(std::abs(l2Eta), pt_e2, shift) / eGapIdSF_->Evaluate2D(std::abs(l2Eta), pt_e2);
+           //weight *= eGapIdSF_->Evaluate2D(std::abs(l2Charge), pt_e2, shift) / eGapIdSF_->Evaluate2D(std::abs(l2Charge), pt_e2);
         }
         else
         {
           weight *= eIdSF_->Evaluate2D(std::abs(l2Eta), pt_e2, shift) / eIdSF_->Evaluate2D(std::abs(l2Eta), pt_e2);
+          //weight *= eIdSF_->Evaluate2D(std::abs(l2Charge), pt_e2, shift) / eIdSF_->Evaluate2D(std::abs(l2Charge), pt_e2);
         }
         if (l3IsGap)
         {
           weight *= eGapIdSF_->Evaluate2D(std::abs(l3Eta), pt_e3, shift) / eGapIdSF_->Evaluate2D(std::abs(l3Eta), pt_e3);
+         // weight *= eGapIdSF_->Evaluate2D(std::abs(l3Charge), pt_e3, shift) / eGapIdSF_->Evaluate2D(std::abs(l3Charge), pt_e3);
         }
         else
         {
           weight *= eIdSF_->Evaluate2D(std::abs(l3Eta), pt_e3, shift) / eIdSF_->Evaluate2D(std::abs(l3Eta), pt_e3);
+          //weight *= eIdSF_->Evaluate2D(std::abs(l3Charge), pt_e3, shift) / eIdSF_->Evaluate2D(std::abs(l3Charge), pt_e3);
         }
         if (l4IsGap)
         {
           weight *= eGapIdSF_->Evaluate2D(std::abs(l4Eta), pt_e4, shift) / eGapIdSF_->Evaluate2D(std::abs(l4Eta), pt_e4);
+          // weight *= eGapIdSF_->Evaluate2D(std::abs(l4Charge), pt_e4, shift) / eGapIdSF_->Evaluate2D(std::abs(l4Charge), pt_e4);
+
         }
         else
         {
           weight *= eIdSF_->Evaluate2D(std::abs(l4Eta), pt_e4, shift) / eIdSF_->Evaluate2D(std::abs(l4Eta), pt_e4);
+          //weight *= eIdSF_->Evaluate2D(std::abs(l4Charge), pt_e4, shift) / eIdSF_->Evaluate2D(std::abs(l4Charge), pt_e4);
         }
       }
-    }
-  } // channel eeee
-  else if (channel_ == eemm)
+    }cout<<"weight_eeee2"<<weight<<endl;// channel eeee
+  }
+ else if (channel_ == eemm)
   {
     // In order to get around the Overflow issue, set the Pt, not ideal.
     float pt_e1 = l1Pt < EleSF_MAX_PT_ ? l1Pt : EleSF_MAX_PT_ - 0.01;
@@ -727,18 +990,27 @@ void ZZSelector::ShiftEfficiencies(Systematic variation)
       if (l1Pt < 20)
       {
         weight *= eLowRecoSF_->Evaluate2D(std::abs(l1Eta), l1Pt, shift) / eLowRecoSF_->Evaluate2D(std::abs(l1Eta), l1Pt);
+        //weight *= eLowRecoSF_->Evaluate2D(std::abs(l1Charge), l1Pt, shift) / eLowRecoSF_->Evaluate2D(std::abs(l1Charge), l1Pt);
+
+
+
       }
       else
       {
         weight *= eRecoSF_->Evaluate2D(std::abs(l1Eta), pt_e1, shift) / eRecoSF_->Evaluate2D(std::abs(l1Eta), pt_e1);
+        //weight *= eRecoSF_->Evaluate2D(std::abs(l1Charge), pt_e1, shift) / eRecoSF_->Evaluate2D(std::abs(l1Charge), pt_e1);
+
+
       }
       if (l2Pt < 20)
       {
         weight *= eLowRecoSF_->Evaluate2D(std::abs(l2Eta), l2Pt, shift) / eLowRecoSF_->Evaluate2D(std::abs(l2Eta), l2Pt);
+        //weight *= eLowRecoSF_->Evaluate2D(std::abs(l2Charge), l2Pt, shift) / eLowRecoSF_->Evaluate2D(std::abs(l2Charge), l2Pt);
       }
       else
       {
         weight *= eRecoSF_->Evaluate2D(std::abs(l2Eta), pt_e2, shift) / eRecoSF_->Evaluate2D(std::abs(l2Eta), pt_e2);
+        //weight *= eRecoSF_->Evaluate2D(std::abs(l2Charge), pt_e2, shift) / eRecoSF_->Evaluate2D(std::abs(l2Charge), pt_e2);
       }
     }
     // Applying Electron ID SFs Up/Down for ElectronIDEffSyst
@@ -747,24 +1019,31 @@ void ZZSelector::ShiftEfficiencies(Systematic variation)
       if (l1IsGap)
       {
         weight *= eGapIdSF_->Evaluate2D(std::abs(l1Eta), pt_e1, shift) / eGapIdSF_->Evaluate2D(std::abs(l1Eta), pt_e1);
+        //weight *= eGapIdSF_->Evaluate2D(std::abs(l1Charge), pt_e1, shift) / eGapIdSF_->Evaluate2D(std::abs(l1Charge), pt_e1);
       }
       else
       {
         weight *= eIdSF_->Evaluate2D(std::abs(l1Eta), pt_e1, shift) / eIdSF_->Evaluate2D(std::abs(l1Eta), pt_e1);
+        //weight *= eIdSF_->Evaluate2D(std::abs(l1Charge), pt_e1, shift) / eIdSF_->Evaluate2D(std::abs(l1Charge), pt_e1);
       }
       if (l2IsGap)
       {
         weight *= eGapIdSF_->Evaluate2D(std::abs(l2Eta), pt_e2, shift) / eGapIdSF_->Evaluate2D(std::abs(l2Eta), pt_e2);
+        //weight *= eGapIdSF_->Evaluate2D(std::abs(l2Charge), pt_e2, shift) / eGapIdSF_->Evaluate2D(std::abs(l2Charge), pt_e2);
       }
       else
       {
         weight *= eIdSF_->Evaluate2D(std::abs(l2Eta), pt_e2, shift) / eIdSF_->Evaluate2D(std::abs(l2Eta), pt_e2);
+        //weight *= eIdSF_->Evaluate2D(std::abs(l2Charge), pt_e2, shift) / eIdSF_->Evaluate2D(std::abs(l2Charge), pt_e2);
+
       }
     }
     else if (variation == muonEfficiencyUp || variation == muonEfficiencyDown)
     {
       weight *= mIdSF_->Evaluate2D(std::abs(l3Eta), pt_m3, shift) / mIdSF_->Evaluate2D(std::abs(l3Eta), pt_m3);
       weight *= mIdSF_->Evaluate2D(std::abs(l4Eta), pt_m4, shift) / mIdSF_->Evaluate2D(std::abs(l4Eta), pt_m4);
+     // weight *= mIdSF_->Evaluate2D(std::abs(l3Charge), pt_m3, shift) / mIdSF_->Evaluate2D(std::abs(l3Charge), pt_m3);
+     // weight *= mIdSF_->Evaluate2D(std::abs(l4Charge), pt_m4, shift) / mIdSF_->Evaluate2D(std::abs(l4Charge), pt_m4);
     }
   }
   else if (channel_ == mmee)
@@ -777,6 +1056,8 @@ void ZZSelector::ShiftEfficiencies(Systematic variation)
     {
       weight *= mIdSF_->Evaluate2D(std::abs(l1Eta), pt_m1, shift) / mIdSF_->Evaluate2D(std::abs(l1Eta), pt_m1);
       weight *= mIdSF_->Evaluate2D(std::abs(l2Eta), pt_m2, shift) / mIdSF_->Evaluate2D(std::abs(l2Eta), pt_m2);
+      //weight *= mIdSF_->Evaluate2D(std::abs(l1Charge), pt_m1, shift) / mIdSF_->Evaluate2D(std::abs(l1Charge), pt_m1);
+      //weight *= mIdSF_->Evaluate2D(std::abs(l2Charge), pt_m2, shift) / mIdSF_->Evaluate2D(std::abs(l2Charge), pt_m2);
     }
     else if (variation == electronRecoEffUp || variation == electronRecoEffDown)
     {
@@ -784,18 +1065,25 @@ void ZZSelector::ShiftEfficiencies(Systematic variation)
       if (l3Pt < 20)
       {
         weight *= eLowRecoSF_->Evaluate2D(std::abs(l3Eta), l3Pt, shift) / eLowRecoSF_->Evaluate2D(std::abs(l3Eta), l3Pt);
+        //weight *= eLowRecoSF_->Evaluate2D(std::abs(l3Charge), l3Pt, shift) / eLowRecoSF_->Evaluate2D(std::abs(l3Charge), l3Pt);
       }
       else
       {
         weight *= eRecoSF_->Evaluate2D(std::abs(l3Eta), pt_e3, shift) / eRecoSF_->Evaluate2D(std::abs(l3Eta), pt_e3);
+         //weight *= eRecoSF_->Evaluate2D(std::abs(l3Charge), pt_e3, shift) / eRecoSF_->Evaluate2D(std::abs(l3Charge), pt_e3);
       }
+
       if (l4Pt < 20)
       {
         weight *= eLowRecoSF_->Evaluate2D(std::abs(l4Eta), l4Pt, shift) / eLowRecoSF_->Evaluate2D(std::abs(l4Eta), l4Pt);
+        //weight *= eLowRecoSF_->Evaluate2D(std::abs(l4Charge), l4Pt, shift) / eLowRecoSF_->Evaluate2D(std::abs(l4Charge), l4Pt);
       }
       else
       {
         weight *= eRecoSF_->Evaluate2D(std::abs(l4Eta), pt_e4, shift) / eRecoSF_->Evaluate2D(std::abs(l4Eta), pt_e4);
+        //weight *= eRecoSF_->Evaluate2D(std::abs(l4Charge), pt_e4, shift) / eRecoSF_->Evaluate2D(std::abs(l4Charge), pt_e4);
+
+
       }
     }
     // Applying Electron ID SFs Up/Down for ElectronIDEffSyst
@@ -804,18 +1092,26 @@ void ZZSelector::ShiftEfficiencies(Systematic variation)
       if (l3IsGap)
       {
         weight *= eGapIdSF_->Evaluate2D(std::abs(l3Eta), pt_e3, shift) / eGapIdSF_->Evaluate2D(std::abs(l3Eta), pt_e3);
+        //weight *= eGapIdSF_->Evaluate2D(std::abs(l3Charge), pt_e3, shift) / eGapIdSF_->Evaluate2D(std::abs(l3Charge), pt_e3);
       }
       else
       {
         weight *= eIdSF_->Evaluate2D(std::abs(l3Eta), pt_e3, shift) / eIdSF_->Evaluate2D(std::abs(l3Eta), pt_e3);
+        //weight *= eIdSF_->Evaluate2D(std::abs(l3Charge), pt_e3, shift) / eIdSF_->Evaluate2D(std::abs(l3Charge), pt_e3);
+
       }
       if (l4IsGap)
       {
         weight *= eGapIdSF_->Evaluate2D(std::abs(l4Eta), pt_e4, shift) / eGapIdSF_->Evaluate2D(std::abs(l4Eta), pt_e4);
+        //weight *= eGapIdSF_->Evaluate2D(std::abs(l4Charge), pt_e4, shift) / eGapIdSF_->Evaluate2D(std::abs(l4Charge), pt_e4);
       }
       else
       {
         weight *= eIdSF_->Evaluate2D(std::abs(l4Eta), pt_e4, shift) / eIdSF_->Evaluate2D(std::abs(l4Eta), pt_e4);
+        //weight *= eIdSF_->Evaluate2D(std::abs(l4Charge), pt_e4, shift) / eIdSF_->Evaluate2D(std::abs(l4Charge), pt_e4);
+
+
+
       }
     }
   }
@@ -833,6 +1129,15 @@ void ZZSelector::ShiftEfficiencies(Systematic variation)
     // std::cout<<"l3 Shift: "<< mIdSF_->Evaluate2D(std::abs(l3Eta), pt_m3, shift)<<std::endl;
     // std::cout<<"l3 sf: "<< mIdSF_->Evaluate2D(std::abs(l3Eta), pt_m3)<<std::endl;
     weight *= mIdSF_->Evaluate2D(std::abs(l4Eta), pt_m4, shift) / mIdSF_->Evaluate2D(std::abs(l4Eta), pt_m4);
+     //weight *= mIdSF_->Evaluate2D(std::abs(l1Charge), pt_m1, shift) / mIdSF_->Evaluate2D(std::abs(l1Charge), pt_m1);
+    // std::cout<<"l1 Shift: "<< mIdSF_->Evaluate2D(std::abs(l1Eta), pt_m1, shift)<<std::endl;
+    // std::cout<<"l1 sf: "<< mIdSF_->Evaluate2D(std::abs(l1Eta), pt_m1)<<std::endl;
+   // weight *= mIdSF_->Evaluate2D(std::abs(l2Charge), pt_m2, shift) / mIdSF_->Evaluate2D(std::abs(l2Charge), pt_m2);
+    //weight *= mIdSF_->Evaluate2D(std::abs(l3Charge), pt_m3, shift) / mIdSF_->Evaluate2D(std::abs(l3Charge), pt_m3);
+    // std::cout<<"l3 Shift: "<< mIdSF_->Evaluate2D(std::abs(l3Eta), pt_m3, shift)<<std::endl;
+    // std::cout<<"l3 sf: "<< mIdSF_->Evaluate2D(std::abs(l3Eta), pt_m3)<<std::endl;
+    //cout<<"weight_mmmm2"<<weight<<endl;
+    //weight *= mIdSF_->Evaluate2D(std::abs(l4Charge), pt_m4, shift) / mIdSF_->Evaluate2D(std::abs(l4Charge), pt_m4);
   }
 }
 
@@ -1204,10 +1509,12 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
       } // loop over syst indices
 
     } // if (isMC_) for jet systs
-
+//    cout<< cosTheta_1<<"Before the big loop" <<endl;
+ //cout<< cosTheta_1<<"Before the big loop" <<endl;
     // std::cout<<"does it go into lheWeights"<<std::endl;
-    // std::cout << "lheWeights.size() " << lheWeights.size() << std::endl;
-    for (size_t i = 0; i < lheWeights.size(); i++) // expect 0 to 111 currently
+   //std::cout << "lheWeights.size() " << lheWeights.size() << std::endl;
+
+   for (size_t i = 0; i < lheWeights.size(); i++) // expect 0 to 111 currently
     {
       SafeHistFill(weighthistMap1D_, getHistName("yield", variation.second), 1, i, lheWeights[i] / lheWeights[0] * weight);
       SafeHistFill(weighthistMap1D_, getHistName("Mass", variation.second), Mass, i, lheWeights[i] / lheWeights[0] * weight);
@@ -1222,6 +1529,15 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
       SafeHistFill(weighthistMap1D_, getHistName("dRZ1Z2", variation.second), dRZZ, i, lheWeights[i] / lheWeights[0] * weight);
 
       SafeHistFill(weighthistMap1D_, getHistName("nJets", variation.second), jetPt->size(), i, lheWeights[i] / lheWeights[0] * weight);
+   cout<< cosTheta_1 << "before the small loop"<<endl;
+      if (l1Charge<0 && l2Charge>0) { //cout<< cosTheta_1 <<endl;
+        SafeHistFill(weighthistMap1D_, getHistName("CosTheta", variation.second),cosTheta_1, i, lheWeights[i] / lheWeights[0] * weight);}
+      if (l2Charge <0 && l1Charge>0) { //cout<< cosTheta_2 <<endl;
+        SafeHistFill(weighthistMap1D_, getHistName("CosTheta", variation.second),cosTheta_2,  i, lheWeights[i] / lheWeights[0] * weight);}
+      if (l3Charge<0 && l4Charge>0) { //cout<< cosTheta_3 <<endl;
+        SafeHistFill(weighthistMap1D_, getHistName("CosTheta", variation.second), cosTheta_3, i, lheWeights[i] / lheWeights[0] * weight);}
+      if (l4Charge <0 && l3Charge>0) { //cout<< cosTheta_4 <<endl;
+        SafeHistFill(weighthistMap1D_, getHistName("CosTheta", variation.second),cosTheta_4,  i, lheWeights[i] / lheWeights[0] * weight);}
 
       if (jetPt->size() > 0 && jetPt->size() == jetEta->size())
       {
@@ -1273,6 +1589,7 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
       }
     }
   }
+  weight =genWeight;
   // std::cout<<"isNonPrompt_ in FillHistograms after ZZSelection:"<<isNonPrompt_<<std::endl;
   // std::cout<<run<<":"<<lumi<<":"<<evt<<std::endl;
   // std::cout << "variation.second: "<<variation.second;
@@ -1299,7 +1616,7 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
   // if (Mass <= 70.0 || Mass>=1000.0){
   //   return;
   // }
-
+  //weight =1;
   SafeHistFill(histMap1D_, getHistName("yield", variation.second), 1, weight);
   // SafeHistFill(histMap1D_, getHistName("Mass", variation.second), Mass,weight);
   SafeHistFill(histMap1D_, getHistName("Z1Mass", variation.second), Z1mass, weight);
@@ -1326,10 +1643,40 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
   SafeHistFill(histMap1D_, getHistName("LepEta", variation.second), l2Eta, weight);
   SafeHistFill(histMap1D_, getHistName("LepEta", variation.second), l3Eta, weight);
   SafeHistFill(histMap1D_, getHistName("LepEta", variation.second), l4Eta, weight);
+  SafeHistFill(histMap1D_, getHistName("LepPhi", variation.second), l1Phi, weight);
+  SafeHistFill(histMap1D_, getHistName("LepPhi", variation.second), l2Phi, weight);
+  SafeHistFill(histMap1D_, getHistName("LepPhi", variation.second), l3Phi, weight);
+  SafeHistFill(histMap1D_, getHistName("LepPhi", variation.second), l4Phi, weight);  
   SafeHistFill(histMap1D_, getHistName("nJets", variation.second), jetPt->size(), weight);
-
-  if (jetPt->size() == 0 && jetPt->size() == jetEta->size())
-  {
+//  cout<<"dphi"<<dPhill<<endl;
+  SafeHistFill(histMap1D_, getHistName("dPhiOSll", variation.second), dPhill,weight);
+  //if(channel_ == mmmm) {cout<<weight<<"weight"<<endl;} 
+  //cout<< cosTheta_1<<"Before small loop with just weight" <<endl;
+ // cout<< l1Charge<< "lepton1Charge"<<endl;
+ // cout<<l2Charge<<"lepton2Charge"<<endl;
+ // cout<<l3Charge<<"lepton3Charge"<<endl;
+ // cout<<l4Charge<<"lepton4Charge"<<endl;
+  //cout<<"Correct printing here----------------------------------------------------------------------------"<<endl;
+   if (l1Charge<0 && l2Charge>0) { //cout<< cosTheta_1 << "In small loop with just weight" <<endl;
+  SafeHistFill(histMap1D_, getHistName("CosTheta", variation.second), cosTheta_1, weight);}
+  if (l2Charge <0 && l1Charge>0) { //cout<< cosTheta_2 <<endl;
+  SafeHistFill(histMap1D_, getHistName("CosTheta", variation.second),  cosTheta_2, weight);}
+  if (l3Charge<0 && l4Charge>0) {  //cout<< cosTheta_3 <<endl;
+  SafeHistFill(histMap1D_, getHistName("CosTheta", variation.second),  cosTheta_3, weight);}
+  if (l4Charge <0 && l3Charge>0) {  //cout<< cosTheta_4 <<endl;
+  SafeHistFill(histMap1D_, getHistName("CosTheta", variation.second),  cosTheta_4, weight);}
+  //if (l1Charge<0 && l2Charge>0) { //cout<< cosTheta_1 << "In small loop with just weight" <<endl;
+  //Double_t factor = 1.;
+  //CosTheta->Scale(factor/CosTheta->Integral());                                           
+  //SafeHistFill(histMap1D_, getHistName("CosTheta",variation.second), cosTheta_1,1);}                                                  
+  //if (l2Charge <0 && l1Charge>0) { //cout<< cosTheta_2 <<endl;                                                                               
+  //SafeHistFill(histMap1D_, getHistName("CosTheta", variation.second),  cosTheta_2,1);}                                                 
+  //if (l3Charge<0 && l4Charge>0) {  //cout<< cosTheta_3 <<endl;                                                                               
+  //SafeHistFill(histMap1D_, getHistName("CosTheta", variation.second),  cosTheta_3, 1);}                                                 
+  //if (l4Charge <0 && l3Charge>0) {  //cout<< cosTheta_4 <<endl;                                                                              
+  // SafeHistFill(histMap1D_, getHistName("CosTheta",variation.second),  cosTheta_4,1);}    
+if (jetPt->size() == 0 && jetPt->size() == jetEta->size())
+   {
     SafeHistFill(histMap1D_, getHistName("Mass0j", variation.second), Mass, weight);
   }
   else if (jetPt->size() == 1 && jetPt->size() == jetEta->size())
@@ -1392,7 +1739,14 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
     SafeHistFill(histMap1D_, getHistName("jetPhi[2]", variation.second), jetPhi->at(2), weight);
   }
 
-  //    if (!PassesZZjjSelection()){
+  //  if (l1Charge<0 && l2Charge>0) {
+  //SafeHistFill(hists1D_, getHistName("CosTheta", variation.second),  cosTheta_1, weight);}
+  //if (l2Charge <0 && l1Charge>0) {
+  //SafeHistFill(hists1D_, getHistName("CosTheta", variation.second),  cosTheta_2, weight); }
+  //if (l3Charge<0 && l4Charge>0) {
+  //SafeHistFill(hists1D_, getHistName("CosTheta", variation.second),  cosTheta_3, weight);}
+  //if (l4Charge <0 && l3Charge>0) {
+  //SafeHistFill(hists1D_, getHistName("CosTheta", variation.second),  cosTheta_4, weight); }//    if (!PassesZZjjSelection()){
   //  return;
   //}
 
@@ -1400,11 +1754,11 @@ void ZZSelector::FillHistograms(Long64_t entry, std::pair<Systematic, std::strin
   //   return;
   // }
 
-  if (isMC_)
-  {
+  //if (isMC_)
+ // {
     // std::cout<<run<<":"<<lumi<<":"<<evt<<std::endl;
     // std::cout<<"UpdatedSF:"<<weight<<std::endl;
-  }
+ // }
 
   // SafeHistFill(histMap1D_, getHistName("Mass", variation.second), Mass,weight);
   // SafeHistFill(histMap1D_, getHistName("dEtajj", variation.second), dEtajj, weight);
